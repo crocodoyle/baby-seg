@@ -27,6 +27,8 @@ from sklearn.metrics import confusion_matrix
 import argparse
 
 smooth = 1
+input_file = '/data1/data/iSeg-2017/baby-seg.hdf5'
+path = '/data1/data/iSeg-2017/'
 
 def segmentation_model():
     nb_classes = 4
@@ -105,7 +107,7 @@ def dice_coef_loss(y_true, y_pred):
 
 
 def batch(indices):
-    f = h5py.File('E:/baby-seg.hdf5')
+    f = h5py.File(input_file)
     images = f['images']
     labels = f['labels']
 
@@ -116,7 +118,7 @@ def batch(indices):
 
 if __name__ == "__main__":
 
-    f = h5py.File('E:/baby-seg.hdf5')
+    f = h5py.File(input_file)
     images = f['images']
     labels = f['labels']
 
@@ -127,7 +129,7 @@ if __name__ == "__main__":
     model = segmentation_model()
     model.summary()
 
-    model_checkpoint = ModelCheckpoint("E:/best_iseg_model.hdf5", monitor="val_acc", verbose=0, save_best_only=True, save_weights_only=False, mode='auto')
+    model_checkpoint = ModelCheckpoint(path + 'best_seg_model.hdf5', monitor="val_acc", verbose=0, save_best_only=True, save_weights_only=False, mode='auto')
 
 
     # for epoch in range(10):

@@ -1,13 +1,3 @@
-from keras.models import Model
-from keras.layers import Input, Dense, Dropout, Activation, Convolution2D, MaxPooling2D, Flatten, BatchNormalization, SpatialDropout2D, merge
-from keras.layers import Convolution3D, MaxPooling3D, SpatialDropout3D, UpSampling3D
-
-from keras.optimizers import SGD, Adam
-from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
-# from keras.utils.visualize_util import plot
-
-from keras import backend as K
-
 import numpy as np
 import h5py
 
@@ -20,15 +10,13 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 
-from sklearn.model_selection import ShuffleSplit
-from sklearn.metrics import confusion_matrix
-
 import argparse
 
-
-
 def make_iseg():
-
+    """
+    Reads data from the MICCAI 2017 Grand Challenge (iSeg 2017) and creates an HDF5 dataset.
+    Subject 23 has a different size than the others.
+    """
     training_dir = 'E:/baby-seg/training/'
     testing_dir  = 'E:/baby-seg/testing/'
     scratch_dir = 'E:/'
@@ -84,63 +72,5 @@ def make_iseg():
 
     return
 
-
-
-
-def batch(indices, labels, n, random_slice=False):
-    f = h5py.File(scratch_dir + 'oasis.hdf5', 'r')
-    images = f.get('oasis')
-    labels = f.get('oasis_labels')
-
-    x_train = np.zeros((n, 1, 180, 217, 180), dtype=np.float32)
-    y_train = np.zeros((n, 180, 217, 180), dtype=np.int8)
-
-    while True:
-        np.random.shuffle(indices)
-
-        samples_this_batch = 0
-        for i, index in enumerate(indices):
-            x_train[i%n, :, :, :] = images[index, :-2, :, :-2]
-            y_train[i%n, :, :, :] = labels[index, :-2, :, :-2]
-            samples_this_batch += 1
-            if (i+1) % n == 0:
-                yield (x_train, y_train)
-                samples_this_batch = 0
-            elif i == len(indices)-1:
-                yield (x_train[0:samples_this_batch, ...], y_train[0:samples_this_batch, :])
-        samples_this_batch = 0
-
-def test_images(model):
-    f = h5py.File(scratch_dir + 'oasis.hdf5', 'r')
-
-    images = f.get('oasis')
-    labels = f.get('oasis_labels')
-
-    model.predict()
-
-
-    dice = 0
-
-
-    return dice
-
 if __name__ == "__main__":
-
     make_iseg()
-
-    # print "Running segmentation training"
-    #
-    # train_indices, validation_indices, test_indices, patient_id = load_oasis()
-
-    # model = segmentation_model()
-    # model.summary()
-    #
-    # plot(model, to_file="segmentation_model.png")
-    #
-    #
-    # model_checkpoint = ModelCheckpoint("models/best_segmentation_model.hdf5", monitor="val_acc", verbose=0, save_best_only=True, save_weights_only=False, mode='auto')
-    #
-    # hist = model.fit_generator(batch(train_indices, labels, 2,True), nb_epoch=400, samples_per_epoch=len(train_indices), validation_data=batch(validation_indices, labels, 2), nb_val_samples=len(validation_indices), callbacks=[model_checkpoint], class_weight = {0:.7, 1:.3})
-    #
-    #
-    # model.load_weights('models/best_segmentation_model.hdf5')

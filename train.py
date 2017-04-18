@@ -163,4 +163,25 @@ if __name__ == "__main__":
     # history = model.fit(train_data, train_labels, nb_epoch=10, batch_size=1,
     #                     validation_data=(validation_data, validation_labels), callbacks=[model_checkpoint])
 
-    model.fit_generator(batch(training_indices), len(training_indices), epochs=10, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1)
+    hist = model.fit_generator(batch(training_indices), len(training_indices), epochs=3, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1)
+
+
+    model.load_weights(scratch_dir + 'best_seg_model.hdf5')
+    segmentation = model.predict_generator(batch(testing_indices))
+
+    test_img = nib.Nifti1Image(segmentation, np.eye(4))
+    nib.save(test_img, scratch_dir + 'segmentation.nii.gz')
+
+    print(hist.history.keys())
+    epoch_num = range(len(hist.history['acc']))
+    dice = np.array(hist.history['acc'])
+    acc = np.array(hist.history['acc'])
+
+    plt.clf()
+    plt.plot(epoch_num, dice, label='DICE Score')
+    plt.plot(epoch_num, acc, label="Accuracy")
+    plt.legend(shadow=True)
+    plt.xlabel("Training Epoch Number")
+    plt.ylabel("Score")
+    plt.savefig('results.png')
+    plt.close()

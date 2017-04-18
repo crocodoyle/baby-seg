@@ -28,7 +28,7 @@ from sklearn.metrics import confusion_matrix
 import argparse
 
 smooth = 1
-scratch_dir = '/home/users/jmorse/baby-seg/'
+scratch_dir = '/data1/data/iSeg-2017/'
 input_file = scratch_dir + 'baby-seg.hdf5'
 
 
@@ -39,7 +39,7 @@ def segmentation_model():
     concat_axis = 4
 
     inputs = Input(shape=(144, 192, 256, 2))
-    nconv = 16  # 16
+    nconv = 16
     conv1 = Convolution3D(nconv, 3, 3, 3, activation='relu', border_mode='same')(inputs)
     conv1 = Convolution3D(nconv, 3, 3, 3, activation='relu', border_mode='same')(conv1)
     pool1 = MaxPooling3D(pool_size=(2, 2, 2))(conv1)
@@ -130,7 +130,7 @@ def batch(indices):
     while True:
         np.random.shuffle(indices)
         for i in indices:
-            yield (images[i, ...], labels[i, ...])
+            yield (images[i, ...][np.newaxis, ...], labels[i, ...][np.newaxis, ...])
 
 
 if __name__ == "__main__":
@@ -138,9 +138,9 @@ if __name__ == "__main__":
     images = f['images']
     labels = f['labels']
 
-    training_indices = range(8)
-    validation_indices = 9
-    testing_indices = 10
+    training_indices = np.linspace(0, 8)
+    validation_indices = [9]
+    testing_indices = [10]
 
     # train_data = np.reshape(images[training_indices], (8, 144, 192, 256, 2))
     # train_labels = np.reshape(labels[training_indices], (8, 144, 192, 256, 1))
@@ -163,4 +163,4 @@ if __name__ == "__main__":
     # history = model.fit(train_data, train_labels, nb_epoch=10, batch_size=1,
     #                     validation_data=(validation_data, validation_labels), callbacks=[model_checkpoint])
 
-    model.fit_generator(batch(training_indices), len(training_indices), batch_size=1, epochs=10, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices))
+    model.fit_generator(batch(training_indices), len(training_indices), epochs=10, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1)

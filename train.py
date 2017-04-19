@@ -116,7 +116,7 @@ def to_categorical(y):
     # Returns
         A binary matrix representation of the input.
     """
-    categories = set(np.arrray(y, dtype="int").ravel())
+    categories = set(np.array(y, dtype="int").ravel())
     num_classes = len(categories)
 
     print('num categories:', num_classes)

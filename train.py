@@ -116,14 +116,13 @@ def to_categorical(y):
     # Returns
         A binary matrix representation of the input.
     """
-    y = np.array(y, dtype='uint8').ravel()
     categories = set(y)
     num_classes = len(categories)
-    n = y.shape[0]
 
-    categorical = np.zeros((n, num_classes))
+    print('num categories:', num_classes)
+    categorical = np.zeros(np.shape(y) + (num_classes, ))
     for i, cat in enumerate(categories):
-        categorical[:, i] = np.equal(y, [cat]*n)
+        categorical[..., i] = np.equal(y, np.ones(np.shape(y))*cat)
 
     return categorical
 

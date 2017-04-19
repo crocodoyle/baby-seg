@@ -124,9 +124,7 @@ def to_categorical(y):
     categorical = np.zeros((n, num_classes))
     for i, cat in enumerate(categories):
         categorical[:, i] = np.equal(y, [cat]*n)
-    print(np.shape(categorical))
-
-    print(set(categorical[:, 1]))
+        print np.sum(np.equal(y, [cat]*n))
     return categorical
 
 

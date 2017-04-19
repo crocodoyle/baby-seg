@@ -185,7 +185,7 @@ if __name__ == "__main__":
     class_weight[150] = 0.9  # WM
     class_weight[250] = 1.0  # GM
 
-    hist = model.fit_generator(batch(training_indices), len(training_indices), epochs=4, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1)
+    hist = model.fit_generator(batch(training_indices), len(training_indices), epochs=400, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1)
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
     segmentation = model.predict_generator(batch(testing_indices), steps=1)
@@ -204,5 +204,5 @@ if __name__ == "__main__":
     plt.legend(shadow=True)
     plt.xlabel("Training Epoch Number")
     plt.ylabel("Score")
-    plt.savefig('results.png')
+    plt.savefig(scratch_dir + 'results.png')
     plt.close()

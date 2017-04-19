@@ -1,7 +1,8 @@
 from keras.models import Model
 from keras.layers import Input, Dense, Dropout, Activation, Convolution2D, MaxPooling2D, Flatten, BatchNormalization, \
     SpatialDropout2D, merge
-from keras.layers import Convolution3D, MaxPooling3D, SpatialDropout3D, UpSampling3D
+from keras.layers import Conv3D, MaxPooling3D, SpatialDropout3D, UpSampling3D
+from keras.layers.merge import Concatenate
 from keras.optimizers import SGD, Adam
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 # from keras.utils.visualize_util import plot
@@ -42,43 +43,43 @@ def segmentation_model():
 
     inputs = Input(shape=(144, 192, 256, 2))
     nconv = 16
-    conv1 = Convolution3D(nconv, conv_size, activation='relu', border_mode='same')(inputs)
-    conv1 = Convolution3D(nconv, conv_size, activation='relu', border_mode='same')(conv1)
+    conv1 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(inputs)
+    conv1 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(conv1)
     pool1 = MaxPooling3D(pool_size=pool_size)(conv1)
 
-    conv2 = Convolution3D(nconv, conv_size, activation='relu', border_mode='same')(pool1)
-    conv2 = Convolution3D(nconv, conv_size, activation='relu', border_mode='same')(conv2)
+    conv2 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(pool1)
+    conv2 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(conv2)
     pool2 = MaxPooling3D(pool_size=pool_size)(conv2)
 
-    conv3 = Convolution3D(nconv, conv_size, activation='relu', border_mode='same')(pool2)
-    conv3 = Convolution3D(nconv, conv_size, activation='relu', border_mode='same')(conv3)
+    conv3 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(pool2)
+    conv3 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(conv3)
     pool3 = MaxPooling3D(pool_size=pool_size)(conv3)
 
-    conv4 = Convolution3D(nconv, conv_size, activation='relu', border_mode='same')(pool3)
-    conv4 = Convolution3D(nconv, conv_size, activation='relu', border_mode='same')(conv4)
+    conv4 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(pool3)
+    conv4 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(conv4)
     pool4 = MaxPooling3D(pool_size=pool_size)(conv4)
 
-    conv5 = Convolution3D(nconv, conv_size, activation='relu', border_mode='same')(pool4)
-    conv5 = Convolution3D(nconv, conv_size, activation='relu', border_mode='same')(conv5)
+    conv5 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(pool4)
+    conv5 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(conv5)
 
     up8 = merge([UpSampling3D(size=pool_size)(conv5), conv4], mode='concat', concat_axis=concat_axis)
-    conv8 = Convolution3D(nconv, conv_size, activation='relu', border_mode='same')(up8)
-    conv8 = Convolution3D(nconv, conv_size, activation='relu', border_mode='same')(conv8)
+    conv8 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(up8)
+    conv8 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(conv8)
 
     up9 = merge([UpSampling3D(size=pool_size)(conv8), conv3], mode='concat', concat_axis=concat_axis)
-    conv9 = Convolution3D(nconv, conv_size, activation='relu', border_mode='same')(up9)
-    conv9 = Convolution3D(nconv, conv_size, activation='relu', border_mode='same')(conv9)
+    conv9 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(up9)
+    conv9 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(conv9)
 
     up10 = merge([UpSampling3D(size=pool_size)(conv9), conv2], mode='concat', concat_axis=concat_axis)
-    conv10 = Convolution3D(nconv, conv_size, activation='relu', border_mode='same')(up10)
-    conv10 = Convolution3D(nconv, conv_size, activation='relu', border_mode='same')(conv10)
+    conv10 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(up10)
+    conv10 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(conv10)
 
     up11 = merge([UpSampling3D(size=pool_size)(conv10), conv1], mode='concat', concat_axis=concat_axis)
-    conv11 = Convolution3D(nconv, conv_size, activation='relu', border_mode='same')(up11)
-    conv11 = Convolution3D(nconv, conv_size, activation='relu', border_mode='same')(conv11)
+    conv11 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(up11)
+    conv11 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(conv11)
 
     # need as many output channel as tissue classes
-    conv14 = Convolution3D(tissue_classes, (1, 1, 1), activation='sigmoid')(conv11)
+    conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='sigmoid')(conv11)
 
     model = Model(input=[inputs], output=[conv14])
 
@@ -165,7 +166,7 @@ if __name__ == "__main__":
     model = segmentation_model()
     model.summary()
 
-    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="dice_coef_val", verbose=0,
+    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_dice_coef", verbose=0,
                                        save_best_only=True, save_weights_only=False, mode='auto')
 
     # for epoch in range(10):

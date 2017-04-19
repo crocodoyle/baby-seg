@@ -2,9 +2,6 @@ from keras.models import Model
 from keras.layers import Input, Dense, Dropout, Activation, Convolution2D, MaxPooling2D, Flatten, BatchNormalization, \
     SpatialDropout2D, merge
 from keras.layers import Convolution3D, MaxPooling3D, SpatialDropout3D, UpSampling3D
-
-from keras.utils import to_categorical
-
 from keras.optimizers import SGD, Adam
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 # from keras.utils.visualize_util import plot
@@ -101,11 +98,37 @@ def dice_coef(y_true, y_pred):
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
     intersection = K.sum(y_true_f * y_pred_f)
-    return (2. * intersection + 1) / (K.sum(y_true_f) + K.sum(y_pred_f) + 1)  #the 1 is to ensure smoothness
+    return (2. * intersection + 1) / (K.sum(y_true_f) + K.sum(y_pred_f) + 1)  # the 1 is to ensure smoothness
 
 
 def dice_coef_loss(y_true, y_pred):
     return -dice_coef(y_true, y_pred)
+
+
+
+def to_categorical(y):
+    """Converts a class vector (integers) to binary class matrix.
+    Keras function did not support sparse category labels
+    # Arguments
+        y: class vector to be converted into a matrix
+            (integers from 0 to num_classes).
+        num_classes: total number of classes.
+    # Returns
+        A binary matrix representation of the input.
+    """
+    y = np.array(y, dtype='uint8').ravel()
+    categories = set(y)
+    num_classes = len(categories)
+    n = y.shape[0]
+
+    categorical = np.zeros((n, num_classes))
+    for i, cat in enumerate(categories):
+        categorical[i, :] = np.equal(y, [cat]*n)
+    print(np.shape(categorical))
+
+    print(set(categorical[1, :]))
+    return categorical
+
 
 
 def batch(indices):
@@ -120,8 +143,8 @@ def batch(indices):
     while True:
         np.random.shuffle(indices)
         for i in indices:
-            label = to_categorical(labels[i, ...])
-            yield (images[i, ...][np.newaxis, ...], label[np.newaxis, ...])
+            label = to_categorical(labels[i, ...], 4)
+            yield (images[i, ...][np.newaxis, ...], [np.newaxis, ...])
 
 
 if __name__ == "__main__":

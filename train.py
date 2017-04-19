@@ -43,40 +43,40 @@ def segmentation_model():
 
     inputs = Input(shape=(144, 192, 256, 2))
     nconv = 16
-    conv1 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(inputs)
-    conv1 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(conv1)
+    conv1 = Conv3D(nconv, conv_size, activation='relu', padding='same')(inputs)
+    conv1 = Conv3D(nconv, conv_size, activation='relu', padding='same')(conv1)
     pool1 = MaxPooling3D(pool_size=pool_size)(conv1)
 
-    conv2 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(pool1)
-    conv2 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(conv2)
+    conv2 = Conv3D(nconv, conv_size, activation='relu', padding='same')(pool1)
+    conv2 = Conv3D(nconv, conv_size, activation='relu', padding='same')(conv2)
     pool2 = MaxPooling3D(pool_size=pool_size)(conv2)
 
-    conv3 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(pool2)
-    conv3 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(conv3)
+    conv3 = Conv3D(nconv, conv_size, activation='relu', padding='same')(pool2)
+    conv3 = Conv3D(nconv, conv_size, activation='relu', padding='same')(conv3)
     pool3 = MaxPooling3D(pool_size=pool_size)(conv3)
 
-    conv4 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(pool3)
-    conv4 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(conv4)
+    conv4 = Conv3D(nconv, conv_size, activation='relu', padding='same')(pool3)
+    conv4 = Conv3D(nconv, conv_size, activation='relu', padding='same')(conv4)
     pool4 = MaxPooling3D(pool_size=pool_size)(conv4)
 
-    conv5 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(pool4)
-    conv5 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(conv5)
+    conv5 = Conv3D(nconv, conv_size, activation='relu', padding='same')(pool4)
+    conv5 = Conv3D(nconv, conv_size, activation='relu', padding='same')(conv5)
 
     up8 = merge([UpSampling3D(size=pool_size)(conv5), conv4], mode='concat', concat_axis=concat_axis)
-    conv8 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(up8)
-    conv8 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(conv8)
+    conv8 = Conv3D(nconv, conv_size, activation='relu', padding='same')(up8)
+    conv8 = Conv3D(nconv, conv_size, activation='relu', padding='same')(conv8)
 
     up9 = merge([UpSampling3D(size=pool_size)(conv8), conv3], mode='concat', concat_axis=concat_axis)
-    conv9 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(up9)
-    conv9 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(conv9)
+    conv9 = Conv3D(nconv, conv_size, activation='relu', padding='same')(up9)
+    conv9 = Conv3D(nconv, conv_size, activation='relu', padding='same')(conv9)
 
     up10 = merge([UpSampling3D(size=pool_size)(conv9), conv2], mode='concat', concat_axis=concat_axis)
-    conv10 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(up10)
-    conv10 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(conv10)
+    conv10 = Conv3D(nconv, conv_size, activation='relu', padding='same')(up10)
+    conv10 = Conv3D(nconv, conv_size, activation='relu', padding='same')(conv10)
 
     up11 = merge([UpSampling3D(size=pool_size)(conv10), conv1], mode='concat', concat_axis=concat_axis)
-    conv11 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(up11)
-    conv11 = Conv3D(nconv, conv_size, activation='relu', border_mode='same')(conv11)
+    conv11 = Conv3D(nconv, conv_size, activation='relu', padding='same')(up11)
+    conv11 = Conv3D(nconv, conv_size, activation='relu', padding='same')(conv11)
 
     # need as many output channel as tissue classes
     conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='sigmoid')(conv11)
@@ -194,9 +194,9 @@ if __name__ == "__main__":
     nib.save(test_img, scratch_dir + 'segmentation.nii.gz')
 
     print(hist.history.keys())
-    epoch_num = range(len(hist.history['acc']))
+    epoch_num = range(len(hist.history['dice_coef']))
     dice_train = np.array(hist.history['dice_coef'])
-    dice_val = np.array(hist.history['dice_coef_val'])
+    dice_val = np.array(hist.history['val_dice_coef'])
 
     plt.clf()
     plt.plot(epoch_num, dice_train, label='DICE Score Training')

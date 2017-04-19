@@ -120,7 +120,7 @@ def to_categorical(y):
     num_classes = len(categories)
 
     print('num categories:', num_classes)
-    categorical = np.zeros(np.shape(y) + (num_classes, ))
+    categorical = np.zeros(np.shape(y)[:-1] + (num_classes, ))
     for i, cat in enumerate(categories):
         categorical[..., i] = np.equal(y, np.ones(np.shape(y))*cat)
 

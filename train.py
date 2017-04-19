@@ -166,13 +166,14 @@ if __name__ == "__main__":
     #                     validation_data=(validation_data, validation_labels), callbacks=[model_checkpoint])
 
 
+    # class weight doesn't work in 3D ?
     class_weight = {}
     class_weight[0] = 0 # don't care about background
     class_weight[10] = 0.7 # CSF
     class_weight[150] = 0.9 # WM
     class_weight[250] = 1.0 # GM
 
-    hist = model.fit_generator(batch(training_indices), len(training_indices), epochs=4, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1, class_weight = class_weight)
+    hist = model.fit_generator(batch(training_indices), len(training_indices), epochs=4, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1)
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
     segmentation = model.predict_generator(batch(testing_indices), steps=1)

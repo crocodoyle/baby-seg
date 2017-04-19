@@ -124,7 +124,7 @@ def to_categorical(y):
 
     print('categorical shape:', cat_shape)
     for i, cat in enumerate(categories):
-        categorical[..., i] = np.equal(y, np.ones(np.shape(y))*cat)
+        categorical[..., i] = np.squeeze(np.equal(y, np.ones(np.shape(y))*cat))
 
     return categorical
 

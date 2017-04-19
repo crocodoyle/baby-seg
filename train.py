@@ -3,6 +3,8 @@ from keras.layers import Input, Dense, Dropout, Activation, Convolution2D, MaxPo
     SpatialDropout2D, merge
 from keras.layers import Convolution3D, MaxPooling3D, SpatialDropout3D, UpSampling3D
 
+from keras.utils import to_categorical
+
 from keras.optimizers import SGD, Adam
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 # from keras.utils.visualize_util import plot
@@ -27,7 +29,6 @@ from sklearn.metrics import confusion_matrix
 
 import argparse
 
-smooth = 1
 scratch_dir = '/data1/data/iSeg-2017/'
 input_file = scratch_dir + 'baby-seg.hdf5'
 
@@ -84,7 +85,7 @@ def segmentation_model():
 
     model = Model(input=[inputs], output=[conv14])
 
-    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef, "accuracy"])
+    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
 
     return model
 
@@ -100,7 +101,7 @@ def dice_coef(y_true, y_pred):
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
     intersection = K.sum(y_true_f * y_pred_f)
-    return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
+    return (2. * intersection + 1) / (K.sum(y_true_f) + K.sum(y_pred_f) + 1)  #the 1 is to ensure smoothness
 
 
 def dice_coef_loss(y_true, y_pred):
@@ -119,7 +120,8 @@ def batch(indices):
     while True:
         np.random.shuffle(indices)
         for i in indices:
-            yield (images[i, ...][np.newaxis, ...], labels[i, ...][np.newaxis, ...])
+            label = to_categorical(labels[i, ...], 4)
+            yield (images[i, ...][np.newaxis, ...], label[np.newaxis, ...])
 
 
 if __name__ == "__main__":
@@ -141,7 +143,7 @@ if __name__ == "__main__":
     model = segmentation_model()
     model.summary()
 
-    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_acc", verbose=0,
+    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="dice_coef_val", verbose=0,
                                        save_best_only=True, save_weights_only=False, mode='auto')
 
     # for epoch in range(10):
@@ -155,10 +157,10 @@ if __name__ == "__main__":
 
     # class weight doesn't work in 3D ?
     class_weight = {}
-    class_weight[0] = 0 # don't care about background
-    class_weight[10] = 0.7 # CSF
-    class_weight[150] = 0.9 # WM
-    class_weight[250] = 1.0 # GM
+    class_weight[0] = 0  # don't care about background
+    class_weight[10] = 0.7  # CSF
+    class_weight[150] = 0.9  # WM
+    class_weight[250] = 1.0  # GM
 
     hist = model.fit_generator(batch(training_indices), len(training_indices), epochs=4, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1)
 

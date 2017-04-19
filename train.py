@@ -163,23 +163,23 @@ if __name__ == "__main__":
     # history = model.fit(train_data, train_labels, nb_epoch=10, batch_size=1,
     #                     validation_data=(validation_data, validation_labels), callbacks=[model_checkpoint])
 
-    hist = model.fit_generator(batch(training_indices), len(training_indices), epochs=3, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1)
+    hist = model.fit_generator(batch(training_indices), len(training_indices), epochs=400, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1)
 
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
-    segmentation = model.predict_generator(batch(testing_indices))
+    segmentation = model.predict_generator(batch(testing_indices), steps=1)
 
     test_img = nib.Nifti1Image(segmentation, np.eye(4))
     nib.save(test_img, scratch_dir + 'segmentation.nii.gz')
 
     print(hist.history.keys())
     epoch_num = range(len(hist.history['acc']))
-    dice = np.array(hist.history['acc'])
-    acc = np.array(hist.history['acc'])
+    dice_train = np.array(hist.history['dice_coef'])
+    dice_val = np.array(hist.history['dice_coef_val'])
 
     plt.clf()
-    plt.plot(epoch_num, dice, label='DICE Score')
-    plt.plot(epoch_num, acc, label="Accuracy")
+    plt.plot(epoch_num, dice, label='DICE Score Training')
+    plt.plot(epoch_num, dice_val, label="DICE Score Validation")
     plt.legend(shadow=True)
     plt.xlabel("Training Epoch Number")
     plt.ylabel("Score")

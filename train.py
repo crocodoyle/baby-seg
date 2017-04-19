@@ -35,7 +35,7 @@ def segmentation_model():
     3D U-net model, using very small convolutional kernels
     """
     concat_axis = 4
-    tissue_classes = 3
+    tissue_classes = 4
 
     conv_size = (3, 3, 3)
     pool_size = (2, 2, 2)
@@ -117,12 +117,13 @@ def to_categorical(y):
         A binary matrix representation of the input.
     """
     categories = set(np.array(y, dtype="int").ravel())
+    print(categories)
+
     num_classes = len(categories)
 
     cat_shape = np.shape(y)[:-1] + (num_classes, )
     categorical = np.zeros(cat_shape)
 
-    print('categorical shape:', cat_shape)
     for i, cat in enumerate(categories):
         categorical[..., i] = np.squeeze(np.equal(y, np.ones(np.shape(y))*cat))
 

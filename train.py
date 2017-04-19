@@ -124,7 +124,7 @@ def to_categorical(y):
     categorical = np.zeros((n, num_classes))
     for i, cat in enumerate(categories):
         categorical[:, i] = np.equal(y, [cat]*n)
-        print np.sum(np.equal(y, [cat]*n))
+
     return categorical
 
 
@@ -142,7 +142,8 @@ def batch(indices):
         np.random.shuffle(indices)
         for i in indices:
             label = to_categorical(labels[i, ...])
-            yield (images[i, ...][np.newaxis, ...], [np.newaxis, ...])
+
+            yield (images[i, ...][np.newaxis, ...], label[np.newaxis, ...])
 
 
 if __name__ == "__main__":

@@ -117,8 +117,6 @@ def to_categorical(y):
         A binary matrix representation of the input.
     """
     categories = set(np.array(y, dtype="int").ravel())
-    print(categories)
-
     num_classes = len(categories)
 
     cat_shape = np.shape(y)[:-1] + (num_classes, )
@@ -186,7 +184,7 @@ if __name__ == "__main__":
     class_weight[150] = 0.9  # WM
     class_weight[250] = 1.0  # GM
 
-    hist = model.fit_generator(batch(training_indices), len(training_indices), epochs=4, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1)
+    hist = model.fit_generator(batch(training_indices), len(training_indices), epochs=2, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1)
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
     segmentation = model.predict_generator(batch(testing_indices), steps=1)

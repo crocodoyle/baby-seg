@@ -119,11 +119,12 @@ def to_categorical(y):
     categories = set(np.array(y, dtype="int").ravel())
     num_classes = len(categories)
 
-    print('num categories:', num_classes)
     cat_shape = np.shape(y)[:-1] + (num_classes, )
     categorical = np.zeros(cat_shape)
+
+    print('categorical shape:', cat_shape)
     for i, cat in enumerate(categories):
-        categorical[..., i] = np.equal(y, np.ones(cat_shape)*cat)
+        categorical[..., i] = np.equal(y, np.ones(cat_shape[:-1])*cat)
 
     return categorical
 

@@ -37,6 +37,7 @@ def segmentation_model():
     3D U-net model, using very small convolutional kernels
     """
     concat_axis = 4
+    tissue_classes = 3
 
     inputs = Input(shape=(144, 192, 256, 2))
     nconv = 16
@@ -91,9 +92,10 @@ def segmentation_model():
     # conv13 = Convolution3D(nconv, 3, 3, 3, activation='relu', border_mode='same')(up13)
     # conv13 = Convolution3D(nconv, 3, 3, 3, activation='relu', border_mode='same')(conv13)
 
-    conv14 = Convolution3D(1, 1, 1, 1, activation='sigmoid')(conv11)
+    # need as many output channel as tissue classes
+    conv14 = Convolution3D(tissue_classes, 1, 1, 1, activation='sigmoid')(conv11)
 
-    model = Model(input=inputs, output=conv14)
+    model = Model(input=[inputs], output=[conv14])
 
     model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef, "accuracy"])
 
@@ -163,8 +165,14 @@ if __name__ == "__main__":
     # history = model.fit(train_data, train_labels, nb_epoch=10, batch_size=1,
     #                     validation_data=(validation_data, validation_labels), callbacks=[model_checkpoint])
 
-    hist = model.fit_generator(batch(training_indices), len(training_indices), epochs=400, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1)
 
+    class_weight = {}
+    class_weight[0] = 0 # don't care about background
+    class_weight[10] = 0.7 # CSF
+    class_weight[150] = 0.9 # WM
+    class_weight[250] = 1.0 # GM
+
+    hist = model.fit_generator(batch(training_indices), len(training_indices), epochs=4, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1, class_weight = class_weight)
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
     segmentation = model.predict_generator(batch(testing_indices), steps=1)
@@ -178,7 +186,7 @@ if __name__ == "__main__":
     dice_val = np.array(hist.history['dice_coef_val'])
 
     plt.clf()
-    plt.plot(epoch_num, dice, label='DICE Score Training')
+    plt.plot(epoch_num, dice_train, label='DICE Score Training')
     plt.plot(epoch_num, dice_val, label="DICE Score Validation")
     plt.legend(shadow=True)
     plt.xlabel("Training Epoch Number")

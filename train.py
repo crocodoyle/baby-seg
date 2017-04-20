@@ -140,7 +140,8 @@ def from_categorical(categorical, category_mapping):
     segmentation = np.zeros(img_shape, dtype='uint8')
 
     for cat in category_mapping:
-        segmentation[cat_img == cat] = int(cat)
+        print('category:', cat, len(segmentation[cat_img == cat]))
+        segmentation[cat_img == cat] = cat
 
     return segmentation
 

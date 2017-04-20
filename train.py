@@ -135,7 +135,7 @@ def from_categorical(categorical, category_mapping):
     :return:
     """
     img_shape = np.shape(categorical)[1:-1]
-    cat_img = np.argmax(categorical[1, ...], axis=3)
+    cat_img = np.argmax(np.squeeze(categorical), axis=3)
 
     segmentation = np.zeros(img_shape, dtype='uint8')
 

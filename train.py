@@ -120,12 +120,12 @@ def to_categorical(y):
     categories = set(np.array(y, dtype="int").ravel())
     num_classes = len(categories)
 
-    cat_shape = np.shape(y)[:-1] + (num_classes, )
+    cat_shape = np.shape(y)[:-1] + (num_classes,)
     categorical = np.zeros(cat_shape)
 
     for i, cat in enumerate(categories):
         categorical[..., i] = np.squeeze(np.equal(y, np.ones(np.shape(y))*cat))
-
+        print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
     return categorical
 
 def from_categorical(categorical, category_mapping):
@@ -140,7 +140,7 @@ def from_categorical(categorical, category_mapping):
     segmentation = np.zeros(img_shape, dtype='uint8')
 
     for cat in category_mapping:
-        print('category:', cat, len(segmentation[cat_img == cat]))
+        print('category', cat, 'has', len(segmentation[cat_img == cat]), 'voxels')
         segmentation[cat_img == cat] = cat
 
     return segmentation

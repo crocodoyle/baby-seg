@@ -89,7 +89,7 @@ def segmentation_model():
 
 
 def dice_coef(y_true, y_pred):
-    """
+    """ DICE coefficient: 2TP / (2TP + FP + FN). An additional smoothness term is added to ensure no / 0
     :param y_true: True labels.
     :type: TensorFlow/Theano tensor.
     :param y_pred: Predictions.
@@ -135,7 +135,7 @@ def from_categorical(categorical, category_mapping):
     :return:
     """
     img_shape = np.shape(categorical)[1:-1]
-    cat_img = np.argmax(categorical[1, ...], axis=4)
+    cat_img = np.argmax(categorical[1, ...], axis=3)
 
     segmentation = np.zeros(img_shape, dtype='uint8')
 
@@ -199,7 +199,7 @@ if __name__ == "__main__":
     class_weight[150] = 0.9  # WM
     class_weight[250] = 1.0  # GM
 
-    hist = model.fit_generator(batch(training_indices), len(training_indices), epochs=10, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1)
+    hist = model.fit_generator(batch(training_indices), len(training_indices), epochs=1, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1)
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
     predicted = model.predict_generator(batch(testing_indices), steps=1)

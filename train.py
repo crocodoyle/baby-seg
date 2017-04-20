@@ -83,7 +83,7 @@ def segmentation_model():
 
     model = Model(input=[inputs], output=[conv14])
 
-    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
+    model.compile(optimizer=Adam(lr=1e-4), loss=dice_coef_loss, metrics=[dice_coef])
 
     return model
 
@@ -101,11 +101,8 @@ def dice_coef(y_true, y_pred):
     intersection = K.sum(y_true_f * y_pred_f)
     return (2. * intersection + 1) / (K.sum(y_true_f) + K.sum(y_pred_f) + 1)  # the 1 is to ensure smoothness
 
-
 def dice_coef_loss(y_true, y_pred):
     return -dice_coef(y_true, y_pred)
-
-
 
 def to_categorical(y):
     """Converts a class vector (integers) to binary class matrix.

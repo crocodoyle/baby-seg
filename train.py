@@ -118,11 +118,13 @@ def to_categorical(y):
     num_classes = len(categories)
 
     cat_shape = np.shape(y)[:-1] + (num_classes,)
-    categorical = np.zeros(cat_shape)
+    categorical = np.zeros(cat_shape, dtype='bool')
 
     for i, cat in enumerate(categories):
         categorical[..., i] = np.squeeze(np.equal(y, np.ones(np.shape(y))*cat))
         print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
+        test = nib.Nifti1Image(categorical[...,i], np.eye(4))
+        nib.save(test, 'cat' + str(cat) + '.nii.gz')
     return categorical
 
 def from_categorical(categorical, category_mapping):

@@ -138,8 +138,9 @@ def from_categorical(categorical, category_mapping):
 
     segmentation = np.zeros(img_shape, dtype='uint8')
 
-    for cat in category_mapping:
-        print('category', cat, 'has', len(segmentation[cat_img == cat]), 'voxels')
+    for i, cat in enumerate(category_mapping):
+        print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
+        # print('category', cat, 'has', len(segmentation[cat_img == cat]), 'voxels')
         segmentation[cat_img == cat] = cat
 
     return segmentation

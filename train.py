@@ -218,7 +218,7 @@ if __name__ == "__main__":
     #validation image
     predicted = model.predict_generator(batch(validation_indices), steps=1)
     segmentation = from_categorical(predicted, category_mapping)
-    val_image = nib.Nifti1Image(segmentation. np.eye(4))
+    val_image = nib.Nifti1Image(segmentation, np.eye(4))
     nib.save(val_image, 'val_image_segmentation.nii.gz')
 
     epoch_num = range(len(hist.history['dice_coef']))

@@ -122,9 +122,9 @@ def to_categorical(y):
 
     for i, cat in enumerate(categories):
         categorical[..., i] = np.squeeze(np.equal(y, np.ones(np.shape(y))*cat))
-        print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
-        test = nib.Nifti1Image(categorical[...,i], np.eye(4))
-        nib.save(test, 'cat' + str(cat) + '.nii.gz')
+        # print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
+        # test = nib.Nifti1Image(categorical[...,i], np.eye(4))
+        # nib.save(test, 'cat' + str(cat) + '.nii.gz')
     return categorical
 
 def from_categorical(categorical, category_mapping):
@@ -136,13 +136,13 @@ def from_categorical(categorical, category_mapping):
     img_shape = np.shape(categorical)[1:-1]
     cat_img = np.argmax(np.squeeze(categorical), axis=3)
 
-    img = nib.Nifti1Image(cat_img, np.eye(4))
-    nib.save(img, 'cat_img.nii.gz')
+    # img = nib.Nifti1Image(cat_img, np.eye(4))
+    # nib.save(img, 'cat_img.nii.gz')
 
     segmentation = np.zeros(img_shape, dtype='uint8')
 
     for i, cat in enumerate(category_mapping):
-        print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
+        # print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
         # print('category', cat, 'has', len(segmentation[cat_img == cat]), 'voxels')
         segmentation[cat_img == 1] = cat
 
@@ -206,13 +206,20 @@ if __name__ == "__main__":
     hist = model.fit_generator(batch(training_indices), len(training_indices), epochs=1, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1)
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
-    predicted = model.predict_generator(batch(testing_indices), steps=1)
 
     category_mapping = [0, 10, 150, 250]
-    segmentation = from_categorical(predicted, category_mapping)
 
+    #test image
+    predicted = model.predict_generator(batch(testing_indices), steps=1)
+    segmentation = from_categorical(predicted, category_mapping)
     test_img = nib.Nifti1Image(segmentation, np.eye(4))
-    nib.save(test_img, scratch_dir + 'segmentation.nii.gz')
+    nib.save(test_img, 'test_image_segmentation.nii.gz')
+
+    #validation image
+    predicted = model.predict_generator(batch(validation_indices), steps=1)
+    segmentation = from_categorical(predicted, category_mapping)
+    val_image = nib.Nifti1Image(segmentation. np.eye(4))
+    nib.save(val_image, 'val_image_segmentation.nii.gz')
 
     epoch_num = range(len(hist.history['dice_coef']))
     dice_train = np.array(hist.history['dice_coef'])

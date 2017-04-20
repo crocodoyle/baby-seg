@@ -128,7 +128,21 @@ def to_categorical(y):
 
     return categorical
 
+def from_categorical(categorical, category_mapping):
+    """Combines several binary masks for tissue classes into a single segmentation image
+    :param categorical:
+    :param category_mapping:
+    :return:
+    """
+    img_shape = np.shape(categorical)[1:-1]
+    cat_img = np.argmax(categorical[1, ...], axis=4)
 
+    segmentation = np.zeros(img_shape, dtype='uint8')
+
+    for cat in category_mapping:
+        segmentation[cat_img == cat] = int(cat)
+
+    return segmentation
 
 def batch(indices):
     """
@@ -185,15 +199,17 @@ if __name__ == "__main__":
     class_weight[150] = 0.9  # WM
     class_weight[250] = 1.0  # GM
 
-    hist = model.fit_generator(batch(training_indices), len(training_indices), epochs=400, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1)
+    hist = model.fit_generator(batch(training_indices), len(training_indices), epochs=10, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1)
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
-    segmentation = model.predict_generator(batch(testing_indices), steps=1)
+    predicted = model.predict_generator(batch(testing_indices), steps=1)
+
+    category_mapping = [0, 10, 150, 250]
+    segmentation = from_categorical(predicted, category_mapping)
 
     test_img = nib.Nifti1Image(segmentation, np.eye(4))
     nib.save(test_img, scratch_dir + 'segmentation.nii.gz')
 
-    print(hist.history.keys())
     epoch_num = range(len(hist.history['dice_coef']))
     dice_train = np.array(hist.history['dice_coef'])
     dice_val = np.array(hist.history['val_dice_coef'])

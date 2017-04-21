@@ -172,15 +172,20 @@ def batch(indices, class_weights=None):
             # print("class weights in batch", class_weights)
             if not class_weights == None:
                 label, sample_weight = to_categorical(labels[i, ...], class_weights=class_weights)
+                yield (images[i, ...][np.newaxis, ...], label.flatten()[np.newaxis, ..., np.newaxis],
+                       sample_weight.flatten()[np.newaxis, ...])
             else:
                 label = to_categorical(labels[i, ...])
+                yield (images[i, ...][np.newaxis, ...], label.flatten()[np.newaxis, ..., np.newaxis])
 
-            yield (images[i, ...][np.newaxis, ...], label.flatten()[np.newaxis, ..., np.newaxis], sample_weight.flatten()[np.newaxis, ...])
+
 
 if __name__ == "__main__":
     f = h5py.File(input_file)
     images = f['images']
     labels = f['labels']
+
+    output_shape = (144, 256, 192, 4)
 
     training_indices = np.linspace(0, 8)
     validation_indices = [9]
@@ -230,13 +235,17 @@ if __name__ == "__main__":
 
     #test image
     predicted = model.predict_generator(batch(testing_indices), steps=1)
+    predicted_img = np.reshape(predicted_img, (output_shape))
+
     segmentation = from_categorical(predicted, category_mapping)
     test_img = nib.Nifti1Image(segmentation, np.eye(4))
     nib.save(test_img, 'test_image_segmentation.nii.gz')
 
     #validation image
     predicted = model.predict_generator(batch(validation_indices), steps=1)
-    segmentation = from_categorical(predicted, category_mapping)
+    predicted_img = np.reshape(predicted, (output_shape))
+
+    segmentation = from_categorical(predicted_img, category_mapping)
     val_image = nib.Nifti1Image(segmentation, np.eye(4))
     nib.save(val_image, 'val_image_segmentation.nii.gz')
 

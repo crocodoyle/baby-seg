@@ -122,7 +122,7 @@ def to_categorical(y, class_weights=None):
     sample_weights = np.zeros(np.shape(y)[:-1], dtype='uint8')
 
     print('sample weight shape', np.shape(sample_weights))
-
+    print("class weights in to_categorical:", class_weights)
     for i, cat in enumerate(categories):
         categorical[..., i] = np.squeeze(np.equal(y, np.ones(np.shape(y))*cat))
         # print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
@@ -167,6 +167,7 @@ def batch(indices, class_weights=None):
     while True:
         np.random.shuffle(indices)
         for i in indices:
+            print("class weights in batch", class_weights)
             label, sample_weight = to_categorical(labels[i, ...], class_weights=class_weights)
 
 

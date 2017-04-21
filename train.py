@@ -128,7 +128,7 @@ def to_categorical(y, class_weights=None):
         # print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
         # test = nib.Nifti1Image(categorical[...,i], np.eye(4))
         # nib.save(test, 'cat' + str(cat) + '.nii.gz')
-        if class_weights:
+        if not class_weights == None:
             weight = class_weights[i]
             sample_weights[categorical[..., i] == 1] = weight
 
@@ -167,10 +167,10 @@ def batch(indices, class_weights=None):
     while True:
         np.random.shuffle(indices)
         for i in indices:
-            label = to_categorical(labels[i, ...], class_weights=class_weights)
+            label, sample_weight = to_categorical(labels[i, ...], class_weights=class_weights)
 
 
-            yield (images[i, ...][np.newaxis, ...], label[np.newaxis, ...])
+            yield (images[i, ...][np.newaxis, ...], label[np.newaxis, ...], sample_weight[np.newaxis, ...])
 
 
 if __name__ == "__main__":

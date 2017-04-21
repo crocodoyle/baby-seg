@@ -1,6 +1,6 @@
 from keras.models import Model
 from keras.layers import Input, Dense, Dropout, Activation, Convolution2D, MaxPooling2D, Flatten, BatchNormalization, \
-    SpatialDropout2D, merge
+    SpatialDropout2D, merge, Reshape
 from keras.layers import Conv3D, MaxPooling3D, SpatialDropout3D, UpSampling3D
 from keras.layers.merge import Concatenate
 from keras.optimizers import SGD, Adam
@@ -79,7 +79,7 @@ def segmentation_model():
 
     # need as many output channel as tissue classes
     conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='sigmoid')(conv11)
-    flat = Flatten()(conv14)
+    flat = Reshape((28311552, 1))(conv14)
 
     model = Model(input=[inputs], output=[flat])
 

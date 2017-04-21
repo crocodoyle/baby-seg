@@ -174,9 +174,9 @@ def batch(indices, class_weights=None):
             else:
                 label = to_categorical(labels[i, ...])
 
-            print(np.shape(images[i, ...]), np.shape(sample_weight), np.shape(label))
+            print(np.shape(images[i, ...]), np.shape(sample_weight.flatten()), np.shape(label.flatten()))
 
-            yield (images[i, ...][np.newaxis, ...], label.flatten()[np.newaxis, ...], sample_weight.flatten()[np.newaxis, ...])
+            yield (images[i, ...][np.newaxis, ...], label.flatten(), sample_weight.flatten())
 
 if __name__ == "__main__":
     f = h5py.File(input_file)

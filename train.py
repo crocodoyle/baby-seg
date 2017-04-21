@@ -174,7 +174,7 @@ def batch(indices, class_weights=None):
             else:
                 label = to_categorical(labels[i, ...])
 
-            print(np.shape(images[i, ...]), np.shape(sample_weight.flatten()), np.shape(label.flatten()))
+            print(np.shape(images[i, ...][np.newaxis, ...]), np.shape(sample_weight.flatten()[np.newaxis, ...]), np.shape(label.flatten()[np.newaxis, ...]))
 
             yield (images[i, ...][np.newaxis, ...], label.flatten(), sample_weight.flatten())
 

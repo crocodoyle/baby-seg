@@ -128,7 +128,8 @@ def to_categorical(y, class_weights=None):
         # print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
         # test = nib.Nifti1Image(categorical[...,i], np.eye(4))
         # nib.save(test, 'cat' + str(cat) + '.nii.gz')
-        sample_weights[categorical[..., i] == 1] = class_weights[i]
+        if class_weights:
+            sample_weights[categorical[..., i] == 1] = class_weights[i]
 
     return categorical
 
@@ -211,7 +212,7 @@ if __name__ == "__main__":
 
 
     hist = model.fit_generator(
-        batch(training_indices),
+        batch(training_indices, class_weight=class_weight),
         len(training_indices),
         epochs=1,
         verbose=1,

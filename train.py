@@ -207,10 +207,10 @@ if __name__ == "__main__":
 
     # class weight has to be converted to sample weight
     class_weight = {}
-    class_weight[0] = 0.1  # don't care about background
-    class_weight[10] = 0.7  # CSF
-    class_weight[150] = 0.9  # WM
-    class_weight[250] = 1.0  # GM
+    class_weight[0] = 10  # don't care about background
+    class_weight[10] = 70  # CSF
+    class_weight[150] = 90  # WM
+    class_weight[250] = 100  # GM
 
 
     hist = model.fit_generator(

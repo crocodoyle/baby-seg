@@ -174,7 +174,7 @@ def batch(indices, class_weights=None):
             else:
                 label = to_categorical(labels[i, ...])
 
-            yield (images[i, ...][np.newaxis, ...], label[np.newaxis, ...].flatten(), sample_weight[np.newaxis, ...].flatten())
+            yield (images[i, ...][np.newaxis, ...], label.flatten()[np.newaxis, ...], sample_weight.flatten()[np.newaxis, ...])
 
 
 if __name__ == "__main__":

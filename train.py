@@ -79,8 +79,9 @@ def segmentation_model():
 
     # need as many output channel as tissue classes
     conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='sigmoid')(conv11)
+    flat = Flatten()(conv14)
 
-    model = Model(input=[inputs], output=[conv14])
+    model = Model(input=[inputs], output=[flat])
 
     model.compile(optimizer=Adam(lr=1e-4), loss=dice_coef_loss, metrics=[dice_coef], sample_weight_mode='temporal')
 
@@ -173,8 +174,6 @@ def batch(indices, class_weights=None):
                 label, sample_weight = to_categorical(labels[i, ...], class_weights=class_weights)
             else:
                 label = to_categorical(labels[i, ...])
-
-            print(np.shape(images[i, ...][np.newaxis, ...]), np.shape(sample_weight.flatten()[np.newaxis, ...]), np.shape(label.flatten()[np.newaxis, ...]))
 
             yield (images[i, ...][np.newaxis, ...], label.flatten()[np.newaxis, ..., np.newaxis], sample_weight.flatten()[np.newaxis, ...])
 

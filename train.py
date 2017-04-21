@@ -237,7 +237,7 @@ if __name__ == "__main__":
     predicted = model.predict_generator(batch(testing_indices), steps=1)
     predicted_img = np.reshape(predicted, (output_shape))
 
-    segmentation = from_categorical(predicted, category_mapping)
+    segmentation = from_categorical(predicted_img, category_mapping)
     test_img = nib.Nifti1Image(segmentation, np.eye(4))
     nib.save(test_img, 'test_image_segmentation.nii.gz')
 

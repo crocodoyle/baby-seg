@@ -218,7 +218,7 @@ if __name__ == "__main__":
         epochs=1,
         verbose=1,
         callbacks=[model_checkpoint],
-        validation_data=batch(validation_indices),
+        validation_data=batch(validation_indices, class_weights=class_weight),
         validation_steps=1)
 
 

@@ -82,7 +82,7 @@ def segmentation_model():
 
     model = Model(input=[inputs], output=[conv14])
 
-    model.compile(optimizer=Adam(lr=1e-4), loss=dice_coef_loss, metrics=[dice_coef])
+    model.compile(optimizer=Adam(lr=1e-4), loss=dice_coef_loss, metrics=[dice_coef], sample_weights_mode='temporal')
 
     return model
 
@@ -176,7 +176,7 @@ def batch(indices, class_weights=None):
 
             print(np.shape(images[i, ...][np.newaxis, ...]), np.shape(sample_weight.flatten()[np.newaxis, ...]), np.shape(label.flatten()[np.newaxis, ...]))
 
-            yield (images[i, ...][np.newaxis, ...], label.flatten()[np.newaxis, ...], sample_weight.flatten()[np.newaxis, ...])
+            yield (images[i, ...][np.newaxis, ...], label.flatten()[np.newaxis, ..., np.newaxis], sample_weight.flatten()[np.newaxis, ..., np.newaxis])
 
 if __name__ == "__main__":
     f = h5py.File(input_file)

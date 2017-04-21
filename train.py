@@ -129,7 +129,8 @@ def to_categorical(y, class_weights=None):
         # test = nib.Nifti1Image(categorical[...,i], np.eye(4))
         # nib.save(test, 'cat' + str(cat) + '.nii.gz')
         if class_weights:
-            sample_weights[categorical[..., i] == 1] = class_weights[i]
+            weight = class_weights[i]
+            sample_weights[categorical[..., i] == 1] = weight
 
     return categorical
 

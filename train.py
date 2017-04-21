@@ -121,16 +121,15 @@ def to_categorical(y, class_weights=None):
 
     sample_weights = np.zeros(np.shape(y)[:-1], dtype='uint8')
 
-    print('sample weight shape', np.shape(sample_weights))
-    print("class weights in to_categorical:", class_weights)
+    # print('sample weight shape', np.shape(sample_weights))
+    # print("class weights in to_categorical:", class_weights)
     for i, cat in enumerate(categories):
         categorical[..., i] = np.squeeze(np.equal(y, np.ones(np.shape(y))*cat))
         # print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
         # test = nib.Nifti1Image(categorical[...,i], np.eye(4))
         # nib.save(test, 'cat' + str(cat) + '.nii.gz')
         if not class_weights == None:
-            weight = class_weights[i]
-            sample_weights[categorical[..., i] == 1] = weight
+            sample_weights[categorical[..., i] == 1] = class_weights[cat]
 
     return categorical
 
@@ -167,9 +166,8 @@ def batch(indices, class_weights=None):
     while True:
         np.random.shuffle(indices)
         for i in indices:
-            print("class weights in batch", class_weights)
+            # print("class weights in batch", class_weights)
             label, sample_weight = to_categorical(labels[i, ...], class_weights=class_weights)
-
 
             yield (images[i, ...][np.newaxis, ...], label[np.newaxis, ...], sample_weight[np.newaxis, ...])
 
@@ -221,8 +219,6 @@ if __name__ == "__main__":
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices, class_weights=class_weight),
         validation_steps=1)
-
-
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
 

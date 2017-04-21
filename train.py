@@ -176,7 +176,7 @@ def batch(indices, class_weights=None):
 
             print(np.shape(images[i, ...][np.newaxis, ...]), np.shape(sample_weight.flatten()[np.newaxis, ...]), np.shape(label.flatten()[np.newaxis, ...]))
 
-            yield (images[i, ...][np.newaxis, ...], label.flatten()[np.newaxis, ...], sample_weight.flatten()[np.newaxis, ...])
+            yield (images[i, ...][np.newaxis, ...], label.flatten()[None, ...], sample_weight.flatten()[None, ...])
 
 if __name__ == "__main__":
     f = h5py.File(input_file)

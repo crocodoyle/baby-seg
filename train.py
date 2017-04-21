@@ -226,7 +226,7 @@ if __name__ == "__main__":
 
 
     hist = model.fit_generator(
-        batch(training_indices, class_weights=class_weight),
+        batch(training_indices),
         len(training_indices),
         epochs=1,
         verbose=1,

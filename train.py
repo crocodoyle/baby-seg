@@ -94,22 +94,9 @@ def dice_coef(y_true, y_pred):
     :type: TensorFlow/Theano tensor of the same shape as y_true.
     :return: Scalar DICE coefficient.
     """
-
-    print(np.shape(y_true))
-    print(np.shape(y_pred))
-
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
     intersection = K.sum(y_true_f * y_pred_f)
-
-    class_weight = {}
-    class_weight[0] = 10  # don't care about background
-    class_weight[10] = 70  # CSF
-    class_weight[150] = 90  # WM
-    class_weight[250] = 100  # GM
-
-
-
     return (2. * intersection + 1) / (K.sum(y_true_f) + K.sum(y_pred_f) + 1)  # the 1 is to ensure smoothness
 
 def dice_coef_loss(y_true, y_pred):
@@ -187,7 +174,7 @@ def batch(indices, class_weights=None):
             else:
                 label = to_categorical(labels[i, ...])
 
-            yield (images[i, ...][np.newaxis, ...], label[np.newaxis, ...])
+            yield (images[i, ...][np.newaxis, ...], label[np.newaxis, ...].flatten(), sample_weight[np.newaxis, ...].flatten())
 
 
 if __name__ == "__main__":
@@ -221,15 +208,20 @@ if __name__ == "__main__":
     #                     validation_data=(validation_data, validation_labels), callbacks=[model_checkpoint])
 
 
+    class_weight = {}
+    class_weight[0] = 10  # don't care about background
+    class_weight[10] = 70  # CSF
+    class_weight[150] = 90  # WM
+    class_weight[250] = 100  # GM
 
 
     hist = model.fit_generator(
-        batch(training_indices),
+        batch(training_indices, class_weight),
         len(training_indices),
         epochs=1,
         verbose=1,
         callbacks=[model_checkpoint],
-        validation_data=batch(validation_indices),
+        validation_data=batch(validation_indices, class_weight),
         validation_steps=1)
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')

@@ -185,7 +185,7 @@ if __name__ == "__main__":
     images = f['images']
     labels = f['labels']
 
-    output_shape = (144, 256, 192, 4)
+    output_shape = (1, 144, 256, 192, 4)
 
     training_indices = np.linspace(0, 8)
     validation_indices = [9]

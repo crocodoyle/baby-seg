@@ -30,7 +30,6 @@ import argparse
 scratch_dir = '/data1/data/iSeg-2017/'
 input_file = scratch_dir + 'baby-seg.hdf5'
 
-
 def segmentation_model():
     """
     3D U-net model, using very small convolutional kernels
@@ -104,7 +103,7 @@ def dice_coef(y_true, y_pred):
 def dice_coef_loss(y_true, y_pred):
     return -dice_coef(y_true, y_pred)
 
-def to_categorical(y):
+def to_categorical(y, class_weights=None):
     """Converts a class vector (integers) to binary class matrix.
     Keras function did not support sparse category labels
     # Arguments
@@ -120,11 +119,17 @@ def to_categorical(y):
     cat_shape = np.shape(y)[:-1] + (num_classes,)
     categorical = np.zeros(cat_shape, dtype='b')
 
+    sample_weights = np.zeros(np.shape(y)[:-1], dtype='uint8')
+
+    print('sample weight shape', np.shape(sample_weights))
+
     for i, cat in enumerate(categories):
         categorical[..., i] = np.squeeze(np.equal(y, np.ones(np.shape(y))*cat))
         # print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
         # test = nib.Nifti1Image(categorical[...,i], np.eye(4))
         # nib.save(test, 'cat' + str(cat) + '.nii.gz')
+        sample_weights[categorical[..., i] == 1] = class_weights[i]
+
     return categorical
 
 def from_categorical(categorical, category_mapping):
@@ -148,7 +153,7 @@ def from_categorical(categorical, category_mapping):
 
     return segmentation
 
-def batch(indices):
+def batch(indices, class_weights=None):
     """
     :param indices: List of indices into the HDF5 dataset to draw samples from
     :return: (image, label)
@@ -160,7 +165,8 @@ def batch(indices):
     while True:
         np.random.shuffle(indices)
         for i in indices:
-            label = to_categorical(labels[i, ...])
+            label = to_categorical(labels[i, ...], class_weights)
+
 
             yield (images[i, ...][np.newaxis, ...], label[np.newaxis, ...])
 
@@ -196,14 +202,24 @@ if __name__ == "__main__":
     #                     validation_data=(validation_data, validation_labels), callbacks=[model_checkpoint])
 
 
-    # class weight doesn't work in 3D ?
+    # class weight has to be converted to sample weight
     class_weight = {}
-    class_weight[0] = 0  # don't care about background
+    class_weight[0] = 0.1  # don't care about background
     class_weight[10] = 0.7  # CSF
     class_weight[150] = 0.9  # WM
     class_weight[250] = 1.0  # GM
 
-    hist = model.fit_generator(batch(training_indices), len(training_indices), epochs=1, verbose=1, callbacks=[model_checkpoint], validation_data=batch(validation_indices), validation_steps=1)
+
+    hist = model.fit_generator(
+        batch(training_indices),
+        len(training_indices),
+        epochs=1,
+        verbose=1,
+        callbacks=[model_checkpoint],
+        validation_data=batch(validation_indices),
+        validation_steps=1)
+
+
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
 

@@ -86,7 +86,6 @@ def segmentation_model():
 
     return model
 
-
 def dice_coef(y_true, y_pred):
     """ DICE coefficient: 2TP / (2TP + FP + FN). An additional smoothness term is added to ensure no / 0
     :param y_true: True labels.
@@ -95,9 +94,22 @@ def dice_coef(y_true, y_pred):
     :type: TensorFlow/Theano tensor of the same shape as y_true.
     :return: Scalar DICE coefficient.
     """
+
+    print(np.shape(y_true))
+    print(np.shape(y_pred))
+
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
     intersection = K.sum(y_true_f * y_pred_f)
+
+    class_weight = {}
+    class_weight[0] = 10  # don't care about background
+    class_weight[10] = 70  # CSF
+    class_weight[150] = 90  # WM
+    class_weight[250] = 100  # GM
+
+
+
     return (2. * intersection + 1) / (K.sum(y_true_f) + K.sum(y_pred_f) + 1)  # the 1 is to ensure smoothness
 
 def dice_coef_loss(y_true, y_pred):
@@ -211,12 +223,6 @@ if __name__ == "__main__":
     #                     validation_data=(validation_data, validation_labels), callbacks=[model_checkpoint])
 
 
-    # class weight has to be converted to sample weight
-    class_weight = {}
-    class_weight[0] = 10  # don't care about background
-    class_weight[10] = 70  # CSF
-    class_weight[150] = 90  # WM
-    class_weight[250] = 100  # GM
 
 
     hist = model.fit_generator(
@@ -225,7 +231,7 @@ if __name__ == "__main__":
         epochs=1,
         verbose=1,
         callbacks=[model_checkpoint],
-        validation_data=batch(validation_indices, class_weights=class_weight),
+        validation_data=batch(validation_indices),
         validation_steps=1)
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')

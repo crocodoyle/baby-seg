@@ -82,7 +82,7 @@ def segmentation_model():
 
     model = Model(input=[inputs], output=[conv14])
 
-    model.compile(optimizer=Adam(lr=1e-4), loss=dice_coef_loss, metrics=[dice_coef])
+    model.compile(optimizer=Adam(lr=1e-4), loss=dice_coef_loss, metrics=[dice_coef], sample_weight_mode="temporal")
 
     return model
 
@@ -176,7 +176,7 @@ def batch(indices, class_weights=None):
                 label = to_categorical(labels[i, ...])
 
             print("label shape:", np.shape(label[np.newaxis, ...]))
-            print("sample weights shape: ", sample_weight[np.newaxis, ...])
+            print("sample weights shape: ", np.shape(sample_weight[np.newaxis, ...]))
             yield (images[i, ...][np.newaxis, ...], label[np.newaxis, ...], sample_weight)
 
 

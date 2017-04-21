@@ -166,7 +166,7 @@ def batch(indices, class_weights=None):
     while True:
         np.random.shuffle(indices)
         for i in indices:
-            label = to_categorical(labels[i, ...], class_weights)
+            label = to_categorical(labels[i, ...], class_weights=class_weights)
 
 
             yield (images[i, ...][np.newaxis, ...], label[np.newaxis, ...])

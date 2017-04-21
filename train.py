@@ -118,7 +118,7 @@ def to_categorical(y, class_weights=None):
     cat_shape = np.shape(y)[:-1] + (num_classes,)
     categorical = np.zeros(cat_shape, dtype='b')
 
-    sample_weights = np.zeros(np.shape(y)[:-1], dtype='uint8')
+    sample_weights = np.zeros(np.shape(categorical), dtype='uint8')
 
     # print('sample weight shape', np.shape(sample_weights))
     # print("class weights in to_categorical:", class_weights)
@@ -128,7 +128,7 @@ def to_categorical(y, class_weights=None):
         # test = nib.Nifti1Image(categorical[...,i], np.eye(4))
         # nib.save(test, 'cat' + str(cat) + '.nii.gz')
         if not class_weights == None:
-            sample_weights[categorical[..., i] == 1] = class_weights[cat]
+            sample_weights[..., i] = class_weights[cat]
 
     if not class_weights == None:
         return categorical, sample_weights

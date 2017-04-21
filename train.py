@@ -131,7 +131,10 @@ def to_categorical(y, class_weights=None):
         if not class_weights == None:
             sample_weights[categorical[..., i] == 1] = class_weights[cat]
 
-    return categorical
+    if not class_weights == None:
+        return categorical, sample_weights
+    else:
+        return categorical
 
 def from_categorical(categorical, category_mapping):
     """Combines several binary masks for tissue classes into a single segmentation image

@@ -168,7 +168,9 @@ def from_categorical(categorical, category_mapping):
         img = nib.Nifti1Image(categorical[..., i], np.eye(4))
         nib.save(img, 'cat' + str(cat) + '_img.nii.gz')
 
-        segmentation[np.equal(categorical[:, :, :, i], np.ones(img_shape)*i)] = cat
+        indices = np.equal(categorical[:, :, :, i], np.ones(img_shape)*i)
+        print('indices:', indices)
+        segmentation[indices] = cat
 
     bins, vals = np.histogram(segmentation)
     print('histogram of img', vals)

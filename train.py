@@ -153,14 +153,16 @@ def from_categorical(categorical, category_mapping):
 
     segmentation = np.zeros(img_shape, dtype='uint8')
 
-    for i, cat in enumerate(category_mapping):
-        print('category', cat, 'has', np.sum(categorical[:, :, :, i]), 'voxels')
-        img = nib.Nifti1Image(categorical[..., i], np.eye(4))
-        nib.save(img, 'cat' + str(cat) + '_img.nii.gz')
+    # for i, cat in enumerate(category_mapping):
+    #     print('category', cat, 'has', np.sum(categorical[:, :, :, i]), 'voxels')
+    #
+    #     #binary masks for each category
+    #     img = nib.Nifti1Image(categorical[..., i], np.eye(4))
+    #     nib.save(img, 'cat' + str(cat) + '_img.nii.gz')
+    #
+    #     segmentation[cat_img == 1] = cat
 
-        segmentation[cat_img == 1] = cat
-
-    return segmentation
+    return cat_img
 
 def batch(indices, class_weights=None):
     """

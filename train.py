@@ -9,6 +9,14 @@ from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 
 from keras import backend as K
 
+import tensorflow as tf
+
+# configures TensorFlow to not try to grab all the GPU memory
+config = tf.ConfigProto(allow_soft_placement=True)
+config.gpu_options.allow_growth = True
+session = tf.Session(config=config)
+K.set_session(session)
+
 import numpy as np
 import h5py
 

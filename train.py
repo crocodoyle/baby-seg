@@ -170,7 +170,7 @@ def from_categorical(categorical, category_mapping):
 
         indices = np.equal(categorical[:, :, :, i], np.ones(img_shape)*i)
         print('indices:', np.shape(indices))
-        print('sum', np.sum(indices))
+        print('sum', np.sum(categorical[:, :, :, i][indices]))
         segmentation[indices] = cat
 
     bins, vals = np.histogram(segmentation)

@@ -155,7 +155,7 @@ def from_categorical(categorical, category_mapping):
     :return:
     """
     print('categorical shape:', np.shape(categorical))
-    img_shape = np.shape(categorical)[1:-1]
+    img_shape = np.shape(categorical)[:-1]
     cat_img = np.argmax(np.squeeze(categorical), axis=3)
     print('categories img:', np.shape(cat_img))
 

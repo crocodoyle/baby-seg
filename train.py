@@ -41,41 +41,45 @@ def segmentation_model():
     pool_size = (2, 2, 2)
 
     inputs = Input(shape=(144, 192, 256, 2))
-    nconv = 16
-    conv1 = Conv3D(nconv, conv_size, activation='relu', padding='same')(inputs)
-    conv1 = Conv3D(nconv, conv_size, activation='relu', padding='same')(conv1)
+    nconv = 64
+
+    conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(inputs)
+    conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(conv1)
     pool1 = MaxPooling3D(pool_size=pool_size)(conv1)
 
-    conv2 = Conv3D(nconv, conv_size, activation='relu', padding='same')(pool1)
-    conv2 = Conv3D(nconv, conv_size, activation='relu', padding='same')(conv2)
+    conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(pool1)
+    conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(conv2)
     pool2 = MaxPooling3D(pool_size=pool_size)(conv2)
 
-    conv3 = Conv3D(nconv, conv_size, activation='relu', padding='same')(pool2)
-    conv3 = Conv3D(nconv, conv_size, activation='relu', padding='same')(conv3)
+    conv3 = Conv3D(32, conv_size, activation='relu', padding='same')(pool2)
+    conv3 = Conv3D(32, conv_size, activation='relu', padding='same')(conv3)
     pool3 = MaxPooling3D(pool_size=pool_size)(conv3)
 
-    conv4 = Conv3D(nconv, conv_size, activation='relu', padding='same')(pool3)
-    conv4 = Conv3D(nconv, conv_size, activation='relu', padding='same')(conv4)
+    conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(pool3)
+    drop4 = Dropout(0.5)(conv4)
+    conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(conv4)
     pool4 = MaxPooling3D(pool_size=pool_size)(conv4)
 
-    conv5 = Conv3D(nconv, conv_size, activation='relu', padding='same')(pool4)
-    conv5 = Conv3D(nconv, conv_size, activation='relu', padding='same')(conv5)
+    conv5 = Conv3D(128, conv_size, activation='relu', padding='same')(pool4)
+    drop5 = Dropout(0.5)(conv5)
+    conv5 = Conv3D(128, conv_size, activation='relu', padding='same')(conv5)
+    drop6 = Dropout(0.5)(conv5)
 
-    up8 = merge([UpSampling3D(size=pool_size)(conv5), conv4], mode='concat', concat_axis=concat_axis)
-    conv8 = Conv3D(nconv, conv_size, activation='relu', padding='same')(up8)
-    conv8 = Conv3D(nconv, conv_size, activation='relu', padding='same')(conv8)
+    up8 = merge([UpSampling3D(size=pool_size)(drop6), conv4], mode='concat', concat_axis=concat_axis)
+    conv8 = Conv3D(128, conv_size, activation='relu', padding='same')(up8)
+    conv8 = Conv3D(128, conv_size, activation='relu', padding='same')(conv8)
 
     up9 = merge([UpSampling3D(size=pool_size)(conv8), conv3], mode='concat', concat_axis=concat_axis)
-    conv9 = Conv3D(nconv, conv_size, activation='relu', padding='same')(up9)
-    conv9 = Conv3D(nconv, conv_size, activation='relu', padding='same')(conv9)
+    conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(up9)
+    conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(conv9)
 
     up10 = merge([UpSampling3D(size=pool_size)(conv9), conv2], mode='concat', concat_axis=concat_axis)
-    conv10 = Conv3D(nconv, conv_size, activation='relu', padding='same')(up10)
-    conv10 = Conv3D(nconv, conv_size, activation='relu', padding='same')(conv10)
+    conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(up10)
+    conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(conv10)
 
     up11 = merge([UpSampling3D(size=pool_size)(conv10), conv1], mode='concat', concat_axis=concat_axis)
-    conv11 = Conv3D(nconv, conv_size, activation='relu', padding='same')(up11)
-    conv11 = Conv3D(nconv, conv_size, activation='relu', padding='same')(conv11)
+    conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(up11)
+    conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(conv11)
 
     # need as many output channel as tissue classes
     conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='sigmoid')(conv11)
@@ -83,7 +87,7 @@ def segmentation_model():
 
     model = Model(input=[inputs], output=[flat])
 
-    model.compile(optimizer=Adam(lr=1e-4), loss=dice_coef_loss, metrics=[dice_coef], sample_weight_mode='temporal')
+    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef], sample_weight_mode='temporal')
 
     return model
 
@@ -119,7 +123,7 @@ def to_categorical(y, class_weights=None):
     cat_shape = np.shape(y)[:-1] + (num_classes,)
     categorical = np.zeros(cat_shape, dtype='b')
 
-    sample_weights = np.zeros(np.shape(categorical), dtype='uint8')
+    sample_weights = np.zeros(np.shape(categorical), dtype='float')
 
     # print('sample weight shape', np.shape(sample_weights))
     # print("class weights in to_categorical:", class_weights)
@@ -214,16 +218,16 @@ if __name__ == "__main__":
 
 
     class_weight = {}
-    class_weight[0] = 10  # don't care about background
-    class_weight[10] = 70  # CSF
-    class_weight[150] = 90  # WM
-    class_weight[250] = 100  # GM
+    class_weight[0] = 0  # don't care about background
+    class_weight[10] = 0.7  # CSF
+    class_weight[150] = 0.9  # WM
+    class_weight[250] = 1.0  # GM
 
 
     hist = model.fit_generator(
         batch(training_indices, class_weight),
         len(training_indices),
-        epochs=1,
+        epochs=400,
         verbose=1,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices, class_weight),

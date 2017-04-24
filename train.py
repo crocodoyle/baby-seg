@@ -62,7 +62,7 @@ def segmentation_model():
 
     conv5 = Conv3D(128, conv_size, activation='relu', padding='same')(pool4)
     drop5 = Dropout(0.5)(conv5)
-    conv5 = Conv3D(128, conv_size, activation='relu', padding='same')(conv5)
+    conv5 = Conv3D(128, conv_size, activation='relu', padding='same')(drop5)
     drop6 = Dropout(0.5)(conv5)
 
     up8 = merge([UpSampling3D(size=pool_size)(drop6), conv4], mode='concat', concat_axis=concat_axis)
@@ -149,14 +149,17 @@ def from_categorical(categorical, category_mapping):
     img_shape = np.shape(categorical)[1:-1]
     cat_img = np.argmax(np.squeeze(categorical), axis=3)
 
-    # img = nib.Nifti1Image(cat_img, np.eye(4))
-    # nib.save(img, 'cat_img.nii.gz')
+
 
     segmentation = np.zeros(img_shape, dtype='uint8')
 
     for i, cat in enumerate(category_mapping):
-        # print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
-        # print('category', cat, 'has', len(segmentation[cat_img == cat]), 'voxels')
+        print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
+        print('category', cat, 'has', len(segmentation[cat_img == 1]), 'voxels')
+
+        img = nib.Nifti1Image(categorical[..., i], np.eye(4))
+        nib.save(img, 'cat' + str(cat) + '_img.nii.gz')
+
         segmentation[cat_img == 1] = cat
 
     return segmentation
@@ -227,7 +230,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices, class_weight),
         len(training_indices),
-        epochs=400,
+        epochs=1,
         verbose=1,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices, class_weight),

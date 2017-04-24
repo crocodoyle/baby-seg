@@ -168,7 +168,7 @@ def from_categorical(categorical, category_mapping):
         img = nib.Nifti1Image(categorical[..., i], np.eye(4))
         nib.save(img, 'cat' + str(cat) + '_img.nii.gz')
 
-        indices = np.equal(categorical[:, :, :, i], np.ones(img_shape)*i)
+        indices = np.equal(categorical[:, :, :, i], np.ones(img_shape))
         print('indices:', np.shape(indices))
         print('sum', np.sum(categorical[:, :, :, i][indices]))
         segmentation[indices] = cat

@@ -169,7 +169,8 @@ def from_categorical(categorical, category_mapping):
         nib.save(img, 'cat' + str(cat) + '_img.nii.gz')
 
         indices = np.equal(categorical[:, :, :, i], np.ones(img_shape)*i)
-        print('indices:', indices)
+        print('indices:', np.shape(indices))
+        print('sum', np.sum(indices))
         segmentation[indices] = cat
 
     bins, vals = np.histogram(segmentation)

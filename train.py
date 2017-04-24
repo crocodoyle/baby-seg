@@ -154,9 +154,7 @@ def from_categorical(categorical, category_mapping):
     segmentation = np.zeros(img_shape, dtype='uint8')
 
     for i, cat in enumerate(category_mapping):
-        print('category', cat, 'has', np.sum(categorical[0, :, :, :, i]), 'voxels')
-
-
+        print('category', cat, 'has', np.sum(categorical[:, :, :, i]), 'voxels')
         img = nib.Nifti1Image(categorical[..., i], np.eye(4))
         nib.save(img, 'cat' + str(cat) + '_img.nii.gz')
 

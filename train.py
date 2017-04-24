@@ -154,8 +154,8 @@ def from_categorical(categorical, category_mapping):
     segmentation = np.zeros(img_shape, dtype='uint8')
 
     for i, cat in enumerate(category_mapping):
-        print('category', cat, 'has', np.sum(categorical[..., i]) / cat, 'voxels')
-        print('category', cat, 'has', len(segmentation[cat_img == 1]), 'voxels')
+        print('category', cat, 'has', np.sum(categorical[0, :, :, :, i]), 'voxels')
+
 
         img = nib.Nifti1Image(categorical[..., i], np.eye(4))
         nib.save(img, 'cat' + str(cat) + '_img.nii.gz')
@@ -192,7 +192,7 @@ if __name__ == "__main__":
     images = f['images']
     labels = f['labels']
 
-    output_shape = (1, 144, 256, 192, 4)
+    output_shape = (144, 256, 192, 4)
 
     training_indices = np.linspace(0, 8)
     validation_indices = [9]
@@ -242,9 +242,12 @@ if __name__ == "__main__":
 
     #test image
     predicted = model.predict_generator(batch(testing_indices), steps=1)
+    print('predicted voxels vector:', np.shape(predicted))
     predicted_img = np.reshape(predicted, (output_shape))
+    print('reshaped into categorical images:', np.shape(predicted_img))
 
     segmentation = from_categorical(predicted_img, category_mapping)
+    print('segmentation shape:', np.shape(segmentation))
     test_img = nib.Nifti1Image(segmentation, np.eye(4))
     nib.save(test_img, 'test_image_segmentation.nii.gz')
 

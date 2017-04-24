@@ -173,7 +173,7 @@ def from_categorical(categorical, category_mapping):
         print('sum', np.sum(categorical[:, :, :, i][indices]))
         segmentation[indices] = cat
 
-    bins, vals = np.histogram(segmentation)
+    vals, bins = np.histogram(segmentation)
     print('histogram of img', vals)
 
     return segmentation
@@ -244,7 +244,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices, class_weight),
         len(training_indices),
-        epochs=1,
+        epochs=5,
         verbose=1,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices, class_weight),

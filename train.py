@@ -173,8 +173,8 @@ def from_categorical(categorical, category_mapping):
         print('sum', np.sum(categorical[:, :, :, i][indices]))
         segmentation[indices] = cat
 
-    vals, bins = np.histogram(segmentation)
-    print('histogram of img', vals)
+    # vals, bins = np.histogram(segmentation)
+    # print('histogram of img', vals)
 
     return segmentation
 
@@ -212,27 +212,11 @@ if __name__ == "__main__":
     validation_indices = [9]
     testing_indices = [10]
 
-    # train_data = np.reshape(images[training_indices], (8, 144, 192, 256, 2))
-    # train_labels = np.reshape(labels[training_indices], (8, 144, 192, 256, 1))
-    # test_data = np.reshape(images[testing_indices], (1, 144, 192, 256, 2))
-    # test_labels = np.reshape(labels[testing_indices], (1, 144, 192, 256, 1))
-    # validation_data = np.reshape(images[validation_indices], (1, 144, 192, 256, 2))
-    # validation_labels = np.reshape(labels[validation_indices], (1, 144, 192, 256, 1))
-
     model = segmentation_model()
     model.summary()
 
     model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_dice_coef", verbose=0,
                                        save_best_only=True, save_weights_only=False, mode='auto')
-
-    # for epoch in range(10):
-    #     print("training epoch:", epoch)
-    #     for index in range(len(training_indices)):
-    #         loss = model.train_on_batch(np.reshape(images[index], (1, 144, 192, 256, 2)), np.reshape(labels[index], (1, 144, 192, 256, 1)))
-
-    # history = model.fit(train_data, train_labels, nb_epoch=10, batch_size=1,
-    #                     validation_data=(validation_data, validation_labels), callbacks=[model_checkpoint])
-
 
     class_weight = {}
     class_weight[0] = 0  # don't care about background
@@ -257,7 +241,13 @@ if __name__ == "__main__":
     #test image
     predicted = model.predict_generator(batch(testing_indices), steps=1)
     print('predicted voxels vector:', np.shape(predicted))
-    predicted_img = np.reshape(predicted, (output_shape))
+    #
+    # predicted_img = np.zeros(output_shape[:-1])
+    # for i, cat in enumerate(category_mapping):
+    #     predicted_img[..., i]
+    #
+
+    predicted_img = np.reshape(predicted, (output_shape), order='F')
     print('reshaped into categorical images:', np.shape(predicted_img))
 
     segmentation = from_categorical(predicted_img, category_mapping)
@@ -267,7 +257,7 @@ if __name__ == "__main__":
 
     #validation image
     predicted = model.predict_generator(batch(validation_indices), steps=1)
-    predicted_img = np.reshape(predicted, (output_shape))
+    predicted_img = np.reshape(predicted, (output_shape), order='F')
 
     segmentation = from_categorical(predicted_img, category_mapping)
     val_image = nib.Nifti1Image(segmentation, np.eye(4))

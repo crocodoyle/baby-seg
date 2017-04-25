@@ -91,7 +91,8 @@ def segmentation_model():
 
     # need as many output channel as tissue classes
     conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='sigmoid')(conv11)
-    flatter = Reshape((144*192*256*4, 1))(conv14)
+    flat = Reshape((144*192*256, 4))(conv14)
+    flatter = Reshape((144*192*256*4, 1))(flat)
     # flat = Reshape((28311552, 1))(conv14)
     # flat = Flatten()(conv14)
 
@@ -222,7 +223,6 @@ if __name__ == "__main__":
     training_indices = np.linspace(0, 8)
     validation_indices = [9]
     testing_indices = [10]
-
 
     model = segmentation_model()
     model.summary()

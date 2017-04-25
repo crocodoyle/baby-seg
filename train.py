@@ -264,7 +264,7 @@ if __name__ == "__main__":
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
 
     #test image
-    predicted = model.predict_generator(batch(testing_indices), steps=1)
+    predicted = model.predict_generator(batch(testing_indices), steps=1, verbose=1)
     print('predicted voxels vector:', np.shape(predicted))
     #
     # predicted_img = np.zeros(output_shape[:-1])
@@ -281,7 +281,7 @@ if __name__ == "__main__":
     nib.save(test_img, 'test_image_segmentation.nii.gz')
 
     #validation image
-    predicted = model.predict_generator(batch(validation_indices), steps=1)
+    predicted = model.predict_generator(batch(validation_indices), steps=1, verbose=1)
     print('predicted shape:', np.shape(predicted))
     predicted_img = np.reshape(predicted, (output_shape))
 

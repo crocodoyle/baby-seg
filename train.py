@@ -135,13 +135,13 @@ def to_categorical(y, class_weights=None):
 
     sample_weights = np.zeros(np.shape(categorical), dtype='float')
 
-    # print('sample weight shape', np.shape(sample_weights))
-    # print("class weights in to_categorical:", class_weights)
+    print('sample weight shape', np.shape(sample_weights))
+    print("class weights in to_categorical:", class_weights)
     for i, cat in enumerate(categories):
         categorical[..., i] = np.squeeze(np.equal(y, np.ones(np.shape(y))*cat))
-        # print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
-        # test = nib.Nifti1Image(categorical[...,i], np.eye(4))
-        # nib.save(test, 'cat' + str(cat) + '.nii.gz')
+        print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
+        test = nib.Nifti1Image(categorical[...,i], np.eye(4))
+        nib.save(test, 'cat' + str(cat) + '.nii.gz')
         if not class_weights == None:
             sample_weights[..., i] = class_weights[cat]
 
@@ -167,12 +167,12 @@ def from_categorical(categorical, category_mapping):
         print('category', cat, 'has', np.sum(categorical[:, :, :, i]), 'voxels')
 
         #binary masks for each category
-        img = nib.Nifti1Image(categorical[..., i], np.eye(4))
-        nib.save(img, 'cat' + str(cat) + '_img.nii.gz')
+        # img = nib.Nifti1Image(categorical[..., i], np.eye(4))
+        # nib.save(img, 'cat' + str(cat) + '_img.nii.gz')
 
         indices = np.equal(categorical[:, :, :, i], np.ones(img_shape))
-        print('indices:', np.shape(indices))
-        print('sum', np.sum(categorical[:, :, :, i][indices]))
+        # print('indices:', np.shape(indices))
+        # print('sum', np.sum(categorical[:, :, :, i][indices]))
         segmentation[indices] = cat
 
     # vals, bins = np.histogram(segmentation)
@@ -266,6 +266,7 @@ if __name__ == "__main__":
 
     #validation image
     predicted = model.predict_generator(batch(validation_indices), steps=1)
+    print('predicted shape:', np.shape(predicted))
     predicted_img = np.reshape(predicted, (output_shape))
 
     segmentation = from_categorical(predicted_img, category_mapping)

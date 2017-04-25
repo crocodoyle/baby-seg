@@ -253,7 +253,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices, class_weight),
         len(training_indices),
-        epochs=3,
+        epochs=300,
         verbose=1,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices),
@@ -272,11 +272,11 @@ if __name__ == "__main__":
 
     predicted_img = np.reshape(predicted, (output_shape))
 
-    all_voxels = np.sum(predicted_img,axis=3)
-    equal = np.equal(np.ones((144, 192, 256)), all_voxels)
-
-    for vox in all_voxels.flatten():
-        print(vox)
+    # all_voxels = np.sum(predicted_img,axis=3)
+    # equal = np.equal(np.ones((144, 192, 256)), all_voxels)
+    #
+    # for vox in all_voxels.flatten():
+    #     print(vox)
 
     print('reshaped into categorical images:', np.shape(predicted_img))
 

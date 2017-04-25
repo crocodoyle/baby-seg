@@ -49,7 +49,6 @@ def segmentation_model():
     pool_size = (2, 2, 2)
 
     inputs = Input(shape=(144, 192, 256, 2))
-    nconv = 64
 
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(inputs)
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(conv1)
@@ -90,9 +89,9 @@ def segmentation_model():
     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(conv11)
 
     # need as many output channel as tissue classes
-    conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax')(conv11)
-    flat = Reshape((144*192*256, 4))(conv14)
-    flatter = Reshape((144*192*256*4, 1))(flat)
+    conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='sigmoid', padding='valid')(conv11)
+    # flat = Reshape((144*192*256, 4))(conv14)
+    flatter = Reshape((144*192*256*4, 1))(conv14)
     # flat = Reshape((28311552, 1))(conv14)
     # flat = Flatten()(conv14)
 
@@ -113,7 +112,7 @@ def dice_coef(y_true, y_pred):
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
     intersection = K.sum(y_true_f * y_pred_f)
-    return (2. * intersection + 1) / (K.sum(y_true_f) + K.sum(y_pred_f) + 1)  # the 1 is to ensure smoothness
+    return (2. * intersection) / (K.sum(y_true_f) + K.sum(y_pred_f))  # the 1 is to ensure smoothness
 
 def dice_coef_loss(y_true, y_pred):
     return -dice_coef(y_true, y_pred)
@@ -209,12 +208,12 @@ def batch(indices, class_weights=None):
                 yield (images[i, ...][np.newaxis, ...], flat_label, flat_weights)
             else:
                 label = to_categorical(labels[i, ...])
-                print('label shape:', np.shape(label))
+                # print('label shape:', np.shape(label))
                 if np.shape(label)[-1] == 1:
                     yield images[i, ...][np.newaxis, ...]
                 else:
                     flat_label = np.reshape(label, (1, 144*192*256*4, 1))
-                    print('flat label shape', np.shape(flat_label))
+                    # print('flat label shape', np.shape(flat_label))
                     yield (images[i, ...][np.newaxis, ...], flat_label)
 
 if __name__ == "__main__":
@@ -254,7 +253,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices, class_weight),
         len(training_indices),
-        epochs=2,
+        epochs=3,
         verbose=1,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices),

@@ -127,16 +127,17 @@ def to_categorical(y, class_weights=None):
     # Returns
         A binary matrix representation of the input.
     """
-    print('y shape', np.shape(y))
+    # print('y shape', np.shape(y))
     categories = set(np.array(y, dtype="uint8").flatten())
     num_classes = len(categories)
+    print(categories)
 
     cat_shape = np.shape(y)[:-1] + (num_classes,)
     categorical = np.zeros(cat_shape, dtype='b')
 
     sample_weights = np.zeros(np.shape(categorical), dtype='float')
 
-    print('sample weight shape', np.shape(sample_weights))
+    # print('sample weight shape', np.shape(sample_weights))
     # print("class weights in to_categorical:", class_weights)
     for i, cat in enumerate(categories):
         categorical[..., i] = np.equal(y[..., 0], np.ones(np.shape(y[..., 0]))*cat)

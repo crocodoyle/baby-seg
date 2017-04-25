@@ -205,10 +205,12 @@ def batch(indices, class_weights=None):
             else:
                 label = to_categorical(labels[i, ...])
                 print('label shape:', np.shape(label))
-                flat_label = np.reshape(label, (1, 144*192*256*4, 1))
-                print('flat label shape', np.shape(flat_label))
-
-                yield (images[i, ...][np.newaxis, ...], flat_label)
+                if np.shape(label)[-1] == 1:
+                    yield images[i, ...][np.newaxis, ...]
+                else:
+                    flat_label = np.reshape(label, (1, 144*192*256*4, 1))
+                    print('flat label shape', np.shape(flat_label))
+                    yield (images[i, ...][np.newaxis, ...], flat_label)
 
 if __name__ == "__main__":
     f = h5py.File(input_file)

@@ -221,7 +221,7 @@ if __name__ == "__main__":
     images = f['images']
     labels = f['labels']
 
-    output_shape = (144, 256, 192, 4)
+    output_shape = (144, 192, 256, 4)
 
     training_indices = np.linspace(0, 8)
     validation_indices = [9]
@@ -273,7 +273,7 @@ if __name__ == "__main__":
     predicted_img = np.reshape(predicted, (output_shape))
 
     all_voxels = np.sum(predicted_img,axis=3)
-    equal = np.equal(np.ones((192, 144, 256)), all_voxels)
+    equal = np.equal(np.ones((144, 192, 256)), all_voxels)
 
     for vox in all_voxels.flatten():
         print(vox)

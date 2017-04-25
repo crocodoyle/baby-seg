@@ -98,7 +98,7 @@ def segmentation_model():
 
     model = Model(input=[inputs], output=[flatter])
 
-    model.compile(optimizer=Adam(lr=1e-5), loss='sparse_categorical_crossentropy', metrics=[dice_coef], sample_weight_mode='temporal')
+    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef], sample_weight_mode='temporal')
 
     return model
 
@@ -146,6 +146,12 @@ def to_categorical(y, class_weights=None):
         # nib.save(test, 'cat' + str(cat) + '.nii.gz')
         if not class_weights == None:
             sample_weights[..., i] = class_weights[cat]
+
+    vals, bins = np.histogram(categorical)
+    print('histogram values of categorical labels: ', vals)
+    vals, bins = np.histogram(sample_weights)
+    print('histogram values of sample weights', vals)
+
 
     if not class_weights == None:
         return categorical, sample_weights

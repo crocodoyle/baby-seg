@@ -91,7 +91,7 @@ def segmentation_model():
 
     # need as many output channel as tissue classes
     conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='sigmoid')(conv11)
-    flatter = Reshape((4, 144*192*256))(conv14)
+    flatter = Reshape((144*192*256, 1))(conv14)
     # flat = Reshape((28311552, 1))(conv14)
     # flat = Flatten()(conv14)
 
@@ -221,7 +221,7 @@ if __name__ == "__main__":
     category_mapping = [0, 10, 150, 250]
 
     class_weight = {}
-    class_weight[0] = 0  # don't care about background
+    class_weight[0] = 0.01  # don't care about background
     class_weight[10] = 0.7  # CSF
     class_weight[150] = 0.9  # WM
     class_weight[250] = 1.0  # GM

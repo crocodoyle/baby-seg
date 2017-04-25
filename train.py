@@ -91,10 +91,11 @@ def segmentation_model():
 
     # need as many output channel as tissue classes
     conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='sigmoid')(conv11)
+    flatter = Reshape((144*192*256, 4))(conv14)
     # flat = Reshape((28311552, 1))(conv14)
-    flat = Flatten()(conv14)
+    # flat = Flatten()(conv14)
 
-    model = Model(input=[inputs], output=[flat])
+    model = Model(input=[inputs], output=[flatter])
 
     model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef], sample_weight_mode='temporal')
 

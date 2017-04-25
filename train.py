@@ -90,7 +90,7 @@ def segmentation_model():
     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(conv11)
 
     # need as many output channel as tissue classes
-    conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='sigmoid')(conv11)
+    conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax')(conv11)
     flat = Reshape((144*192*256, 4))(conv14)
     flatter = Reshape((144*192*256*4, 1))(flat)
     # flat = Reshape((28311552, 1))(conv14)
@@ -98,7 +98,7 @@ def segmentation_model():
 
     model = Model(input=[inputs], output=[flatter])
 
-    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef], sample_weight_mode='temporal')
+    model.compile(optimizer=Adam(lr=1e-5), loss='categorical_crossentropy', metrics=[dice_coef], sample_weight_mode='temporal')
 
     return model
 
@@ -131,7 +131,6 @@ def to_categorical(y, class_weights=None):
     # print('y shape', np.shape(y))
     categories = set(np.array(y, dtype="uint8").flatten())
     num_classes = len(categories)
-    print(categories)
 
     cat_shape = np.shape(y)[:-1] + (num_classes,)
     categorical = np.zeros(cat_shape, dtype='b')
@@ -159,10 +158,10 @@ def from_categorical(categorical, category_mapping):
     :param category_mapping:
     :return:
     """
-    print('categorical shape:', np.shape(categorical))
+    # print('categorical shape:', np.shape(categorical))
     img_shape = np.shape(categorical)[:-1]
     cat_img = np.argmax(np.squeeze(categorical), axis=3)
-    print('categories img:', np.shape(cat_img))
+    # print('categories img:', np.shape(cat_img))
 
     segmentation = np.zeros(img_shape, dtype='uint8')
 

@@ -147,11 +147,10 @@ def to_categorical(y, class_weights=None):
         if not class_weights == None:
             sample_weights[..., i] = class_weights[cat]
 
-    vals, bins = np.histogram(categorical)
-    print('histogram values of categorical labels: ', vals)
-    vals, bins = np.histogram(sample_weights)
-    print('histogram values of sample weights', vals)
-
+    # vals, bins = np.histogram(categorical)
+    # print('histogram values of categorical labels: ', vals)
+    # vals, bins = np.histogram(sample_weights)
+    # print('histogram values of sample weights', vals)
 
     if not class_weights == None:
         return categorical, sample_weights

@@ -135,12 +135,12 @@ def to_categorical(y, class_weights=None):
 
     sample_weights = np.zeros(np.shape(categorical), dtype='float')
 
-    print('sample weight shape', np.shape(sample_weights))
-    print("class weights in to_categorical:", class_weights)
+    # print('sample weight shape', np.shape(sample_weights))
+    # print("class weights in to_categorical:", class_weights)
     for i, cat in enumerate(categories):
         categorical[..., i] = np.squeeze(np.equal(y, np.ones(np.shape(y))*cat))
-        print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
-        test = nib.Nifti1Image(categorical[...,i], np.eye(4))
+        # print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
+        test = nib.Nifti1Image(categorical[..., i], np.eye(4))
         nib.save(test, 'cat' + str(cat) + '.nii.gz')
         if not class_weights == None:
             sample_weights[..., i] = class_weights[cat]
@@ -195,11 +195,15 @@ def batch(indices, class_weights=None):
             # print("class weights in batch", class_weights)
             if not class_weights == None:
                 label, sample_weight = to_categorical(labels[i, ...], class_weights=class_weights)
-                yield (images[i, ...][np.newaxis, ...], label.flatten()[np.newaxis, ..., np.newaxis],
-                       sample_weight.flatten()[np.newaxis, ...])
+
+                flat_label = np.reshape(label, (1, 144*192*256, 4))
+                flat_weights = np.reshape(sample_weight, (1, 144*192*256*4))
+
+                yield (images[i, ...][np.newaxis, ...], flat_label, flat_weights)
             else:
                 label = to_categorical(labels[i, ...])
-                yield (images[i, ...][np.newaxis, ...], label.flatten()[np.newaxis, ..., np.newaxis])
+                flat_label = np.reshape(label, (1, 144*192*256, 4))
+                yield (images[i, ...][np.newaxis, ...], flat_label)
 
 if __name__ == "__main__":
     f = h5py.File(input_file)

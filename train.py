@@ -125,7 +125,7 @@ def to_categorical(y, class_weights=None):
     # Returns
         A binary matrix representation of the input.
     """
-    categories = set(np.array(y, dtype="int").ravel())
+    categories = set(np.array(y, dtype="int").flatten())
     num_classes = len(categories)
 
     cat_shape = np.shape(y)[:-1] + (num_classes,)

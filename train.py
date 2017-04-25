@@ -196,13 +196,13 @@ def batch(indices, class_weights=None):
             if not class_weights == None:
                 label, sample_weight = to_categorical(labels[i, ...], class_weights=class_weights)
 
-                flat_label = np.reshape(label, (1, 144*192*256*4))
+                flat_label = np.reshape(label, (1, 144*192*256*4, 1))
                 flat_weights = np.reshape(sample_weight, (1, 144*192*256*4))
 
                 yield (images[i, ...][np.newaxis, ...], flat_label, flat_weights)
             else:
                 label = to_categorical(labels[i, ...])
-                flat_label = np.reshape(label, (1, 144*192*256*4))
+                flat_label = np.reshape(label, (1, 144*192*256*4, 1))
                 yield (images[i, ...][np.newaxis, ...], flat_label)
 
 if __name__ == "__main__":

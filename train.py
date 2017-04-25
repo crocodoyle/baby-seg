@@ -140,8 +140,8 @@ def to_categorical(y, class_weights=None):
     for i, cat in enumerate(categories):
         categorical[..., i] = np.squeeze(np.equal(y, np.ones(np.shape(y))*cat))
         # print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
-        test = nib.Nifti1Image(categorical[..., i], np.eye(4))
-        nib.save(test, 'cat' + str(cat) + '.nii.gz')
+        # test = nib.Nifti1Image(categorical[..., i], np.eye(4))
+        # nib.save(test, 'cat' + str(cat) + '.nii.gz')
         if not class_weights == None:
             sample_weights[..., i] = class_weights[cat]
 

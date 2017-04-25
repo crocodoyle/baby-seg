@@ -204,7 +204,10 @@ def batch(indices, class_weights=None):
                 yield (images[i, ...][np.newaxis, ...], flat_label, flat_weights)
             else:
                 label = to_categorical(labels[i, ...])
+                print('label shape:', np.shape(label))
                 flat_label = np.reshape(label, (1, 144*192*256*4, 1))
+                print('flat label shape', np.shape(flat_label))
+
                 yield (images[i, ...][np.newaxis, ...], flat_label)
 
 if __name__ == "__main__":
@@ -248,7 +251,7 @@ if __name__ == "__main__":
         epochs=2,
         verbose=1,
         callbacks=[model_checkpoint],
-        validation_data=batch(validation_indices, class_weight),
+        validation_data=batch(validation_indices),
         validation_steps=1)
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')

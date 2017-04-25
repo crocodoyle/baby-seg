@@ -65,7 +65,7 @@ def segmentation_model():
 
     conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(pool3)
     drop4 = Dropout(0.5)(conv4)
-    conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(conv4)
+    conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(drop4)
     pool4 = MaxPooling3D(pool_size=pool_size)(conv4)
 
     conv5 = Conv3D(128, conv_size, activation='relu', padding='same')(pool4)
@@ -91,9 +91,9 @@ def segmentation_model():
 
     # need as many output channel as tissue classes
     conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='sigmoid')(conv11)
-    flat = Reshape((28311552, 1))(conv14)
+    # flat = Reshape((28311552, 1))(conv14)
 
-    model = Model(input=[inputs], output=[flat])
+    model = Model(input=[inputs], output=[conv14])
 
     model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef], sample_weight_mode='temporal')
 
@@ -211,10 +211,6 @@ if __name__ == "__main__":
     testing_indices = [10]
 
 
-
-
-
-
     model = segmentation_model()
     model.summary()
 
@@ -228,63 +224,61 @@ if __name__ == "__main__":
     class_weight[150] = 0.9  # WM
     class_weight[250] = 1.0  # GM
 
-    label, weight = to_categorical(labels[0, ...], class_weights=class_weight)
-    print('label shape:', np.shape(label))
-    print('weight shape:', np.shape(weight))
+    # label, weight = to_categorical(labels[0, ...], class_weights=class_weight)
+    # print('label shape:', np.shape(label))
+    # print('weight shape:', np.shape(weight))
+    #
+    # img = from_categorical(label, category_mapping)
+    # print('reconstituted:', np.shape(img))
+    #
+    # test_img = nib.Nifti1Image(img, np.eye(4))
+    # nib.save(test_img, 'resmashed.nii.gz')
 
-    img = from_categorical(label, category_mapping)
-    print('reconstituted:', np.shape(img))
+    hist = model.fit_generator(
+        batch(training_indices, class_weight),
+        len(training_indices),
+        epochs=3,
+        verbose=1,
+        callbacks=[model_checkpoint],
+        validation_data=batch(validation_indices, class_weight),
+        validation_steps=1)
 
-    test_img = nib.Nifti1Image(img, np.eye(4))
-    nib.save(test_img, 'resmashed.nii.gz')
+    model.load_weights(scratch_dir + 'best_seg_model.hdf5')
 
-    # hist = model.fit_generator(
-    #     batch(training_indices, class_weight),
-    #     len(training_indices),
-    #     epochs=3,
-    #     verbose=1,
-    #     callbacks=[model_checkpoint],
-    #     validation_data=batch(validation_indices, class_weight),
-    #     validation_steps=1)
+    #test image
+    predicted = model.predict_generator(batch(testing_indices), steps=1)
+    print('predicted voxels vector:', np.shape(predicted))
     #
-    # model.load_weights(scratch_dir + 'best_seg_model.hdf5')
+    # predicted_img = np.zeros(output_shape[:-1])
+    # for i, cat in enumerate(category_mapping):
+    #     predicted_img[..., i]
     #
-    #
-    #
-    # #test image
-    # predicted = model.predict_generator(batch(testing_indices), steps=1)
-    # print('predicted voxels vector:', np.shape(predicted))
-    # #
-    # # predicted_img = np.zeros(output_shape[:-1])
-    # # for i, cat in enumerate(category_mapping):
-    # #     predicted_img[..., i]
-    # #
-    #
-    # predicted_img = np.reshape(predicted, (output_shape))
-    # print('reshaped into categorical images:', np.shape(predicted_img))
-    #
-    # segmentation = from_categorical(predicted_img, category_mapping)
-    # print('segmentation shape:', np.shape(segmentation))
-    # test_img = nib.Nifti1Image(segmentation, np.eye(4))
-    # nib.save(test_img, 'test_image_segmentation.nii.gz')
-    #
-    # #validation image
-    # predicted = model.predict_generator(batch(validation_indices), steps=1)
-    # predicted_img = np.reshape(predicted, (output_shape))
-    #
-    # segmentation = from_categorical(predicted_img, category_mapping)
-    # val_image = nib.Nifti1Image(segmentation, np.eye(4))
-    # nib.save(val_image, 'val_image_segmentation.nii.gz')
-    #
-    # epoch_num = range(len(hist.history['dice_coef']))
-    # dice_train = np.array(hist.history['dice_coef'])
-    # dice_val = np.array(hist.history['val_dice_coef'])
-    #
-    # plt.clf()
-    # plt.plot(epoch_num, dice_train, label='DICE Score Training')
-    # plt.plot(epoch_num, dice_val, label="DICE Score Validation")
-    # plt.legend(shadow=True)
-    # plt.xlabel("Training Epoch Number")
-    # plt.ylabel("Score")
-    # plt.savefig(scratch_dir + 'results.png')
-    # plt.close()
+
+    predicted_img = np.reshape(predicted, (output_shape))
+    print('reshaped into categorical images:', np.shape(predicted_img))
+
+    segmentation = from_categorical(predicted_img, category_mapping)
+    print('segmentation shape:', np.shape(segmentation))
+    test_img = nib.Nifti1Image(segmentation, np.eye(4))
+    nib.save(test_img, 'test_image_segmentation.nii.gz')
+
+    #validation image
+    predicted = model.predict_generator(batch(validation_indices), steps=1)
+    predicted_img = np.reshape(predicted, (output_shape))
+
+    segmentation = from_categorical(predicted_img, category_mapping)
+    val_image = nib.Nifti1Image(segmentation, np.eye(4))
+    nib.save(val_image, 'val_image_segmentation.nii.gz')
+
+    epoch_num = range(len(hist.history['dice_coef']))
+    dice_train = np.array(hist.history['dice_coef'])
+    dice_val = np.array(hist.history['val_dice_coef'])
+
+    plt.clf()
+    plt.plot(epoch_num, dice_train, label='DICE Score Training')
+    plt.plot(epoch_num, dice_val, label="DICE Score Validation")
+    plt.legend(shadow=True)
+    plt.xlabel("Training Epoch Number")
+    plt.ylabel("Score")
+    plt.savefig(scratch_dir + 'results.png')
+    plt.close()

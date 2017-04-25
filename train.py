@@ -127,6 +127,7 @@ def to_categorical(y, class_weights=None):
     # Returns
         A binary matrix representation of the input.
     """
+    print('y shape', np.shape(y))
     categories = set(np.array(y, dtype="uint8").flatten())
     num_classes = len(categories)
 

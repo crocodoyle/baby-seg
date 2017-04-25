@@ -247,7 +247,7 @@ if __name__ == "__main__":
     #     predicted_img[..., i]
     #
 
-    predicted_img = np.reshape(predicted, (output_shape), order='F')
+    predicted_img = np.reshape(predicted, (output_shape))
     print('reshaped into categorical images:', np.shape(predicted_img))
 
     segmentation = from_categorical(predicted_img, category_mapping)
@@ -257,7 +257,7 @@ if __name__ == "__main__":
 
     #validation image
     predicted = model.predict_generator(batch(validation_indices), steps=1)
-    predicted_img = np.reshape(predicted, (output_shape), order='F')
+    predicted_img = np.reshape(predicted, (output_shape))
 
     segmentation = from_categorical(predicted_img, category_mapping)
     val_image = nib.Nifti1Image(segmentation, np.eye(4))

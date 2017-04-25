@@ -98,7 +98,7 @@ def segmentation_model():
 
     model = Model(input=[inputs], output=[flatter])
 
-    model.compile(optimizer=Adam(lr=1e-5), loss='categorical_crossentropy', metrics=[dice_coef], sample_weight_mode='temporal')
+    model.compile(optimizer=Adam(lr=1e-5), loss='sparse_categorical_crossentropy', metrics=[dice_coef], sample_weight_mode='temporal')
 
     return model
 

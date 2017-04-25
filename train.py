@@ -89,7 +89,7 @@ def segmentation_model():
     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(conv11)
 
     # need as many output channel as tissue classes
-    conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='sigmoid', padding='valid')(conv11)
+    conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='valid')(conv11)
     # flat = Reshape((144*192*256, 4))(conv14)
     flatter = Reshape((144*192*256*4, 1))(conv14)
     # flat = Reshape((28311552, 1))(conv14)
@@ -271,6 +271,13 @@ if __name__ == "__main__":
     #
 
     predicted_img = np.reshape(predicted, (output_shape))
+
+    all_voxels = np.sum(predicted_img,axis=3)
+    equal = np.equal(np.ones((192, 144, 256)), all_voxels)
+
+    for vox in all_voxels.flatten():
+        print(vox)
+
     print('reshaped into categorical images:', np.shape(predicted_img))
 
     segmentation = from_categorical(predicted_img, category_mapping)

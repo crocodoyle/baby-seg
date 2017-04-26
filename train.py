@@ -141,7 +141,7 @@ def to_categorical(y, class_weights=None):
     # print("class weights in to_categorical:", class_weights)
     for i, cat in enumerate(categories):
         categorical[..., i] = np.equal(y[..., 0], np.ones(np.shape(y[..., 0]))*cat)
-        # print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
+        print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
         # test = nib.Nifti1Image(categorical[..., i], np.eye(4))
         # nib.save(test, 'cat' + str(cat) + '.nii.gz')
         if not class_weights == None:
@@ -257,7 +257,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices, class_weight),
         len(training_indices),
-        epochs=3,
+        epochs=5,
         verbose=1,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices),

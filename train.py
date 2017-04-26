@@ -24,6 +24,7 @@ import os
 import nibabel as nib
 
 import pickle as pkl
+import csv
 
 import matplotlib as mpl
 
@@ -205,6 +206,11 @@ def batch(indices, class_weights=None):
                 flat_label = np.reshape(label, (1, 144*192*256*4, 1))
                 flat_weights = np.reshape(sample_weight, (1, 144*192*256*4))
 
+                with open('training.csv', 'wb') as csvfile:
+                    writer = csv.writer(csvfile)
+                    writer.writerow(['label'] + flat_label[0,:,0])
+                    writer.writerow(['weight'] + flat_weights[0,:])
+
                 yield (images[i, ...][np.newaxis, ...], flat_label, flat_weights)
             else:
                 label = to_categorical(labels[i, ...])
@@ -253,7 +259,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices, class_weight),
         len(training_indices),
-        epochs=300,
+        epochs=1,
         verbose=1,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices),
@@ -263,6 +269,10 @@ if __name__ == "__main__":
 
     #test image
     predicted = model.predict_generator(batch(testing_indices), steps=1, verbose=1)
+    with open('predictions.csv', 'wb') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(predicted)
+
     print('predicted voxels vector:', np.shape(predicted))
     #
     # predicted_img = np.zeros(output_shape[:-1])

@@ -267,9 +267,7 @@ if __name__ == "__main__":
 
     #test image
     predicted = model.predict_generator(batch(testing_indices), steps=1, verbose=1)
-    with open('predictions.csv', 'wb') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(predicted)
+    np.savetxt('predicted.csv', predicted, delimiter=',')
 
     print('predicted voxels vector:', np.shape(predicted))
     #

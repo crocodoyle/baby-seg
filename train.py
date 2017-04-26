@@ -231,6 +231,10 @@ if __name__ == "__main__":
     validation_indices = [9]
     testing_indices = [10]
 
+    affine = np.eye(4)
+    affine[0,0] = -1
+    affine[1,1] = -1
+
     model = segmentation_model()
     model.summary()
 
@@ -255,7 +259,7 @@ if __name__ == "__main__":
     img = from_categorical(restructured_label, category_mapping)
     print('reconstituted:', np.shape(img))
 
-    test_img = nib.Nifti1Image(img, np.eye(4))
+    test_img = nib.Nifti1Image(img, affine)
     nib.save(test_img, 'resmashed.nii.gz')
 
     hist = model.fit_generator(
@@ -292,7 +296,7 @@ if __name__ == "__main__":
 
     segmentation = from_categorical(predicted_img, category_mapping)
     print('segmentation shape:', np.shape(segmentation))
-    test_img = nib.Nifti1Image(segmentation, np.eye(4))
+    test_img = nib.Nifti1Image(segmentation, affine)
     nib.save(test_img, 'test_image_segmentation.nii.gz')
 
     #validation image
@@ -305,10 +309,10 @@ if __name__ == "__main__":
     wm = predicted_img[:, :, :, 2]
     gm = predicted_img[:, :, :, 3]
 
-    bg_img = nib.Nifti1Image(bg, np.eye(4))
-    csf_img = nib.Nifti1Image(csf, np.eye(4))
-    wm_img = nib.Nifti1Image(wm, np.eye(4))
-    gm_img = nib.Nifti1Image(gm, np.eye(4))
+    bg_img = nib.Nifti1Image(bg, affine)
+    csf_img = nib.Nifti1Image(csf, affine)
+    wm_img = nib.Nifti1Image(wm, affine)
+    gm_img = nib.Nifti1Image(gm, affine)
 
     nib.save(bg_img, 'bg_image.nii.gz')
     nib.save(csf_img, 'csf_image.nii.gz')
@@ -316,7 +320,7 @@ if __name__ == "__main__":
     nib.save(gm_img, 'gm_image.nii.gz')
 
     segmentation = from_categorical(predicted_img, category_mapping)
-    val_image = nib.Nifti1Image(segmentation, np.eye(4))
+    val_image = nib.Nifti1Image(segmentation, affine)
     nib.save(val_image, 'val_image_segmentation.nii.gz')
 
     epoch_num = range(len(hist.history['dice_coef']))

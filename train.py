@@ -257,7 +257,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices, class_weight),
         len(training_indices),
-        epochs=1,
+        epochs=3,
         verbose=1,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices),
@@ -296,9 +296,20 @@ if __name__ == "__main__":
     print('predicted shape:', np.shape(predicted))
     predicted_img = np.reshape(predicted, (output_shape))
 
-    bg = predicted_img[:,:,:,0]
+    bg = predicted_img[:, :, :, 0]
+    csf = predicted_img[:, :, :, 1]
+    wm = predicted_img[:, :, :, 2]
+    gm = predicted_img[:, :, :, 3]
+
     bg_img = nib.Nifti1Image(bg, np.eye(4))
+    csf_img = nib.Nifti1Image(csf, np.eye(4))
+    wm_img = nib.Nifti1Image(wm, np.eye(4))
+    gm_img = nib.Nifti1Image(gm, np.eye(4))
+
     nib.save(bg_img, 'bg_image.nii.gz')
+    nib.save(csf_img, 'csf_image.nii.gz')
+    nib.save(wm_img, 'wm_image.nii.gz')
+    nib.save(gm_img, 'gm_image.nii.gz')
 
     segmentation = from_categorical(predicted_img, category_mapping)
     val_image = nib.Nifti1Image(segmentation, np.eye(4))

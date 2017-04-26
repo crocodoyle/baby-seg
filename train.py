@@ -141,7 +141,7 @@ def to_categorical(y, class_weights=None):
     # print("class weights in to_categorical:", class_weights)
     for i, cat in enumerate(categories):
         categorical[..., i] = np.equal(y[..., 0], np.ones(np.shape(y[..., 0]))*cat)
-        print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
+        # print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
         # test = nib.Nifti1Image(categorical[..., i], np.eye(4))
         # nib.save(test, 'cat' + str(cat) + '.nii.gz')
         if not class_weights == None:
@@ -244,15 +244,19 @@ if __name__ == "__main__":
     class_weight[150] = 0.9  # WM
     class_weight[250] = 1.0  # GM
 
-    # label, weight = to_categorical(labels[0, ...], class_weights=class_weight)
-    # print('label shape:', np.shape(label))
-    # print('weight shape:', np.shape(weight))
-    #
-    # img = from_categorical(label, category_mapping)
-    # print('reconstituted:', np.shape(img))
-    #
-    # test_img = nib.Nifti1Image(img, np.eye(4))
-    # nib.save(test_img, 'resmashed.nii.gz')
+    label, weight = to_categorical(labels[0, ...], class_weights=class_weight)
+    print('label shape:', np.shape(label))
+    print('weight shape:', np.shape(weight))
+
+    flat_label = np.reshape(label, (144*192*256*4, 1))
+    restructured_label = np.reshape(flat_label, (144,192,256,4))
+
+
+    img = from_categorical(restructured_label, category_mapping)
+    print('reconstituted:', np.shape(img))
+
+    test_img = nib.Nifti1Image(img, np.eye(4))
+    nib.save(test_img, 'resmashed.nii.gz')
 
     hist = model.fit_generator(
         batch(training_indices, class_weight),
@@ -267,7 +271,7 @@ if __name__ == "__main__":
 
     #test image
     predicted = model.predict_generator(batch(testing_indices), steps=1, verbose=1)
-    np.savetxt('predicted.csv', predicted, delimiter=',')
+    # np.savetxt('predicted.csv', predicted, delimiter=',')
 
     print('predicted voxels vector:', np.shape(predicted))
     #
@@ -276,7 +280,7 @@ if __name__ == "__main__":
     #     predicted_img[..., i]
     #
 
-    predicted_img = np.reshape(predicted, (output_shape))
+    predicted_img = np.reshape(predicted[0,:,0].T, (output_shape))
 
     # all_voxels = np.sum(predicted_img,axis=3)
     # equal = np.equal(np.ones((144, 192, 256)), all_voxels)
@@ -294,7 +298,7 @@ if __name__ == "__main__":
     #validation image
     predicted = model.predict_generator(batch(validation_indices), steps=1, verbose=1)
     print('predicted shape:', np.shape(predicted))
-    predicted_img = np.reshape(predicted, (output_shape))
+    predicted_img = np.reshape(predicted[0,:,0].T, (output_shape))
 
     bg = predicted_img[:, :, :, 0]
     csf = predicted_img[:, :, :, 1]

@@ -206,10 +206,8 @@ def batch(indices, class_weights=None):
                 flat_label = np.reshape(label, (1, 144*192*256*4, 1))
                 flat_weights = np.reshape(sample_weight, (1, 144*192*256*4))
 
-                with open('training.csv', 'wb') as csvfile:
-                    writer = csv.writer(csvfile)
-                    writer.writerow(list(flat_label[0, :, 0]))
-                    writer.writerow(list(flat_weights[0, :]))
+                np.savetxt('label.csv', flat_label[0, :, 0], delimiter=',')
+                np.savetxt('weight.csv', flat_weights[0, :], delimiter=',')
 
                 yield (images[i, ...][np.newaxis, ...], flat_label, flat_weights)
             else:

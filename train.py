@@ -92,7 +92,7 @@ def segmentation_model():
     # need as many output channel as tissue classes
     conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='valid')(conv11)
     # flat = Reshape((144*192*256, 4))(conv14)
-    flatter = Reshape((144*192*256*4))(conv14)
+    flatter = Flatten()(conv14)
     # flat = Reshape((28311552, 1))(conv14)
     # flat = Flatten()(conv14)
 

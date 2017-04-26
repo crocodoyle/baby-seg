@@ -296,7 +296,7 @@ if __name__ == "__main__":
     print('predicted shape:', np.shape(predicted))
     predicted_img = np.reshape(predicted, (output_shape))
 
-    bg = predicted_img[0,:,:,:]
+    bg = predicted_img[:,:,:,0]
     bg_img = nib.Nifti1Image(bg, np.eye(4))
     nib.save(bg_img, 'bg_image.nii.gz')
 

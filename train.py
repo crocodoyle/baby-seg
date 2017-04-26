@@ -208,8 +208,8 @@ def batch(indices, class_weights=None):
 
                 with open('training.csv', 'wb') as csvfile:
                     writer = csv.writer(csvfile)
-                    writer.writerow(['label'] + flat_label[0,:,0])
-                    writer.writerow(['weight'] + flat_weights[0,:])
+                    writer.writerow(flat_label[0,:,0])
+                    writer.writerow(flat_weights[0,:])
 
                 yield (images[i, ...][np.newaxis, ...], flat_label, flat_weights)
             else:

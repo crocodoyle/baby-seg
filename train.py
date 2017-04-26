@@ -92,7 +92,7 @@ def segmentation_model():
     # need as many output channel as tissue classes
     conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='valid')(conv11)
     # flat = Reshape((144*192*256, 4))(conv14)
-    flatter = Reshape((144*192*256*4, 1))(conv14)
+    flatter = Reshape((144*192*256*4))(conv14)
     # flat = Reshape((28311552, 1))(conv14)
     # flat = Flatten()(conv14)
 
@@ -206,8 +206,8 @@ def batch(indices, class_weights=None):
                 flat_label = np.reshape(label, (1, 144*192*256*4, 1))
                 flat_weights = np.reshape(sample_weight, (1, 144*192*256*4))
 
-                np.savetxt('label.csv', flat_label[0, :, 0], delimiter=',')
-                np.savetxt('weight.csv', flat_weights[0, :], delimiter=',')
+                # np.savetxt('label.csv', flat_label[0, :, 0], delimiter=',')
+                # np.savetxt('weight.csv', flat_weights[0, :], delimiter=',')
 
                 yield (images[i, ...][np.newaxis, ...], flat_label, flat_weights)
             else:

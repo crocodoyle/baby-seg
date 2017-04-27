@@ -106,8 +106,10 @@ def dice_coef(y_true, y_pred):
     :type: TensorFlow/Theano tensor of the same shape as y_true.
     :return: Scalar DICE coefficient.
     """
+    #exclude the background class from DICE calculation
     y_true_f = K.flatten(y_true[..., 1:])
     y_pred_f = K.flatten(y_pred[..., 1:])
+
     intersection = K.sum(y_true_f * y_pred_f)
     return (2. * intersection) / (K.sum(y_true_f) + K.sum(y_pred_f))  # the 1 is to ensure smoothness
 
@@ -252,7 +254,7 @@ if __name__ == "__main__":
     #print('weight shape:', np.shape(weight))
 
     flat_label = np.reshape(label, (144*192*256*4, 1))
-    restructured_label = np.reshape(flat_label, (144,192,256,4))
+    restructured_label = np.reshape(flat_label, (144, 192, 256, 4))
 
     img = from_categorical(restructured_label, category_mapping)
     print('reconstituted:', np.shape(img))
@@ -263,7 +265,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices, class_weight),
         len(training_indices),
-        epochs=2,
+        epochs=5,
         verbose=1,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices),

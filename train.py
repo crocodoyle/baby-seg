@@ -111,12 +111,12 @@ def dice_coef(y_true, y_pred):
     y_pred_f = K.flatten(y_pred[..., 1:])
 
     intersection = K.sum(y_true_f * y_pred_f)
-    return (2. * intersection) / (K.sum(y_true_f) + K.sum(y_pred_f))  # the 1 is to ensure smoothness
+    return (2. * intersection) / (K.sum(y_true_f) + K.sum(y_pred_f))
 
 def dice_coef_loss(y_true, y_pred):
     return -dice_coef(y_true, y_pred)
 
-def to_categorical(y, class_weights=None):
+def to_categorical(y):
     """Converts a class vector (integers) to binary class matrix.
     Keras function did not support sparse category labels
     # Arguments
@@ -126,34 +126,14 @@ def to_categorical(y, class_weights=None):
     # Returns
         A binary matrix representation of the input.
     """
-    # print('y shape', np.shape(y))
     categories = set(np.array(y, dtype="uint8").flatten())
     num_classes = len(categories)
 
     cat_shape = np.shape(y)[:-1] + (num_classes,)
     categorical = np.zeros(cat_shape, dtype='b')
 
-    # sample_weights = np.zeros(np.shape(categorical), dtype='float')
-
-    # print('sample weight shape', np.shape(sample_weights))
-    # print("class weights in to_categorical:", class_weights)
     for i, cat in enumerate(categories):
         categorical[..., i] = np.equal(y[..., 0], np.ones(np.shape(y[..., 0]))*cat)
-        # print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
-        # test = nib.Nifti1Image(categorical[..., i], np.eye(4))
-        # nib.save(test, 'cat' + str(cat) + '.nii.gz')
-        # if not class_weights == None:
-        #     sample_weights[..., i] = class_weights[cat]
-
-    # vals, bins = np.histogram(categorical)
-    # print('histogram values of categorical labels: ', vals)
-    # vals, bins = np.histogram(sample_weights)
-    # print('histogram values of sample weights', vals)
-
-    # if not class_weights == None:
-    #     return categorical, sample_weights
-    # else:
-    #     return categorical
 
     return categorical
 
@@ -163,31 +143,18 @@ def from_categorical(categorical, category_mapping):
     :param category_mapping:
     :return:
     """
-    # print('categorical shape:', np.shape(categorical))
     img_shape = np.shape(categorical)[:-1]
-    cat_img = np.argmax(np.squeeze(categorical), axis=3)
-    # print('categories img:', np.shape(cat_img))
+    # cat_img = np.argmax(np.squeeze(categorical), axis=3)
 
     segmentation = np.zeros(img_shape, dtype='uint8')
 
     for i, cat in enumerate(category_mapping):
-        print('category', cat, 'has', np.sum(categorical[:, :, :, i]), 'voxels')
-
-        #binary masks for each category
-        # img = nib.Nifti1Image(categorical[..., i], np.eye(4))
-        # nib.save(img, 'cat' + str(cat) + '_img.nii.gz')
-
         indices = np.equal(categorical[:, :, :, i], np.ones(img_shape))
-        # print('indices:', np.shape(indices))
-        # print('sum', np.sum(categorical[:, :, :, i][indices]))
         segmentation[indices] = cat
-
-    # vals, bins = np.histogram(segmentation)
-    # print('histogram of img', vals)
 
     return segmentation
 
-def batch(indices, class_weights=None):
+def batch(indices):
     """
     :param indices: List of indices into the HDF5 dataset to draw samples from
     :return: (image, label)
@@ -199,27 +166,12 @@ def batch(indices, class_weights=None):
     while True:
         np.random.shuffle(indices)
         for i in indices:
-            # print("class weights in batch", class_weights)
-            if not class_weights == None:
-                label = to_categorical(labels[i, ...], class_weights=class_weights)
 
-                # flat_label = np.reshape(label, (1, 144*192*256*4, 1))
-                # flat_weights = np.reshape(sample_weight, (1, 144*192*256*4))
-
-                # np.savetxt('label.csv', flat_label[0, :, 0], delimiter=',')
-                # np.savetxt('weight.csv', flat_weights[0, :], delimiter=',')
-
-                # yield (images[i, ...][np.newaxis, ...], flat_label, flat_weights)
-                yield (images[i, ...][np.newaxis, ...], label[np.newaxis, ...])
-            else:
+            try:
                 label = to_categorical(labels[i, ...])
-                # print('label shape:', np.shape(label))
-                if np.shape(label)[-1] == 1:
-                    yield images[i, ...][np.newaxis, ...]
-                else:
-                    flat_label = np.reshape(label, (1, 144*192*256*4))
-                    # print('flat label shape', np.shape(flat_label))
-                    yield (images[i, ...][np.newaxis, ...])
+                yield (images[i, ...][np.newaxis, ...], label[np.newaxis, ...])
+            except ValueError:
+                yield (images[i, ...][np.newaxis, ...])
 
 if __name__ == "__main__":
     f = h5py.File(input_file)
@@ -241,29 +193,10 @@ if __name__ == "__main__":
 
     model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_dice_coef", verbose=0,
                                        save_best_only=True, save_weights_only=False, mode='auto')
-    category_mapping = [0, 10, 150, 250]
-
-    class_weight = {}
-    class_weight[0] = 0.01  # don't care about background
-    class_weight[10] = 0.7  # CSF
-    class_weight[150] = 0.9  # WM
-    class_weight[250] = 1.0  # GM
-
-    label = to_categorical(labels[0, ...], class_weights=class_weight)
-    print('label shape:', np.shape(label))
-    #print('weight shape:', np.shape(weight))
-
-    flat_label = np.reshape(label, (144*192*256*4, 1))
-    restructured_label = np.reshape(flat_label, (144, 192, 256, 4))
-
-    img = from_categorical(restructured_label, category_mapping)
-    print('reconstituted:', np.shape(img))
-
-    test_img = nib.Nifti1Image(img, affine)
-    nib.save(test_img, 'resmashed.nii.gz')
+    category_mapping = [0, 10, 250, 150]
 
     hist = model.fit_generator(
-        batch(training_indices, class_weight),
+        batch(training_indices),
         len(training_indices),
         epochs=5,
         verbose=1,
@@ -275,24 +208,8 @@ if __name__ == "__main__":
 
     #test image
     predicted = model.predict_generator(batch(testing_indices), steps=1, verbose=1)
-    # np.savetxt('predicted.csv', predicted, delimiter=',')
 
     print('predicted voxels vector:', np.shape(predicted))
-    #
-    # predicted_img = np.zeros(output_shape[:-1])
-    # for i, cat in enumerate(category_mapping):
-    #     predicted_img[..., i]
-    #
-
-    # predicted_img = np.reshape(predicted[0,:,0].T, (output_shape))
-
-    # all_voxels = np.sum(predicted_img,axis=3)
-    # equal = np.equal(np.ones((144, 192, 256)), all_voxels)
-    #
-    # for vox in all_voxels.flatten():
-    #     print(vox)
-
-    # print('reshaped into categorical images:', np.shape(predicted_img))
 
     segmentation = from_categorical(predicted, category_mapping)
     print('segmentation shape:', np.shape(segmentation))
@@ -301,23 +218,6 @@ if __name__ == "__main__":
 
     #validation image
     predicted = model.predict_generator(batch(validation_indices), steps=1, verbose=1)
-    # print('predicted shape:', np.shape(predicted))
-    # predicted_img = np.reshape(predicted[0,:,0].T, (output_shape))
-
-    # bg = predicted_img[:, :, :, 0]
-    # csf = predicted_img[:, :, :, 1]
-    # wm = predicted_img[:, :, :, 2]
-    # gm = predicted_img[:, :, :, 3]
-
-    # bg_img = nib.Nifti1Image(bg, affine)
-    # csf_img = nib.Nifti1Image(csf, affine)
-    # wm_img = nib.Nifti1Image(wm, affine)
-    # gm_img = nib.Nifti1Image(gm, affine)
-
-    # nib.save(bg_img, 'bg_image.nii.gz')
-    # nib.save(csf_img, 'csf_image.nii.gz')
-    # nib.save(wm_img, 'wm_image.nii.gz')
-    # nib.save(gm_img, 'gm_image.nii.gz')
 
     segmentation = from_categorical(predicted, category_mapping)
     val_image = nib.Nifti1Image(segmentation, affine)

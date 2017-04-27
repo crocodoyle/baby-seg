@@ -91,14 +91,10 @@ def segmentation_model():
 
     # need as many output channel as tissue classes
     conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='valid')(conv11)
-    # flat = Reshape((144*192*256, 4))(conv14)
-    flatter = Reshape((28311552, 1))(conv14)
-    # flat = Reshape((28311552, 1))(conv14)
-    # flat = Flatten()(conv14)
 
-    model = Model(input=[inputs], output=[flatter])
+    model = Model(input=[inputs], output=[conv14])
 
-    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef], sample_weight_mode='temporal')
+    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
 
     return model
 
@@ -110,8 +106,8 @@ def dice_coef(y_true, y_pred):
     :type: TensorFlow/Theano tensor of the same shape as y_true.
     :return: Scalar DICE coefficient.
     """
-    y_true_f = K.flatten(y_true)
-    y_pred_f = K.flatten(y_pred)
+    y_true_f = K.flatten(y_true[..., 1:])
+    y_pred_f = K.flatten(y_pred[..., 1:])
     intersection = K.sum(y_true_f * y_pred_f)
     return (2. * intersection) / (K.sum(y_true_f) + K.sum(y_pred_f))  # the 1 is to ensure smoothness
 
@@ -135,7 +131,7 @@ def to_categorical(y, class_weights=None):
     cat_shape = np.shape(y)[:-1] + (num_classes,)
     categorical = np.zeros(cat_shape, dtype='b')
 
-    sample_weights = np.zeros(np.shape(categorical), dtype='float')
+    # sample_weights = np.zeros(np.shape(categorical), dtype='float')
 
     # print('sample weight shape', np.shape(sample_weights))
     # print("class weights in to_categorical:", class_weights)
@@ -144,18 +140,20 @@ def to_categorical(y, class_weights=None):
         # print('category', cat, 'has', np.sum(categorical[..., i]), 'voxels')
         # test = nib.Nifti1Image(categorical[..., i], np.eye(4))
         # nib.save(test, 'cat' + str(cat) + '.nii.gz')
-        if not class_weights == None:
-            sample_weights[..., i] = class_weights[cat]
+        # if not class_weights == None:
+        #     sample_weights[..., i] = class_weights[cat]
 
     # vals, bins = np.histogram(categorical)
     # print('histogram values of categorical labels: ', vals)
     # vals, bins = np.histogram(sample_weights)
     # print('histogram values of sample weights', vals)
 
-    if not class_weights == None:
-        return categorical, sample_weights
-    else:
-        return categorical
+    # if not class_weights == None:
+    #     return categorical, sample_weights
+    # else:
+    #     return categorical
+
+    return categorical
 
 def from_categorical(categorical, category_mapping):
     """Combines several binary masks for tissue classes into a single segmentation image
@@ -201,15 +199,16 @@ def batch(indices, class_weights=None):
         for i in indices:
             # print("class weights in batch", class_weights)
             if not class_weights == None:
-                label, sample_weight = to_categorical(labels[i, ...], class_weights=class_weights)
+                label = to_categorical(labels[i, ...], class_weights=class_weights)
 
-                flat_label = np.reshape(label, (1, 144*192*256*4, 1))
-                flat_weights = np.reshape(sample_weight, (1, 144*192*256*4))
+                # flat_label = np.reshape(label, (1, 144*192*256*4, 1))
+                # flat_weights = np.reshape(sample_weight, (1, 144*192*256*4))
 
                 # np.savetxt('label.csv', flat_label[0, :, 0], delimiter=',')
                 # np.savetxt('weight.csv', flat_weights[0, :], delimiter=',')
 
-                yield (images[i, ...][np.newaxis, ...], flat_label, flat_weights)
+                # yield (images[i, ...][np.newaxis, ...], flat_label, flat_weights)
+                yield (images[i, ...][np.newaxis, ...], label[i, ...][np.newaxis, ...])
             else:
                 label = to_categorical(labels[i, ...])
                 # print('label shape:', np.shape(label))
@@ -232,8 +231,8 @@ if __name__ == "__main__":
     testing_indices = [10]
 
     affine = np.eye(4)
-    affine[0,0] = -1
-    affine[1,1] = -1
+    # affine[0, 0] = -1
+    # affine[1, 1] = -1
 
     model = segmentation_model()
     model.summary()
@@ -284,7 +283,7 @@ if __name__ == "__main__":
     #     predicted_img[..., i]
     #
 
-    predicted_img = np.reshape(predicted[0,:,0].T, (output_shape))
+    # predicted_img = np.reshape(predicted[0,:,0].T, (output_shape))
 
     # all_voxels = np.sum(predicted_img,axis=3)
     # equal = np.equal(np.ones((144, 192, 256)), all_voxels)
@@ -292,34 +291,34 @@ if __name__ == "__main__":
     # for vox in all_voxels.flatten():
     #     print(vox)
 
-    print('reshaped into categorical images:', np.shape(predicted_img))
+    # print('reshaped into categorical images:', np.shape(predicted_img))
 
-    segmentation = from_categorical(predicted_img, category_mapping)
+    segmentation = from_categorical(predicted, category_mapping)
     print('segmentation shape:', np.shape(segmentation))
     test_img = nib.Nifti1Image(segmentation, affine)
     nib.save(test_img, 'test_image_segmentation.nii.gz')
 
     #validation image
     predicted = model.predict_generator(batch(validation_indices), steps=1, verbose=1)
-    print('predicted shape:', np.shape(predicted))
-    predicted_img = np.reshape(predicted[0,:,0].T, (output_shape))
+    # print('predicted shape:', np.shape(predicted))
+    # predicted_img = np.reshape(predicted[0,:,0].T, (output_shape))
 
-    bg = predicted_img[:, :, :, 0]
-    csf = predicted_img[:, :, :, 1]
-    wm = predicted_img[:, :, :, 2]
-    gm = predicted_img[:, :, :, 3]
+    # bg = predicted_img[:, :, :, 0]
+    # csf = predicted_img[:, :, :, 1]
+    # wm = predicted_img[:, :, :, 2]
+    # gm = predicted_img[:, :, :, 3]
 
-    bg_img = nib.Nifti1Image(bg, affine)
-    csf_img = nib.Nifti1Image(csf, affine)
-    wm_img = nib.Nifti1Image(wm, affine)
-    gm_img = nib.Nifti1Image(gm, affine)
+    # bg_img = nib.Nifti1Image(bg, affine)
+    # csf_img = nib.Nifti1Image(csf, affine)
+    # wm_img = nib.Nifti1Image(wm, affine)
+    # gm_img = nib.Nifti1Image(gm, affine)
 
-    nib.save(bg_img, 'bg_image.nii.gz')
-    nib.save(csf_img, 'csf_image.nii.gz')
-    nib.save(wm_img, 'wm_image.nii.gz')
-    nib.save(gm_img, 'gm_image.nii.gz')
+    # nib.save(bg_img, 'bg_image.nii.gz')
+    # nib.save(csf_img, 'csf_image.nii.gz')
+    # nib.save(wm_img, 'wm_image.nii.gz')
+    # nib.save(gm_img, 'gm_image.nii.gz')
 
-    segmentation = from_categorical(predicted_img, category_mapping)
+    segmentation = from_categorical(predicted, category_mapping)
     val_image = nib.Nifti1Image(segmentation, affine)
     nib.save(val_image, 'val_image_segmentation.nii.gz')
 

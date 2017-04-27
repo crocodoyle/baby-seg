@@ -208,16 +208,16 @@ def batch(indices, class_weights=None):
                 # np.savetxt('weight.csv', flat_weights[0, :], delimiter=',')
 
                 # yield (images[i, ...][np.newaxis, ...], flat_label, flat_weights)
-                yield (images[i, ...][np.newaxis, ...], label[i, ...][np.newaxis, ...])
+                yield (images[i, ...][np.newaxis, ...], label[np.newaxis, ...])
             else:
                 label = to_categorical(labels[i, ...])
                 # print('label shape:', np.shape(label))
                 if np.shape(label)[-1] == 1:
                     yield images[i, ...][np.newaxis, ...]
                 else:
-                    flat_label = np.reshape(label, (1, 144*192*256*4, 1))
+                    flat_label = np.reshape(label, (1, 144*192*256*4))
                     # print('flat label shape', np.shape(flat_label))
-                    yield (images[i, ...][np.newaxis, ...], flat_label)
+                    yield (images[i, ...][np.newaxis, ...])
 
 if __name__ == "__main__":
     f = h5py.File(input_file)
@@ -247,13 +247,12 @@ if __name__ == "__main__":
     class_weight[150] = 0.9  # WM
     class_weight[250] = 1.0  # GM
 
-    label, weight = to_categorical(labels[0, ...], class_weights=class_weight)
+    label = to_categorical(labels[0, ...], class_weights=class_weight)
     print('label shape:', np.shape(label))
-    print('weight shape:', np.shape(weight))
+    #print('weight shape:', np.shape(weight))
 
     flat_label = np.reshape(label, (144*192*256*4, 1))
     restructured_label = np.reshape(flat_label, (144,192,256,4))
-
 
     img = from_categorical(restructured_label, category_mapping)
     print('reconstituted:', np.shape(img))
@@ -264,7 +263,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices, class_weight),
         len(training_indices),
-        epochs=400,
+        epochs=2,
         verbose=1,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices),

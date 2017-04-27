@@ -185,8 +185,8 @@ if __name__ == "__main__":
     testing_indices = [10]
 
     affine = np.eye(4)
-    # affine[0, 0] = -1
-    # affine[1, 1] = -1
+    affine[0, 0] = -1
+    affine[1, 1] = -1
 
     model = segmentation_model()
     model.summary()
@@ -198,7 +198,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices),
         len(training_indices),
-        epochs=5,
+        epochs=25,
         verbose=1,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices),

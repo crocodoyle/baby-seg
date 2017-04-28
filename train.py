@@ -52,10 +52,9 @@ def segmentation_model():
     inputs = Input(shape=(144, 192, 256, 2))
 
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(inputs)
-    # bn1 = BatchNormalization()(conv1)
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(conv1)
-    # bn1 = BatchNormalization()(conv1)
-    pool1 = MaxPooling3D(pool_size=pool_size)(conv1)
+    bn1 = BatchNormalization()(conv1)
+    pool1 = MaxPooling3D(pool_size=pool_size)(bn1)
 
     conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(pool1)
     # bn2 = BatchNormalization()(conv2)
@@ -102,7 +101,7 @@ def segmentation_model():
     conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(conv10)
     # bn10 = BatchNormalization()(conv10)
 
-    up11 = merge([UpSampling3D(size=pool_size)(conv10), conv1], mode='concat', concat_axis=concat_axis)
+    up11 = merge([UpSampling3D(size=pool_size)(conv10), bn1], mode='concat', concat_axis=concat_axis)
     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(up11)
     # bn11 = BatchNormalization()(conv11)
     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(conv11)

@@ -102,7 +102,7 @@ def segmentation_model():
     conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(conv10)
     # bn10 = BatchNormalization()(conv10)
 
-    up11 = merge([UpSampling3D(size=pool_size)(conv10), bn1], mode='concat', concat_axis=concat_axis)
+    up11 = merge([UpSampling3D(size=pool_size)(conv10), conv1], mode='concat', concat_axis=concat_axis)
     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(up11)
     # bn11 = BatchNormalization()(conv11)
     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(conv11)

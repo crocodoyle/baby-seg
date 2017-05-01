@@ -76,17 +76,17 @@ def segmentation_model():
     bn4 = BatchNormalization()(drop4)
     pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
 
-    conv5 = Conv3D(128, conv_size, activation='relu', padding='same')(pool4)
+    conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(pool4)
     drop5 = Dropout(0.5)(conv5)
     # bn5 = BatchNormalization()(drop5)
-    conv5 = Conv3D(128, conv_size, activation='relu', padding='same')(drop5)
+    conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(drop5)
     drop5 = Dropout(0.5)(conv5)
     bn5 = BatchNormalization()(drop5)
 
     up8 = merge([UpSampling3D(size=pool_size)(bn5), bn4], mode='concat', concat_axis=concat_axis)
-    conv8 = Conv3D(128, conv_size, activation='relu', padding='same')(up8)
+    conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(up8)
     # bn8 = BatchNormalization()(conv8)
-    conv8 = Conv3D(128, conv_size, activation='relu', padding='same')(conv8)
+    conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(conv8)
     bn8 = BatchNormalization()(conv8)
 
     up9 = merge([UpSampling3D(size=pool_size)(bn8), bn3], mode='concat', concat_axis=concat_axis)
@@ -112,7 +112,9 @@ def segmentation_model():
 
     model = Model(input=[inputs], output=[conv14])
 
-    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
+    #model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
+    sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
+    model.compile(optimizer=sgd, loss=dice_coef_loss, metrics=[dice_coef])
 
     return model
 
@@ -216,7 +218,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices),
         len(training_indices),
-        epochs=25,
+        epochs=600,
         verbose=1,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices),

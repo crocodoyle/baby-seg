@@ -223,8 +223,8 @@ if __name__ == "__main__":
     output_shape = (144, 192, 256, 4)
 
     training_indices = list(range(8))
-    validation_indices = [9]
-    testing_indices = [10]
+    validation_indices = [8]
+    testing_indices = [9]
 
     print('training images:', training_indices)
     print('validation images:', validation_indices)

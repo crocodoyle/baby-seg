@@ -257,5 +257,5 @@ if __name__ == "__main__":
 
         print(labels[i,..., 0].shape, segmentation.shape)
         print('confusion matrix for', str(i))
-        print_confusion(labels[i, ..., 0], segmentation)
+        print_confusion(labels[i, ..., 0].flatten(), segmentation.flatten())
 

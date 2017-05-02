@@ -127,23 +127,23 @@ def segmentation_model():
 
     return model
 
-def dice_coef(y_true, y_pred):
-    """ DICE coefficient: 2TP / (2TP + FP + FN). An additional smoothness term is added to ensure no / 0
-    :param y_true: True labels.
-    :type: TensorFlow/Theano tensor.
-    :param y_pred: Predictions.
-    :type: TensorFlow/Theano tensor of the same shape as y_true.
-    :return: Scalar DICE coefficient.
-    """
-    #exclude the background class from DICE calculation
-
-    y_true_f = K.flatten(y_true)
-    y_pred_f = K.flatten(y_pred)
-
-    return dice(y_true_f, y_pred_f)
-
-def dice_coef_loss(y_true, y_pred):
-    return -dice_coef(y_true, y_pred)
+# def dice_coef(y_true, y_pred):
+#     """ DICE coefficient: 2TP / (2TP + FP + FN). An additional smoothness term is added to ensure no / 0
+#     :param y_true: True labels.
+#     :type: TensorFlow/Theano tensor.
+#     :param y_pred: Predictions.
+#     :type: TensorFlow/Theano tensor of the same shape as y_true.
+#     :return: Scalar DICE coefficient.
+#     """
+#     #exclude the background class from DICE calculation
+#
+#     y_true_f = K.flatten(y_true)
+#     y_pred_f = K.flatten(y_pred)
+#
+#     return dice(y_true_f, y_pred_f)
+#
+# def dice_coef_loss(y_true, y_pred):
+#     return -dice_coef(y_true, y_pred)
 
 def to_categorical(y):
     """Converts a class vector (integers) to binary class matrix.
@@ -157,7 +157,7 @@ def to_categorical(y):
     """
     categories = sorted(set(np.array(y, dtype="uint8").flatten()))
     num_classes = len(categories)
-    print(categories)
+    # print(categories)
 
     cat_shape = np.shape(y)[:-1] + (num_classes,)
     categorical = np.zeros(cat_shape, dtype='b')
@@ -244,12 +244,12 @@ if __name__ == "__main__":
     model = segmentation_model()
     model.summary()
 
-    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_categorical_crossentropy", verbose=0,
+    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_categorical_accuracy", verbose=0,
                                        save_best_only=True, save_weights_only=False, mode='auto')
     hist = model.fit_generator(
         batch(training_indices),
         len(training_indices),
-        epochs=100,
+        epochs=2,
         verbose=2,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices),

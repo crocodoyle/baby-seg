@@ -255,7 +255,7 @@ if __name__ == "__main__":
         nib.save(image, 'babylabels' + str(0) + '.nii.gz')
 
 
-        print(labels[i,...].shape, segmentation.shape)
+        print(labels[i,..., 0].shape, segmentation.shape)
         print('confusion matrix for', str(i))
-        print_confusion(labels[i, ...], segmentation)
+        print_confusion(labels[i, ..., 0], segmentation)
 

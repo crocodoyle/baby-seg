@@ -28,9 +28,9 @@ import nibabel as nib
 
 import pickle as pkl
 import csv
+from collections import OrderedDict
 
 import matplotlib as mpl
-
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 
@@ -149,7 +149,7 @@ def to_categorical(y):
     # Returns
         A binary matrix representation of the input.
     """
-    categories = set(np.array(y, dtype="uint8").flatten())
+    categories = set(np.array(y, dtype="uint8").flatten()).sort()
     num_classes = len(categories)
 
     cat_shape = np.shape(y)[:-1] + (num_classes,)
@@ -222,7 +222,7 @@ if __name__ == "__main__":
 
     output_shape = (144, 192, 256, 4)
 
-    training_indices = np.linspace(0, 8)
+    training_indices = list(range(8))
     validation_indices = [9]
     testing_indices = [10]
 
@@ -248,14 +248,16 @@ if __name__ == "__main__":
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
 
-    for i in list(training_indices) + list(validation_indices) + list(testing_indices):
+    for i in training_indices + validation_indices + testing_indices:
         predicted = model.predict(images[i,...][np.newaxis, ...], batch_size=1)
         segmentation = from_categorical(predicted, category_mapping)
         image = nib.Nifti1Image(segmentation, affine)
-        nib.save(image, 'babylabels' + str(0) + '.nii.gz')
+        nib.save(image, 'babylabels' + str(i) + '.nii.gz')
 
 
         print(labels[i,..., 0].shape, segmentation.shape)
         print('confusion matrix for', str(i))
         print_confusion(labels[i, ..., 0].flatten(), segmentation.flatten())
 
+
+    # visualize_training_dice(hist)

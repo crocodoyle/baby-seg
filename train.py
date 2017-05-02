@@ -36,6 +36,9 @@ import matplotlib.pyplot as plt
 
 from sklearn.model_selection import ShuffleSplit
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics.pairwise import pairwise_distances
+
+from scipy.spatial.distance import dice
 
 import argparse
 
@@ -134,14 +137,10 @@ def dice_coef(y_true, y_pred):
     """
     #exclude the background class from DICE calculation
 
-    y_true_labels = from_categorical(y_true, category_mapping)
-    y_pred_labels = from_categorical(y_pred, category_mapping)
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
 
-    y_true_f = K.flatten(y_true_labels)
-    y_pred_f = K.flatten(y_pred_labels)
-
-    intersection = K.sum(y_true_f * y_pred_f)
-    return (2. * intersection) / (K.sum(y_true_f) + K.sum(y_pred_f))
+    return dice(y_true_f, y_pred_f)
 
 def dice_coef_loss(y_true, y_pred):
     return -dice_coef(y_true, y_pred)

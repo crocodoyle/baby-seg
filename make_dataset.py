@@ -35,6 +35,10 @@ def make_iseg():
     numSeen['T2'] = 0
     numSeen['labels'] = 0
 
+    maxVal = {}
+    maxVal['T1'] = 0
+    maxVal['T2'] = 0
+
     for filename in os.listdir(training_dir):
         index = int(filename.split('-')[1]) - 1
 
@@ -67,6 +71,23 @@ def make_iseg():
                     f['images'][index, ..., 1] = nib.load(os.path.join(testing_dir, filename)).get_data()[8:-8, :, :, 0]
             if 'label' in filename:
                 f['labels'][index, ...] = nib.load(os.path.join(testing_dir, filename)).get_data()
+
+    for i in range(23):
+        t1 = f['images'][i, ..., 0]
+        t2 = f['images'][i, ..., 1]
+
+        max_t1 = np.max(t1)
+        max_t2 = np.max(t2)
+
+        if max_t1 > maxVal['T1']:
+            maxVal['T1'] = max_t1
+        if max_t2 > maxVal['T2']:
+            maxVal['T2'] = max_t2
+
+    print(maxVal)
+    for i in range(23):
+        f['images'][i, ..., 0] = np.divide(f['images'][i, ..., 0], maxVal['T1'])
+        f['images'][i, ..., 1] = np.divide(f['images'][i, ..., 1], maxVal['T2'])
 
     f.close()
 

@@ -163,9 +163,15 @@ def dice_coef(y_true, y_pred):
     """
     #exclude the background class from DICE calculation
 
-    y_pred_b = np.asarray(y_pred, dtype='b')
+    score = 0
 
-    return dice(y_true, y_pred_b)
+    category_weight = [0.05, 0.5, 1.0, 1.0]
+
+    for i, c, w in enumerate(zip(category_mapping, category_weight)):
+        score += w*(2.0 * K.sum(y_true[..., i] * y_pred[..., i]) / K.sum(y_true[..., i], + K.sum(y_pred[..., i])))
+
+
+    return score
 
 def dice_coef_loss(y_true, y_pred):
     return -dice_coef(y_true, y_pred)

@@ -126,11 +126,6 @@ def dice_coef(y_true, y_pred):
     :type: TensorFlow/Theano tensor of the same shape as y_true.
     :return: Scalar DICE coefficient.
     """
-
-    print('truth:', np.sum(y_true[...,0]), np.sum(y_true[...,1]), np.sum(y_true)[...,2], np.sum(y_true[...,3]))
-    print('predicted:', np.sum(y_true[...,0]), np.sum(y_true[...,1]), np.sum(y_true)[...,2], np.sum(y_true[...,3]))
-
-
     #exclude the background class from DICE calculation
     y_true_f = K.flatten(y_true[..., 1:])
     y_pred_f = K.flatten(y_pred[..., 1:])
@@ -223,7 +218,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices),
         len(training_indices),
-        epochs=600,
+        epochs=1,
         verbose=1,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices),
@@ -233,8 +228,7 @@ if __name__ == "__main__":
 
     #test image
     predicted = model.predict_generator(batch(testing_indices), steps=1, verbose=1)
-
-    print('predicted voxels vector:', np.shape(predicted))
+    print('predictions:', np.sum(predicted[...,0]), np.sum(predicted[..., 1]), np.sum(predicted[...,2]), np.sum(predicted[...,3]))
 
     segmentation = from_categorical(predicted, category_mapping)
     print('segmentation shape:', np.shape(segmentation))

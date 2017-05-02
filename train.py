@@ -6,7 +6,7 @@ from keras.layers import Conv3D, MaxPooling3D, SpatialDropout3D, UpSampling3D
 from keras.optimizers import SGD, Adam
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 # from keras.utils.visualize_util import plot
-
+from keras.callbacks import Callback
 from keras import backend as K
 
 import tensorflow as tf
@@ -49,7 +49,7 @@ category_mapping = [0, 10, 150, 250]
 img_shape = (144, 192, 256)
 
 
-class ConfusionCallback(K.callbacks.Callback):
+class ConfusionCallback(Callback):
 
     def on_train_begin(self, logs={}):
         self.confusion = []

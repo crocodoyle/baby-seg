@@ -126,6 +126,11 @@ def dice_coef(y_true, y_pred):
     :type: TensorFlow/Theano tensor of the same shape as y_true.
     :return: Scalar DICE coefficient.
     """
+
+    print('truth:', np.sum(y_true[...,0]), np.sum(y_true[...,1]), np.sum(y_true)[...,2], np.sum(y_true[...,3]))
+    print('predicted:', np.sum(y_true[...,0]), np.sum(y_true[...,1]), np.sum(y_true)[...,2], np.sum(y_true[...,3]))
+
+
     #exclude the background class from DICE calculation
     y_true_f = K.flatten(y_true[..., 1:])
     y_pred_f = K.flatten(y_pred[..., 1:])

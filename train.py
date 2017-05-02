@@ -54,7 +54,7 @@ class ConfusionCallback(Callback):
     def on_train_begin(self, logs={}):
         self.confusion = []
 
-    def on_batch_end(self, batch, logs={}):
+    def on_epoch_end(self, batch, logs={}):
         model = self.model
 
         f = h5py.File(input_file)
@@ -65,6 +65,7 @@ class ConfusionCallback(Callback):
         segmentation = from_categorical(predicted, category_mapping).flatten()
 
         conf = confusion_matrix(labels[8,...,0].flatten(), segmentation)
+        print('confusion matrix:', category_mapping)
         print(conf)
 
         self.confusion.append(conf)
@@ -184,7 +185,8 @@ def to_categorical(y):
     categorical = np.zeros(cat_shape, dtype='b')
 
     for i, cat in enumerate(categories):
-        categorical[..., i] = np.equal(y[..., 0], np.ones(np.shape(y[..., 0]))*cat)
+        categorical[..., i] = np.equal(y[..., 0], cat)
+        # categorical[y == cat] = 1
 
     return categorical
 

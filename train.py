@@ -163,6 +163,8 @@ def dice_coef(y_true, y_pred):
     """
     #exclude the background class from DICE calculation
 
+    y_pred = np.asarray(y_pred, dtype='b')
+
     return dice(y_true, y_pred)
 
 def dice_coef_loss(y_true, y_pred):

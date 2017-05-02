@@ -226,6 +226,10 @@ if __name__ == "__main__":
     validation_indices = [9]
     testing_indices = [10]
 
+    print('training images:', training_indices)
+    print('validation images:', validation_indices)
+    print('testing images:', testing_indices)
+
     affine = np.eye(4)
     affine[0, 0] = -1
     affine[1, 1] = -1

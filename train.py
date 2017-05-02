@@ -149,7 +149,7 @@ def segmentation_model():
 
     #model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
     sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-    model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['categorical_accuracy'])
+    model.compile(optimizer=sgd, loss='dice_coef_loss', metrics=[dice_coef])
 
     return model
 
@@ -186,7 +186,7 @@ def to_categorical(y):
     categorical = np.zeros(cat_shape, dtype='b')
 
     for i, cat in enumerate(categories):
-        categorical[..., i] = np.equal(y[..., 0], cat)
+        categorical[..., i] = np.equal(y[..., 0], np.ones(cat_shape)*cat)
         # categorical[y == cat] = 1
 
     return categorical
@@ -268,7 +268,7 @@ if __name__ == "__main__":
     model = segmentation_model()
     model.summary()
 
-    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_categorical_accuracy", verbose=0,
+    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_dice_coef", verbose=0,
                                        save_best_only=True, save_weights_only=False, mode='auto')
 
     confusion_callback = ConfusionCallback()

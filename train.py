@@ -176,7 +176,6 @@ def from_categorical(categorical, category_mapping):
     """
     img_shape = np.shape(categorical)[1:-1]
     # cat_img = np.argmax(np.squeeze(categorical), axis=3)
-    print(img_shape)
 
     segmentation = np.zeros(img_shape, dtype='uint8')
 
@@ -252,7 +251,7 @@ if __name__ == "__main__":
         batch(training_indices),
         len(training_indices),
         epochs=100,
-        verbose=1,
+        verbose=2,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices),
         validation_steps=1)

@@ -43,7 +43,7 @@ scratch_dir = '/data1/data/iSeg-2017/'
 input_file = scratch_dir + 'baby-seg.hdf5'
 
 category_mapping = [0, 10, 150, 250]
-
+img_shape = (144, 192, 256)
 
 def segmentation_model():
     """
@@ -174,7 +174,7 @@ def from_categorical(categorical, category_mapping):
     :param category_mapping:
     :return:
     """
-    img_shape = np.shape(categorical)[1:-1]
+    # img_shape = np.shape(categorical)[1:-1]
     # cat_img = np.argmax(np.squeeze(categorical), axis=3)
 
     segmentation = np.zeros(img_shape, dtype='uint8')

@@ -237,14 +237,14 @@ if __name__ == "__main__":
                                        save_best_only=True, save_weights_only=False, mode='auto')
     category_mapping = [0, 10, 250, 150]
 
-    hist = model.fit_generator(
-        batch(training_indices),
-        len(training_indices),
-        epochs=3,
-        verbose=1,
-        callbacks=[model_checkpoint],
-        validation_data=batch(validation_indices),
-        validation_steps=1)
+    # hist = model.fit_generator(
+    #     batch(training_indices),
+    #     len(training_indices),
+    #     epochs=3,
+    #     verbose=1,
+    #     callbacks=[model_checkpoint],
+    #     validation_data=batch(validation_indices),
+    #     validation_steps=1)
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
 
@@ -255,5 +255,5 @@ if __name__ == "__main__":
         nib.save(image, 'babylabels' + str(0) + '.nii.gz')
 
         print('confusion matrix for', str(i))
-        print_confusion(labels[i,...], to_categorical(labels[i, ...]))
+        print_confusion(to_categorical(labels[i, ...]), predicted)
 

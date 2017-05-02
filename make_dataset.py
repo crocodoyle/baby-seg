@@ -72,5 +72,20 @@ def make_iseg():
 
     return
 
+def convert_to_nifti():
+    training_dir = 'E:/baby-seg/training/'
+    testing_dir = 'E:/baby-seg/testing/'
+
+    affine = np.eye(4)
+    for filename in os.listdir(testing_dir):
+        if 'img' in filename:
+            basename = filename[:-4]
+            data = nib.load(os.path.join(testing_dir, filename)).get_data()
+
+            img = nib.Nifti1Image(data, affine)
+            nib.save(img, basename + '.nii.gz')
+
+
 if __name__ == "__main__":
     make_iseg()
+    # convert_to_nifti()

@@ -101,19 +101,19 @@ def segmentation_model():
     pool3 = MaxPooling3D(pool_size=pool_size)(bn3)
 
     conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(pool3)
-    drop4 = Dropout(0.5)(conv4)
+    # drop4 = Dropout(0.5)(conv4)
     # bn4 = BatchNormalization()(drop4)
-    conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(drop4)
-    drop4 = Dropout(0.5)(conv4)
-    bn4 = BatchNormalization()(drop4)
+    conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(conv4)
+    # drop4 = Dropout(0.5)(conv4)
+    bn4 = BatchNormalization()(conv4)
     pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
 
     conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(pool4)
-    drop5 = Dropout(0.5)(conv5)
+    # drop5 = Dropout(0.5)(conv5)
     # bn5 = BatchNormalization()(drop5)
-    conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(drop5)
-    drop5 = Dropout(0.5)(conv5)
-    bn5 = BatchNormalization()(drop5)
+    conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(conv5)
+    # drop5 = Dropout(0.5)(conv5)
+    bn5 = BatchNormalization()(conv5)
 
     up8 = merge([UpSampling3D(size=pool_size)(bn5), bn4], mode='concat', concat_axis=concat_axis)
     conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(up8)
@@ -144,9 +144,9 @@ def segmentation_model():
 
     model = Model(input=[inputs], output=[conv14])
 
-    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
-    # sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-    # model.compile(optimizer=sgd, loss=dice_coef_loss, metrics=[dice_coef])
+    # model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
+    sgd = SGD(lr=0.01, decay=1e-7, momentum=0.9, nesterov=True)
+    model.compile(optimizer=sgd, loss=dice_coef_loss, metrics=[dice_coef])
 
     return model
 
@@ -167,7 +167,7 @@ def dice_coef(y_true, y_pred):
     for i, (c, w) in enumerate(zip(category_mapping, category_weight)):
         score += w*(2.0 * K.sum(y_true[..., i] * y_pred[..., i]) / (K.sum(y_true[..., i]) + K.sum(y_pred[..., i])))
 
-    return score
+    return score / np.sum(category_weight)
 
 def dice_coef_loss(y_true, y_pred):
     return -dice_coef(y_true, y_pred)

@@ -153,23 +153,20 @@ def segmentation_model():
 
     return model
 
-# def dice_coef(y_true, y_pred):
-#     """ DICE coefficient: 2TP / (2TP + FP + FN). An additional smoothness term is added to ensure no / 0
-#     :param y_true: True labels.
-#     :type: TensorFlow/Theano tensor.
-#     :param y_pred: Predictions.
-#     :type: TensorFlow/Theano tensor of the same shape as y_true.
-#     :return: Scalar DICE coefficient.
-#     """
-#     #exclude the background class from DICE calculation
-#
-#     y_true_f = K.flatten(y_true)
-#     y_pred_f = K.flatten(y_pred)
-#
-#     return dice(y_true_f, y_pred_f)
-#
-# def dice_coef_loss(y_true, y_pred):
-#     return -dice_coef(y_true, y_pred)
+def dice_coef(y_true, y_pred):
+    """ DICE coefficient: 2TP / (2TP + FP + FN). An additional smoothness term is added to ensure no / 0
+    :param y_true: True labels.
+    :type: TensorFlow/Theano tensor.
+    :param y_pred: Predictions.
+    :type: TensorFlow/Theano tensor of the same shape as y_true.
+    :return: Scalar DICE coefficient.
+    """
+    #exclude the background class from DICE calculation
+
+    return dice(y_true, y_pred)
+
+def dice_coef_loss(y_true, y_pred):
+    return -dice_coef(y_true, y_pred)
 
 def to_categorical(y):
     """Converts a class vector (integers) to binary class matrix.

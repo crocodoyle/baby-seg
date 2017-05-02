@@ -57,9 +57,13 @@ class ConfusionCallback(Callback):
     def on_batch_end(self, batch, logs={}):
         model = self.model
 
-        predicted = model.predict(model.validation_data[0], batch_size=1)
+        f = h5py.File(input_file)
+        images = f['images']
+        labels = f['labels']
+
+        predicted = model.predict(images[8,...][np.newaxis,...], batch_size=1)
         segmentation = from_categorical(predicted, category_mapping).flatten()
-        labels = from_categorical(model.validation_data[1]).flatten()
+        labels = from_categorical(labels[8,...]).flatten()
 
         conf = confusion_matrix(labels, segmentation)
         print(conf)
@@ -283,7 +287,6 @@ if __name__ == "__main__":
         segmentation = from_categorical(predicted, category_mapping)
         image = nib.Nifti1Image(segmentation, affine)
         nib.save(image, 'babylabels' + str(i) + '.nii.gz')
-
 
         print(labels[i,..., 0].shape, segmentation.shape)
         print('confusion matrix for', str(i))

@@ -250,7 +250,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices),
         len(training_indices),
-        epochs=5,
+        epochs=10,
         verbose=2,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices),

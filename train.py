@@ -165,7 +165,7 @@ def dice_coef(y_true, y_pred):
     category_weight = [0.05, 0.5, 1.0, 1.0]
 
     for i, (c, w) in enumerate(zip(category_mapping, category_weight)):
-        score += w*(2.0 * K.sum(y_true[..., i] * y_pred[..., i]) / K.sum(y_true[..., i]) + K.sum(y_pred[..., i]))
+        score += w*(2.0 * K.sum(y_true[..., i] * y_pred[..., i]) / (K.sum(y_true[..., i]) + K.sum(y_pred[..., i])))
 
     return score
 

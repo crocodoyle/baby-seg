@@ -48,6 +48,24 @@ input_file = scratch_dir + 'baby-seg.hdf5'
 category_mapping = [0, 10, 150, 250]
 img_shape = (144, 192, 256)
 
+
+class ConfusionCallback(K.callbacks.Callback):
+
+    def on_train_begin(self, logs={}):
+        self.confusion = []
+
+    def on_batch_end(self, batch, logs={}):
+        model = self.model
+
+        predicted = model.predict(model.validation_data[0], batch_size=1)
+        segmentation = from_categorical(predicted, category_mapping).flatten()
+        labels = from_categorical(model.validation_data[1]).flatten()
+
+        conf = confusion_matrix(labels, segmentation)
+        print(conf)
+
+        self.confusion.append(conf)
+
 def segmentation_model():
     """
     3D U-net model, using very small convolutional kernels
@@ -247,12 +265,14 @@ if __name__ == "__main__":
     model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_categorical_accuracy", verbose=0,
                                        save_best_only=True, save_weights_only=False, mode='auto')
 
+    confusion_callback = ConfusionCallback()
+
     hist = model.fit_generator(
         batch(training_indices),
         len(training_indices),
         epochs=10,
         verbose=1,
-        callbacks=[model_checkpoint],
+        callbacks=[model_checkpoint, confusion_callback],
         validation_data=batch(validation_indices),
         validation_steps=1)
 

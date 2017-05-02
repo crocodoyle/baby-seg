@@ -48,7 +48,6 @@ input_file = scratch_dir + 'baby-seg.hdf5'
 category_mapping = [0, 10, 150, 250]
 img_shape = (144, 192, 256)
 
-
 class ConfusionCallback(Callback):
 
     def on_train_begin(self, logs={}):
@@ -170,7 +169,6 @@ def dice_coef(y_true, y_pred):
     for i, (c, w) in enumerate(zip(category_mapping, category_weight)):
         score += w*(2.0 * K.sum(y_true[..., i] * y_pred[..., i]) / K.sum(y_true[..., i]) + K.sum(y_pred[..., i]))
 
-
     return score
 
 def dice_coef_loss(y_true, y_pred):
@@ -194,7 +192,7 @@ def to_categorical(y):
     categorical = np.zeros(cat_shape, dtype='b')
 
     for i, cat in enumerate(categories):
-        categorical[..., i] = np.equal(y[..., 0], np.ones(cat_shape)*cat)
+        categorical[..., i] = np.equal(y[..., 0], np.ones(np.shape(y[..., 0]))*cat)
         # categorical[y == cat] = 1
 
     return categorical
@@ -228,7 +226,6 @@ def batch(indices):
     while True:
         np.random.shuffle(indices)
         for i in indices:
-
             try:
                 label = to_categorical(labels[i, ...])
                 yield (images[i, ...][np.newaxis, ...], label[np.newaxis, ...])

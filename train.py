@@ -123,7 +123,7 @@ def segmentation_model():
 
     #model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
     sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-    model.compile(optimizer=sgd, loss=dice_coef_loss, metrics=[dice_coef])
+    model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['categorical_accuracy'])
 
     return model
 
@@ -244,7 +244,7 @@ if __name__ == "__main__":
     model = segmentation_model()
     model.summary()
 
-    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_dice_coef", verbose=0,
+    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_categorical_crossentropy", verbose=0,
                                        save_best_only=True, save_weights_only=False, mode='auto')
     hist = model.fit_generator(
         batch(training_indices),
@@ -269,4 +269,4 @@ if __name__ == "__main__":
         print_confusion(labels[i, ..., 0].flatten(), segmentation.flatten())
 
 
-    visualize_training_dice(hist)
+    # visualize_training_dice(hist)

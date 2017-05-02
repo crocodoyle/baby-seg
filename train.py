@@ -63,10 +63,6 @@ class ConfusionCallback(Callback):
         predicted = model.predict(images[8,...][np.newaxis, ...], batch_size=1)
         segmentation = from_categorical(predicted, category_mapping).flatten()
 
-        for s in segmentation:
-            if not s == 0:
-                print(s)
-
         conf = confusion_matrix(labels[8,...,0].flatten(), segmentation)
         print('confusion matrix:', category_mapping)
         print(conf)

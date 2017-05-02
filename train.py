@@ -64,8 +64,10 @@ class ConfusionCallback(Callback):
         segmentation = from_categorical(predicted, category_mapping).flatten()
 
         conf = confusion_matrix(labels[8,...,0].flatten(), segmentation)
+        print("------")
         print('confusion matrix:', category_mapping)
         print(conf)
+        print("------")
 
         self.confusion.append(conf)
 
@@ -142,9 +144,9 @@ def segmentation_model():
 
     model = Model(input=[inputs], output=[conv14])
 
-    #model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
-    sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-    model.compile(optimizer=sgd, loss=dice_coef_loss, metrics=[dice_coef])
+    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
+    # sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
+    # model.compile(optimizer=sgd, loss=dice_coef_loss, metrics=[dice_coef])
 
     return model
 

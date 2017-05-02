@@ -246,10 +246,11 @@ if __name__ == "__main__":
 
     model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_categorical_accuracy", verbose=0,
                                        save_best_only=True, save_weights_only=False, mode='auto')
+
     hist = model.fit_generator(
         batch(training_indices),
         len(training_indices),
-        epochs=2,
+        epochs=5,
         verbose=2,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices),

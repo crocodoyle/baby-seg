@@ -2,7 +2,7 @@ from keras.models import Model
 from keras.layers import Input, Dense, Dropout, Activation, Convolution2D, MaxPooling2D, Flatten, BatchNormalization, \
     SpatialDropout2D, merge, Reshape
 from keras.layers import Conv3D, MaxPooling3D, SpatialDropout3D, UpSampling3D
-from keras.layers.merge import Concatenate
+# from keras.layers.merge import Concatenate
 from keras.optimizers import SGD, Adam
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 # from keras.utils.visualize_util import plot
@@ -10,6 +10,9 @@ from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 from keras import backend as K
 
 import tensorflow as tf
+
+from sklearn.metrics import confusion_matrix
+
 
 # configures TensorFlow to not try to grab all the GPU memory
 config = tf.ConfigProto(allow_soft_placement=True)
@@ -193,6 +196,25 @@ def batch(indices):
             except ValueError:
                 yield (images[i, ...][np.newaxis, ...])
 
+def visualize_training_dice(hist):
+    epoch_num = range(len(hist.history['dice_coef']))
+    dice_train = np.array(hist.history['dice_coef'])
+    dice_val = np.array(hist.history['val_dice_coef'])
+
+    plt.clf()
+    plt.plot(epoch_num, dice_train, label='DICE Score Training')
+    plt.plot(epoch_num, dice_val, label="DICE Score Validation")
+    plt.legend(shadow=True)
+    plt.xlabel("Training Epoch Number")
+    plt.ylabel("Score")
+    plt.savefig(scratch_dir + 'results.png')
+    plt.close()
+
+def print_confusion(y_true, y_pred):
+    conf = confusion_matrix(y_true, y_pred)
+
+    print(conf)
+
 if __name__ == "__main__":
     f = h5py.File(input_file)
     images = f['images']
@@ -218,7 +240,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices),
         len(training_indices),
-        epochs=1,
+        epochs=3,
         verbose=1,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices),
@@ -226,31 +248,12 @@ if __name__ == "__main__":
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
 
-    #test image
-    predicted = model.predict_generator(batch(testing_indices), steps=1, verbose=1)
-    print('predictions:', np.sum(predicted[...,0]), np.sum(predicted[..., 1]), np.sum(predicted[...,2]), np.sum(predicted[...,3]))
+    for i in training_indices + validation_indices + testing_indices:
+        predicted = model.predict(images[i,...][np.newaxis, ...], batch_size=1)
+        segmentation = from_categorical(predicted, category_mapping)
+        image = nib.Nifti1Image(segmentation, affine)
+        nib.save(image, 'babylabels' + str(0) + '.nii.gz')
 
-    segmentation = from_categorical(predicted, category_mapping)
-    print('segmentation shape:', np.shape(segmentation))
-    test_img = nib.Nifti1Image(segmentation, affine)
-    nib.save(test_img, 'test_image_segmentation.nii.gz')
+        print('confusion matrix for', str(i))
+        print_confusion(labels[i,...], to_categorical(labels[i, ...]))
 
-    #validation image
-    predicted = model.predict_generator(batch(validation_indices), steps=1, verbose=1)
-
-    segmentation = from_categorical(predicted, category_mapping)
-    val_image = nib.Nifti1Image(segmentation, affine)
-    nib.save(val_image, 'val_image_segmentation.nii.gz')
-
-    epoch_num = range(len(hist.history['dice_coef']))
-    dice_train = np.array(hist.history['dice_coef'])
-    dice_val = np.array(hist.history['val_dice_coef'])
-
-    plt.clf()
-    plt.plot(epoch_num, dice_train, label='DICE Score Training')
-    plt.plot(epoch_num, dice_val, label="DICE Score Validation")
-    plt.legend(shadow=True)
-    plt.xlabel("Training Epoch Number")
-    plt.ylabel("Score")
-    plt.savefig(scratch_dir + 'results.png')
-    plt.close()

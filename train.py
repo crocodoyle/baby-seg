@@ -42,6 +42,9 @@ import argparse
 scratch_dir = '/data1/data/iSeg-2017/'
 input_file = scratch_dir + 'baby-seg.hdf5'
 
+category_mapping = [0, 10, 150, 250]
+
+
 def segmentation_model():
     """
     3D U-net model, using very small convolutional kernels
@@ -130,8 +133,12 @@ def dice_coef(y_true, y_pred):
     :return: Scalar DICE coefficient.
     """
     #exclude the background class from DICE calculation
-    y_true_f = K.flatten(y_true)
-    y_pred_f = K.flatten(y_pred)
+
+    y_true_labels = from_categorical(y_true, category_mapping)
+    y_pred_labels = from_categorical(y_pred, category_mapping)
+
+    y_true_f = K.flatten(y_true_labels)
+    y_pred_f = K.flatten(y_pred_labels)
 
     intersection = K.sum(y_true_f * y_pred_f)
     return (2. * intersection) / (K.sum(y_true_f) + K.sum(y_pred_f))
@@ -240,12 +247,10 @@ if __name__ == "__main__":
 
     model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_dice_coef", verbose=0,
                                        save_best_only=True, save_weights_only=False, mode='auto')
-    category_mapping = [0, 10, 250, 150]
-
     hist = model.fit_generator(
         batch(training_indices),
         len(training_indices),
-        epochs=3,
+        epochs=100,
         verbose=1,
         callbacks=[model_checkpoint],
         validation_data=batch(validation_indices),
@@ -265,4 +270,4 @@ if __name__ == "__main__":
         print_confusion(labels[i, ..., 0].flatten(), segmentation.flatten())
 
 
-    # visualize_training_dice(hist)
+    visualize_training_dice(hist)

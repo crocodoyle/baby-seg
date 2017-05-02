@@ -130,8 +130,8 @@ def dice_coef(y_true, y_pred):
     :return: Scalar DICE coefficient.
     """
     #exclude the background class from DICE calculation
-    y_true_f = K.flatten(y_true[..., 1:])
-    y_pred_f = K.flatten(y_pred[..., 1:])
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
 
     intersection = K.sum(y_true_f * y_pred_f)
     return (2. * intersection) / (K.sum(y_true_f) + K.sum(y_pred_f))
@@ -237,14 +237,14 @@ if __name__ == "__main__":
                                        save_best_only=True, save_weights_only=False, mode='auto')
     category_mapping = [0, 10, 250, 150]
 
-    # hist = model.fit_generator(
-    #     batch(training_indices),
-    #     len(training_indices),
-    #     epochs=3,
-    #     verbose=1,
-    #     callbacks=[model_checkpoint],
-    #     validation_data=batch(validation_indices),
-    #     validation_steps=1)
+    hist = model.fit_generator(
+        batch(training_indices),
+        len(training_indices),
+        epochs=3,
+        verbose=1,
+        callbacks=[model_checkpoint],
+        validation_data=batch(validation_indices),
+        validation_steps=1)
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
 

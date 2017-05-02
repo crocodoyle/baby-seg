@@ -248,12 +248,14 @@ if __name__ == "__main__":
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
 
-    for i in training_indices + validation_indices + testing_indices:
+    for i in list(training_indices) + list(validation_indices) + list(testing_indices):
         predicted = model.predict(images[i,...][np.newaxis, ...], batch_size=1)
         segmentation = from_categorical(predicted, category_mapping)
         image = nib.Nifti1Image(segmentation, affine)
         nib.save(image, 'babylabels' + str(0) + '.nii.gz')
 
+
+        print(labels[i,...].shape, segmentation.shape)
         print('confusion matrix for', str(i))
         print_confusion(labels[i, ...], segmentation)
 

@@ -134,8 +134,8 @@ def dice_coef(y_true, y_pred):
     """
     #exclude the background class from DICE calculation
 
-    y_true_labels = from_categorical(y_true[np.newaxis, ...], category_mapping)
-    y_pred_labels = from_categorical(y_pred[np.newaxis, ...], category_mapping)
+    y_true_labels = from_categorical(y_true[np.newaxis, ..., np.newaxis], category_mapping)
+    y_pred_labels = from_categorical(y_pred[np.newaxis, ..., np.newaxis], category_mapping)
 
     y_true_f = K.flatten(y_true_labels)
     y_pred_f = K.flatten(y_pred_labels)

@@ -75,7 +75,7 @@ class ConfusionCallback(Callback):
             y_true = labels[i,...,0].flatten()
             y_pred = segmentation.flatten()
 
-            dice = dice_coef(to_categorical(y_true), predicted)
+            dice = dice_coef(to_categorical(labels[i,...]), predicted)
             print('DICE for', str(i), dice)
 
             conf += confusion_matrix(y_true, y_pred)

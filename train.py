@@ -120,7 +120,7 @@ def segmentation_model():
     bn5 = BatchNormalization()(drop5)
 
     up8 = UpSampling3D(size=pool_size)(bn5)
-    concat8 = Concatenate([up8, bn4])
+    concat8 = concatenate([up8, bn4])
     conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(concat8)
     conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(conv8)
     bn8 = BatchNormalization()(conv8)

@@ -65,18 +65,20 @@ class ConfusionCallback(Callback):
             predicted = model.predict(images[i,...][np.newaxis, ...], batch_size=1)
             segmentation = from_categorical(predicted, category_mapping)
 
+            classes = model.predict_classes(images[i,...][np.newaxis, ...], batch_size=1)
+
+            vals, bins = np.histogram(classes)
+            print('histogram values/bins:', vals, bins)
+
             # vals, bins = np.histogram(segmentation)
             # print('histogram values:', vals)
             # print('bin edges:', bins)
 
-
-
-
             y_true = labels[i,...,0].flatten()
             y_pred = segmentation.flatten()
 
-            dice = dice_coef(to_categorical(labels[i,...]).flatten(), predicted.flatten())
-            print('DICE for', str(i), dice)
+            # dice = dice_coef(to_categorical(labels[i,...]).flatten(), predicted.flatten())
+            # print('DICE for', str(i), dice)
 
             conf += confusion_matrix(y_true, y_pred)
 

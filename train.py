@@ -63,12 +63,13 @@ class ConfusionCallback(Callback):
         print('\n')
         for i in range(8):
             predicted = model.predict(images[i,...][np.newaxis, ...], batch_size=1)
+
+            vals, bins = np.histogram(predicted)
+            print('histogram values/bins:', vals, bins)
+
             segmentation = from_categorical(predicted, category_mapping)
 
-            classes = model.predict_classes(images[i,...][np.newaxis, ...], batch_size=1)
 
-            vals, bins = np.histogram(classes)
-            print('histogram values/bins:', vals, bins)
 
             # vals, bins = np.histogram(segmentation)
             # print('histogram values:', vals)

@@ -63,25 +63,16 @@ class ConfusionCallback(Callback):
         print('\n')
         for i in range(8):
             predicted = model.predict(images[i,...][np.newaxis, ...], batch_size=1)
-
-            # vals, bins = np.histogram(predicted)
-            # print('histogram values/bins:', vals, bins)
-
             segmentation = from_categorical(predicted, category_mapping)
 
-
-
-            # vals, bins = np.histogram(segmentation)
-            # print('histogram values:', vals)
-            # print('bin edges:', bins)
+            print('shapes:', predicted.shape, segmentation.shape)
 
             y_true = labels[i,...,0].flatten()
             y_pred = segmentation.flatten()
 
-            # dice = dice_coef(to_categorical(labels[i,...]).flatten(), predicted.flatten())
-            # print('DICE for', str(i), dice)
+            conf = confusion_matrix(y_true, y_pred)
 
-            conf += confusion_matrix(y_true, y_pred)
+            print(conf)
 
         print("------")
         print('confusion matrix:', category_mapping)
@@ -230,10 +221,7 @@ def from_categorical(categorical, category_mapping):
     segmentation = np.zeros(img_shape, dtype='uint8')
 
     for i, cat in enumerate(category_mapping):
-        indices = cat_img == i
-        print('indices shape', indices[0].shape)
-        print('indices:', indices)
-        segmentation[indices] = cat
+        segmentation[cat_img == i] = cat
 
     return cat_img
 

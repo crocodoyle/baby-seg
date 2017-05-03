@@ -230,7 +230,7 @@ def from_categorical(categorical, category_mapping):
     segmentation = np.zeros(img_shape, dtype='uint8')
 
     for i, cat in enumerate(category_mapping):
-        indices = cat_img[1:] == i
+        indices = cat_img == i
         print('indices', indices[0].shape)
         segmentation[indices] = cat
 

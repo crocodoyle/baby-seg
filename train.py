@@ -2,7 +2,7 @@ from keras.models import Model
 from keras.layers import Input, Dense, Dropout, Activation, Convolution2D, MaxPooling2D, Flatten, BatchNormalization, \
     SpatialDropout2D, merge, Reshape
 from keras.layers import Conv3D, MaxPooling3D, SpatialDropout3D, UpSampling3D
-# from keras.layers.merge import Concatenate
+from keras.layers.merge import Concatenate
 from keras.optimizers import SGD, Adam
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 # from keras.utils.visualize_util import plot
@@ -106,34 +106,34 @@ def segmentation_model():
     conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(conv4)
     # drop4 = Dropout(0.5)(conv4)
     bn4 = BatchNormalization()(conv4)
-    pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
+    # pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
 
-    conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(pool4)
-    # drop5 = Dropout(0.5)(conv5)
-    # bn5 = BatchNormalization()(drop5)
-    conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(conv5)
-    # drop5 = Dropout(0.5)(conv5)
-    bn5 = BatchNormalization()(conv5)
-
-    up8 = merge([UpSampling3D(size=pool_size)(bn5), bn4], mode='concat', concat_axis=concat_axis)
-    conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(up8)
+    # conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(pool4)
+    # # drop5 = Dropout(0.5)(conv5)
+    # # bn5 = BatchNormalization()(drop5)
+    # conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(conv5)
+    # # drop5 = Dropout(0.5)(conv5)
+    # bn5 = BatchNormalization()(conv5)
+    #
+    # up8 = Concatenate([UpSampling3D(size=pool_size)(bn5), bn4], axis=concat_axis)
+    # conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(up8)
+    # # bn8 = BatchNormalization()(conv8)
+    # conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(conv8)
     # bn8 = BatchNormalization()(conv8)
-    conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(conv8)
-    bn8 = BatchNormalization()(conv8)
 
-    up9 = merge([UpSampling3D(size=pool_size)(bn8), bn3], mode='concat', concat_axis=concat_axis)
+    up9 = Concatenate([UpSampling3D(size=pool_size)(bn4), bn3], axis=concat_axis)
     conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(up9)
     # bn9 = BatchNormalization()(conv9)
     conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(conv9)
     bn9 = BatchNormalization()(conv9)
 
-    up10 = merge([UpSampling3D(size=pool_size)(bn9), bn2], mode='concat', concat_axis=concat_axis)
+    up10 = Concatenate([UpSampling3D(size=pool_size)(bn9), bn2], mode='concat', axis=concat_axis)
     conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(up10)
     # bn10 = BatchNormalization()(conv10)
     conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(conv10)
     bn10 = BatchNormalization()(conv10)
 
-    up11 = merge([UpSampling3D(size=pool_size)(bn10), bn1], mode='concat', concat_axis=concat_axis)
+    up11 = Concatenate([UpSampling3D(size=pool_size)(bn10), bn1], mode='concat', axis=concat_axis)
     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(up11)
     # bn11 = BatchNormalization()(conv11)
     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(conv11)

@@ -64,8 +64,8 @@ class ConfusionCallback(Callback):
         for i in range(8):
             predicted = model.predict(images[i,...][np.newaxis, ...], batch_size=1)
 
-            vals, bins = np.histogram(predicted)
-            print('histogram values/bins:', vals, bins)
+            # vals, bins = np.histogram(predicted)
+            # print('histogram values/bins:', vals, bins)
 
             segmentation = from_categorical(predicted, category_mapping)
 
@@ -224,15 +224,17 @@ def from_categorical(categorical, category_mapping):
     :return:
     """
     # img_shape = np.shape(categorical)[1:-1]
-    # cat_img = np.argmax(np.squeeze(categorical), axis=3)
+    cat_img = np.argmax(np.squeeze(categorical[1:]), axis=3)
 
-    segmentation = np.zeros(img_shape, dtype='uint8')
+    # segmentation = np.zeros(img_shape, dtype='uint8')
+    #
+    # for i, cat in enumerate(category_mapping):
+    #
+    #
+    #     indices = np.equal(categorical[0, :, :, :, i], np.ones(img_shape))
+    #     segmentation[indices] = cat
 
-    for i, cat in enumerate(category_mapping):
-        indices = np.equal(categorical[0, :, :, :, i], np.ones(img_shape))
-        segmentation[indices] = cat
-
-    return segmentation
+    return cat_img
 
 def batch(indices):
     """

@@ -121,19 +121,19 @@ def segmentation_model():
     # conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(conv8)
     # bn8 = BatchNormalization()(conv8)
 
-    up9 = Concatenate([UpSampling3D(size=pool_size)(bn4), bn3], axis=concat_axis)
+    up9 = Concatenate([UpSampling3D(size=pool_size)(bn4), bn3])
     conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(up9)
     # bn9 = BatchNormalization()(conv9)
     conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(conv9)
     bn9 = BatchNormalization()(conv9)
 
-    up10 = Concatenate([UpSampling3D(size=pool_size)(bn9), bn2], mode='concat', axis=concat_axis)
+    up10 = Concatenate([UpSampling3D(size=pool_size)(bn9), bn2])
     conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(up10)
     # bn10 = BatchNormalization()(conv10)
     conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(conv10)
     bn10 = BatchNormalization()(conv10)
 
-    up11 = Concatenate([UpSampling3D(size=pool_size)(bn10), bn1], mode='concat', axis=concat_axis)
+    up11 = Concatenate([UpSampling3D(size=pool_size)(bn10), bn1])
     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(up11)
     # bn11 = BatchNormalization()(conv11)
     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(conv11)

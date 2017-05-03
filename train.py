@@ -70,6 +70,7 @@ class ConfusionCallback(Callback):
             y_true = labels[i,...,0].flatten()
             y_pred = segmentation.flatten()
 
+            print(set(y_true), set(y_pred))
             conf = confusion_matrix(y_true, y_pred)
 
             print(conf)
@@ -222,6 +223,8 @@ def from_categorical(categorical, category_mapping):
 
     for i, cat in enumerate(category_mapping):
         segmentation[cat_img == i] = cat
+
+
 
     return cat_img
 

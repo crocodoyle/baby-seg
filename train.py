@@ -131,16 +131,16 @@ def segmentation_model():
 
     up10 = UpSampling3D(size=pool_size)(bn9)
     concat10 = concatenate([up10, bn2])
-    conv10 = Conv3D(64, conv_size, activation='relu', padding='same')(up10)
+    conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(up10)
     # bn10 = BatchNormalization()(conv10)
-    conv10 = Conv3D(64, conv_size, activation='relu', padding='same')(conv10)
+    conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(conv10)
     bn10 = BatchNormalization()(conv10)
 
     up11 = UpSampling3D(size=pool_size)(bn10)
     concat11 = concatenate([up11, bn1])
-    conv11 = Conv3D(32, conv_size, activation='relu', padding='same')(up11)
+    conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(up11)
     # bn11 = BatchNormalization()(conv11)
-    conv11 = Conv3D(32, conv_size, activation='relu', padding='same')(conv11)
+    conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(conv11)
     bn11 = BatchNormalization()(conv11)
 
     # need as many output channel as tissue classes

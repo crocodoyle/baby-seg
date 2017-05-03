@@ -70,7 +70,7 @@ class ConfusionCallback(Callback):
 
             conf = confusion_matrix(y_true, y_pred)
 
-            print(conf)
+            # print(conf)
 
         print("------")
         print('confusion matrix:', category_mapping)
@@ -97,37 +97,34 @@ def segmentation_model():
     pool1 = MaxPooling3D(pool_size=pool_size)(bn1)
 
     conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(pool1)
-    # bn2 = BatchNormalization()(conv2)
     conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(conv2)
     bn2 = BatchNormalization()(conv2)
     pool2 = MaxPooling3D(pool_size=pool_size)(bn2)
 
     conv3 = Conv3D(64, conv_size, activation='relu', padding='same')(pool2)
-    # bn3 = BatchNormalization()(conv3)
     conv3 = Conv3D(64, conv_size, activation='relu', padding='same')(conv3)
     bn3 = BatchNormalization()(conv3)
     pool3 = MaxPooling3D(pool_size=pool_size)(bn3)
 
-    conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(pool3)
-    # drop4 = Dropout(0.5)(conv4)
-    # bn4 = BatchNormalization()(drop4)
-    conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(conv4)
-    # drop4 = Dropout(0.5)(conv4)
-    bn4 = BatchNormalization()(conv4)
-    # pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
+    conv4 = Conv3D(128, conv_size, activation='relu', padding='same')(pool3)
+    drop4 = Dropout(0.5)(conv4)
+    conv4 = Conv3D(128, conv_size, activation='relu', padding='same')(drop4)
+    drop4 = Dropout(0.5)(conv4)
+    bn4 = BatchNormalization()(drop4)
+    pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
 
-    # conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(pool4)
-    # # drop5 = Dropout(0.5)(conv5)
-    # # bn5 = BatchNormalization()(drop5)
-    # conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(conv5)
-    # # drop5 = Dropout(0.5)(conv5)
-    # bn5 = BatchNormalization()(conv5)
-    #
-    # up8 = Concatenate([UpSampling3D(size=pool_size)(bn5), bn4], axis=concat_axis)
-    # conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(up8)
-    # # bn8 = BatchNormalization()(conv8)
-    # conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(conv8)
+    conv5 = Conv3D(128, conv_size, activation='relu', padding='same')(pool4)
+    drop5 = Dropout(0.5)(conv5)
+    conv5 = Conv3D(128, conv_size, activation='relu', padding='same')(drop5)
+    drop5 = Dropout(0.5)(conv5)
+    bn5 = BatchNormalization()(drop5)
+
+    up8 = UpSampling3D(size=pool_size)(bn5)
+    concat8 = Concatenate([up8, bn4])
+    conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(concat8)
     # bn8 = BatchNormalization()(conv8)
+    conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(conv8)
+    bn8 = BatchNormalization()(conv8)
 
     up9 = UpSampling3D(size=pool_size)(bn4)
     concat9 = concatenate([up9, bn3])
@@ -173,7 +170,7 @@ def dice_coef(y_true, y_pred):
 
     score = 0
 
-    category_weight = [0.1, 0.5, 1.0, 1.0]
+    category_weight = [0.001, 0.4, 1.0, 1.0]
 
     for i, (c, w) in enumerate(zip(category_mapping, category_weight)):
         score += w*(2.0 * K.sum(y_true[..., i] * y_pred[..., i]) / (K.sum(y_true[..., i]) + K.sum(y_pred[..., i])))

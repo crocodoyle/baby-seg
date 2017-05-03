@@ -37,9 +37,6 @@ import matplotlib.pyplot as plt
 
 from sklearn.model_selection import ShuffleSplit
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics.pairwise import pairwise_distances
-
-from scipy.spatial.distance import dice
 
 import argparse
 
@@ -68,11 +65,20 @@ class ConfusionCallback(Callback):
             predicted = model.predict(images[i,...][np.newaxis, ...], batch_size=1)
             segmentation = from_categorical(predicted, category_mapping)
 
-            vals, bins = np.histogram(segmentation)
-            print('histogram values:', vals)
-            print('bin edges:', bins)
+            # vals, bins = np.histogram(segmentation)
+            # print('histogram values:', vals)
+            # print('bin edges:', bins)
 
-            conf += confusion_matrix(labels[i,...,0].flatten(), segmentation.flatten())
+
+
+
+            y_true = labels[i,...,0].flatten()
+            y_pred = segmentation.flatten()
+
+            dice = dice_coef(y_true, y_pred)
+            print('DICE for', str(i), dice)
+
+            conf += confusion_matrix(y_true, y_pred)
 
         print("------")
         print('confusion matrix:', category_mapping)

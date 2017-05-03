@@ -148,9 +148,9 @@ def segmentation_model():
 
     model = Model(input=[inputs], output=[conv14])
 
-    # model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
-    sgd = SGD(lr=0.0001, decay=1e-7, momentum=0.9, nesterov=True)
-    model.compile(optimizer=sgd, loss=dice_coef_loss, metrics=[dice_coef])
+    model.compile(optimizer=Adam(lr=1e-4), loss=dice_coef_loss, metrics=[dice_coef])
+    # sgd = SGD(lr=0.0001, decay=1e-7, momentum=0.9, nesterov=True)
+    # model.compile(optimizer=sgd, loss=dice_coef_loss, metrics=[dice_coef])
 
     return model
 

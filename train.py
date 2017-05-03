@@ -224,9 +224,7 @@ def from_categorical(categorical, category_mapping):
     for i, cat in enumerate(category_mapping):
         segmentation[cat_img == i] = cat
 
-
-
-    return cat_img
+    return segmentation
 
 def batch(indices):
     """

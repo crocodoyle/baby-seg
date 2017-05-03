@@ -292,7 +292,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices),
         len(training_indices),
-        epochs=10,
+        epochs=30,
         verbose=1,
         callbacks=[model_checkpoint, confusion_callback],
         validation_data=batch(validation_indices),

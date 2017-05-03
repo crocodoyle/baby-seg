@@ -72,7 +72,7 @@ class ConfusionCallback(Callback):
             print('histogram values:', vals)
             print('bin edges:', bins)
 
-            conf += confusion_matrix(labels[i,...,0].flatten(), segmentation)
+            conf += confusion_matrix(labels[i,...,0].flatten(), segmentation.flatten())
 
         print("------")
         print('confusion matrix:', category_mapping)

@@ -231,7 +231,8 @@ def from_categorical(categorical, category_mapping):
 
     for i, cat in enumerate(category_mapping):
         indices = cat_img == i
-        print('indices', indices[0].shape)
+        print('indices shape', indices[0].shape)
+        print('indices:', indices)
         segmentation[indices] = cat
 
     return cat_img

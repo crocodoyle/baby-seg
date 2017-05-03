@@ -165,7 +165,7 @@ def dice_coef(y_true, y_pred):
 
     score = 0
 
-    category_weight = [0.00001, 0.1, 1.0, 1.0]
+    category_weight = [0.000001, 1.0, 1.0, 1.0]
 
     for i, (c, w) in enumerate(zip(category_mapping, category_weight)):
         score += w*(2.0 * K.sum(y_true[..., i] * y_pred[..., i]) / (K.sum(y_true[..., i]) + K.sum(y_pred[..., i])))
@@ -281,7 +281,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices),
         len(training_indices),
-        epochs=500,
+        epochs=1000,
         verbose=1,
         callbacks=[model_checkpoint, confusion_callback],
         validation_data=batch(validation_indices),

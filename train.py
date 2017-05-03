@@ -165,7 +165,7 @@ def dice_coef(y_true, y_pred):
 
     score = 0
 
-    category_weight = [0.001, 0.4, 1.0, 1.0]
+    category_weight = [0.00001, 0.1, 1.0, 1.0]
 
     for i, (c, w) in enumerate(zip(category_mapping, category_weight)):
         score += w*(2.0 * K.sum(y_true[..., i] * y_pred[..., i]) / (K.sum(y_true[..., i]) + K.sum(y_pred[..., i])))
@@ -207,7 +207,6 @@ def from_categorical(categorical, category_mapping):
     img_shape = np.shape(categorical)[1:-1]
     cat_img = np.argmax(np.squeeze(categorical), axis=-1)
 
-    print('cat num img:', cat_img.shape)
     segmentation = np.zeros(img_shape, dtype='uint8')
 
     for i, cat in enumerate(category_mapping):
@@ -282,7 +281,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices),
         len(training_indices),
-        epochs=30,
+        epochs=500,
         verbose=1,
         callbacks=[model_checkpoint, confusion_callback],
         validation_data=batch(validation_indices),

@@ -226,12 +226,12 @@ def from_categorical(categorical, category_mapping):
     img_shape = np.shape(categorical)[1:-1]
     cat_img = np.argmax(np.squeeze(categorical[1:]), axis=-1)
 
-
+    print('cat num img:', cat_img.shape)
     segmentation = np.zeros(img_shape, dtype='uint8')
 
     for i, cat in enumerate(category_mapping):
         indices = cat_img == i
-        print('indices', indices)
+        print('indices', indices[0].shape)
         segmentation[indices] = cat
 
     return cat_img

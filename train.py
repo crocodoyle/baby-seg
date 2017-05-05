@@ -93,17 +93,20 @@ def segmentation_model():
 
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(inputs)
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(conv1)
-    bn1 = BatchNormalization()(conv1)
+    drop1 = Dropout(0.5)(conv1)
+    bn1 = BatchNormalization()(drop1)
     pool1 = MaxPooling3D(pool_size=pool_size)(bn1)
 
     conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(pool1)
     conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(conv2)
-    bn2 = BatchNormalization()(conv2)
+    drop2 = Dropout(0.5)(conv2)
+    bn2 = BatchNormalization()(drop2)
     pool2 = MaxPooling3D(pool_size=pool_size)(bn2)
 
     conv3 = Conv3D(64, conv_size, activation='relu', padding='same')(pool2)
     conv3 = Conv3D(64, conv_size, activation='relu', padding='same')(conv3)
-    bn3 = BatchNormalization()(conv3)
+    drop3 = Dropout(0.5)(conv3)
+    bn3 = BatchNormalization()(drop3)
     pool3 = MaxPooling3D(pool_size=pool_size)(bn3)
 
     conv4 = Conv3D(128, conv_size, activation='relu', padding='same')(pool3)
@@ -123,24 +126,29 @@ def segmentation_model():
     concat8 = concatenate([up8, bn4])
     conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(concat8)
     conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(conv8)
-    bn8 = BatchNormalization()(conv8)
+    drop8 = Dropout(0.5)(conv8)
+    bn8 = BatchNormalization()(drop8)
 
-    up9 = UpSampling3D(size=pool_size)(bn4)
+    up9 = UpSampling3D(size=pool_size)(bn8)
     concat9 = concatenate([up9, bn3])
     conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(concat9)
     conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(conv9)
-    bn9 = BatchNormalization()(conv9)
+    drop8 = Dropout(0.5)(conv9)
+    bn9 = BatchNormalization()(drop8)
 
     up10 = UpSampling3D(size=pool_size)(bn9)
     concat10 = concatenate([up10, bn2])
     conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(concat10)
     conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(conv10)
-    bn10 = BatchNormalization()(conv10)
+    drop10 = Dropout(0.5)(conv10)
+    bn10 = BatchNormalization()(drop10)
 
     up11 = UpSampling3D(size=pool_size)(bn10)
     concat11 = concatenate([up11, bn1])
     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(concat11)
-    bn11 = BatchNormalization()(conv11)
+    conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(conv11)
+    drop11 = Dropout(0.5)(conv11)
+    bn11 = BatchNormalization()(drop11)
 
     # need as many output channel as tissue classes
     conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='valid')(bn11)
@@ -273,7 +281,7 @@ if __name__ == "__main__":
     model = segmentation_model()
     model.summary()
 
-    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_dice_coef", verbose=0,
+    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="dice_coef", verbose=1,
                                        save_best_only=True, save_weights_only=False, mode='auto')
 
     confusion_callback = ConfusionCallback()

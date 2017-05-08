@@ -83,7 +83,6 @@ def segmentation_model():
     """
     3D U-net model, using very small convolutional kernels
     """
-    concat_axis = 4
     tissue_classes = 4
 
     conv_size = (3, 3, 3)
@@ -93,14 +92,12 @@ def segmentation_model():
 
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(inputs)
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(conv1)
-    drop1 = Dropout(0.1)(conv1)
-    bn1 = BatchNormalization()(drop1)
+    bn1 = BatchNormalization()(conv1)
     pool1 = MaxPooling3D(pool_size=pool_size)(bn1)
 
     conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(pool1)
     conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(conv2)
-    drop2 = Dropout(0.2)(conv2)
-    bn2 = BatchNormalization()(drop2)
+    bn2 = BatchNormalization()(conv2)
     pool2 = MaxPooling3D(pool_size=pool_size)(bn2)
 
     conv3 = Conv3D(32, conv_size, activation='relu', padding='same')(pool2)
@@ -138,15 +135,13 @@ def segmentation_model():
     concat10 = concatenate([up10, bn2])
     conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(concat10)
     conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(conv10)
-    drop10 = Dropout(0.2)(conv10)
-    bn10 = BatchNormalization()(drop10)
+    bn10 = BatchNormalization()(conv10)
 
     up11 = UpSampling3D(size=pool_size)(bn10)
     concat11 = concatenate([up11, bn1])
     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(concat11)
     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(conv11)
-    drop11 = Dropout(0.1)(conv11)
-    bn11 = BatchNormalization()(drop11)
+    bn11 = BatchNormalization()(conv11)
 
     # need as many output channel as tissue classes
     conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='valid')(bn11)

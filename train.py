@@ -22,7 +22,6 @@ session = tf.Session(config=config)
 K.set_session(session)
 
 import numpy as np
-import matplotlib.pyplot as plt
 import h5py
 import itertools
 import imageio
@@ -31,15 +30,10 @@ import imageio
 import os
 import nibabel as nib
 
-import pickle as pkl
-import csv
-from collections import OrderedDict
-
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 
-from sklearn.model_selection import ShuffleSplit
 from sklearn.metrics import confusion_matrix
 
 import argparse
@@ -358,7 +352,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices),
         len(training_indices),
-        epochs=30,
+        epochs=10,
         verbose=1,
         callbacks=[model_checkpoint, confusion_callback, segvis_callback],
         validation_data=batch(validation_indices),
@@ -371,7 +365,7 @@ if __name__ == "__main__":
         predicted = model.predict(images[i,...][np.newaxis, ...], batch_size=1)
         segmentation = from_categorical(predicted, category_mapping)
         image = nib.Nifti1Image(segmentation, affine)
-        nib.save(image, 'babylabels' + str(i) + '.nii.gz')
+        nib.save(image, 'babylabels' + str(i).zfill(2) + '.nii.gz')
 
         print(labels[i,..., 0].shape, segmentation.shape)
         print('confusion matrix for', str(i))

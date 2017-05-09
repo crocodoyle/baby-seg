@@ -106,8 +106,8 @@ def segmentation_model():
     bn3 = BatchNormalization()(drop3)
     pool3 = MaxPooling3D(pool_size=pool_size)(bn3)
 
-    conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(pool3)
-    conv4 = Conv3D(32, conv_size, activation='relu', padding='same')(conv4)
+    conv4 = Conv3D(32, conv_size, activation='relu', padding='same')(pool3)
+    conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(conv4)
     drop4 = Dropout(0.4)(conv4)
     bn4 = BatchNormalization()(drop4)
     pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
@@ -290,6 +290,7 @@ if __name__ == "__main__":
         validation_steps=1)
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
+    model.save(scratch_dir + 'unet-3d-iseg2017.hdf5')
 
     for i in training_indices + validation_indices + testing_indices:
         predicted = model.predict(images[i,...][np.newaxis, ...], batch_size=1)

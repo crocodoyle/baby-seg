@@ -129,6 +129,7 @@ def save_confusion_matrix(cm, classes, filename,
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
     """
+    plt.clf()
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
     plt.title(title)
     plt.colorbar()

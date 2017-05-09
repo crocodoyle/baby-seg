@@ -22,7 +22,11 @@ session = tf.Session(config=config)
 K.set_session(session)
 
 import numpy as np
+import matplotlib.pyplot as plt
 import h5py
+import itertools
+import imageio
+
 
 import os
 import nibabel as nib
@@ -46,26 +50,56 @@ input_file = scratch_dir + 'baby-seg.hdf5'
 category_mapping = [0, 10, 150, 250]
 img_shape = (144, 192, 256)
 
+class SegVisCallback(Callback):
+
+    def on_train_begin(self, logs={}):
+        self.segmentations = []
+
+        self.f = h5py.File(input_file)
+        self.images = f['images']
+
+    def on_epoch_end(self, batch, logs={}):
+        model = self.model
+
+        predicted = model.predict(self.images[0, ...][np.newaxis, ...], batch_size=1)
+        segmentation = from_categorical(predicted, category_mapping)
+
+        slice = segmentation[72, :, :]
+        self.segmentations.append(slice)
+
+    def on_train_end(self, logs={}):
+
+        for i, seg in enumerate(self.segmentations):
+            plt.imsave(seg, os.path.join(scratch_dir, 'segmentations', 'example_segmentation_' + str(i).zfill(4) + '.png'), seg)
+
+        images = []
+        for filename in os.listdir(os.path.join(scratch_dir, 'segmentations')):
+            if '.png' in filename:
+                images.append(plt.imread(os.path.join(scratch_dir, 'segmentations', filename)))
+
+        imageio.mimsave(os.path.join(scratch_dir, 'segmentations', 'segmentation.gif'), images)
+
+
 class ConfusionCallback(Callback):
 
     def on_train_begin(self, logs={}):
         self.confusion = []
 
+        self.f = h5py.File(input_file)
+        self.images = f['images']
+        self.labels = f['labels']
+
     def on_epoch_end(self, batch, logs={}):
         model = self.model
-
-        f = h5py.File(input_file)
-        images = f['images']
-        labels = f['labels']
 
         conf = np.zeros((len(category_mapping),len(category_mapping)))
 
         print('\n')
         for i in range(1):
-            predicted = model.predict(images[i,...][np.newaxis, ...], batch_size=1)
+            predicted = model.predict(self.images[i,...][np.newaxis, ...], batch_size=1)
             segmentation = from_categorical(predicted, category_mapping)
 
-            y_true = labels[i,...,0].flatten()
+            y_true = self.labels[i,...,0].flatten()
             y_pred = segmentation.flatten()
 
             conf = confusion_matrix(y_true, y_pred)
@@ -78,6 +112,51 @@ class ConfusionCallback(Callback):
         print("------")
 
         self.confusion.append(conf)
+
+    def on_train_end(self, logs={}):
+        tissue_classes = ["BG", "CSF", "GM", "WM"]
+
+        for epoch, conf in enumerate(self.confusion):
+            filename = os.path.join(scratch_dir, 'confusion', 'confusion_' + str(epoch).zfill(4) + '.png')
+            save_confusion_matrix(conf, tissue_classes, filename, normalize=True)
+
+        images = []
+        for filename in os.listdir(os.path.join(scratch_dir, 'confusion')):
+            if '.png' in filename and not 'results' in filename:
+                images.append(plt.imread(os.path.join(scratch_dir, 'confusion', filename)))
+
+            imageio.mimsave(os.path.join(scratch_dir, 'confusion', 'confusion.gif'), images)
+
+
+def save_confusion_matrix(cm, classes, filename,
+                          normalize=False,
+                          title='Confusion matrix',
+                          cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, cm[i, j],
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+    plt.imsave()
+
 
 def segmentation_model():
     """
@@ -248,11 +327,6 @@ def visualize_training_dice(hist):
     plt.savefig(scratch_dir + 'results.png')
     plt.close()
 
-def print_confusion(y_true, y_pred):
-    conf = confusion_matrix(y_true, y_pred)
-
-    print(conf)
-
 if __name__ == "__main__":
     f = h5py.File(input_file)
     images = f['images']
@@ -260,17 +334,17 @@ if __name__ == "__main__":
 
     output_shape = (144, 192, 256, 4)
 
-    training_indices = list(range(8))
-    validation_indices = [8]
-    testing_indices = [9]
+    training_indices = list(range(9))
+    validation_indices = [9]
+    testing_indices = list(range(10, 23))
 
     print('training images:', training_indices)
     print('validation images:', validation_indices)
     print('testing images:', testing_indices)
 
     affine = np.eye(4)
-    affine[0, 0] = -1
-    affine[1, 1] = -1
+    # affine[0, 0] = -1
+    # affine[1, 1] = -1
 
     model = segmentation_model()
     model.summary()
@@ -279,13 +353,14 @@ if __name__ == "__main__":
                                        save_best_only=True, save_weights_only=False, mode='max')
 
     confusion_callback = ConfusionCallback()
+    segvis_callback = SegVisCallback()
 
     hist = model.fit_generator(
         batch(training_indices),
         len(training_indices),
-        epochs=1000,
+        epochs=30,
         verbose=1,
-        callbacks=[model_checkpoint, confusion_callback],
+        callbacks=[model_checkpoint, confusion_callback, segvis_callback],
         validation_data=batch(validation_indices),
         validation_steps=1)
 
@@ -300,7 +375,6 @@ if __name__ == "__main__":
 
         print(labels[i,..., 0].shape, segmentation.shape)
         print('confusion matrix for', str(i))
-        print_confusion(labels[i, ..., 0].flatten(), segmentation.flatten())
-
+        print(confusion_matrix(labels[i, ..., 0].flatten(), segmentation.flatten()))
 
     visualize_training_dice(hist)

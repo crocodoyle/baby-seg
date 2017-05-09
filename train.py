@@ -14,7 +14,6 @@ import tensorflow as tf
 
 from sklearn.metrics import confusion_matrix
 
-
 # configures TensorFlow to not try to grab all the GPU memory
 config = tf.ConfigProto(allow_soft_placement=True)
 config.gpu_options.allow_growth = True
@@ -64,7 +63,7 @@ class SegVisCallback(Callback):
     def on_train_end(self, logs={}):
 
         for i, seg in enumerate(self.segmentations):
-            plt.imsave(seg, os.path.join(scratch_dir, 'segmentations', 'example_segmentation_' + str(i).zfill(4) + '.png'), seg)
+            plt.imsave(os.path.join(scratch_dir, 'segmentations', 'example_segmentation_' + str(i).zfill(4) + '.png'), seg)
 
         images = []
         for filename in os.listdir(os.path.join(scratch_dir, 'segmentations')):
@@ -149,8 +148,7 @@ def save_confusion_matrix(cm, classes, filename,
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    plt.imsave()
-
+    plt.savefig(filename, bbox_inches='tight')
 
 def segmentation_model():
     """

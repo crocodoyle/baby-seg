@@ -57,7 +57,7 @@ class SegVisCallback(Callback):
         predicted = model.predict(self.images[0, ...][np.newaxis, ...], batch_size=1)
         segmentation = from_categorical(predicted, category_mapping)
 
-        slice = segmentation[72, :, :]
+        slice = segmentation[:, :, 128]
         self.segmentations.append(slice)
 
     def on_train_end(self, logs={}):
@@ -66,7 +66,7 @@ class SegVisCallback(Callback):
             plt.imsave(os.path.join(scratch_dir, 'segmentations', 'example_segmentation_' + str(i).zfill(4) + '.png'), seg)
 
         images = []
-        for filename in os.listdir(os.path.join(scratch_dir, 'segmentations')):
+        for filename in os.listdir(os.path.join(scratch_dir, 'segmentations')).sorted():
             if '.png' in filename:
                 images.append(plt.imread(os.path.join(scratch_dir, 'segmentations', filename)))
 
@@ -178,7 +178,7 @@ def segmentation_model():
     bn3 = BatchNormalization()(drop3)
     pool3 = MaxPooling3D(pool_size=pool_size)(bn3)
 
-    conv4 = Conv3D(32, conv_size, activation='relu', padding='same')(pool3)
+    conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(pool3)
     conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(conv4)
     drop4 = Dropout(0.4)(conv4)
     bn4 = BatchNormalization()(drop4)

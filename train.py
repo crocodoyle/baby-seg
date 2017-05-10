@@ -325,6 +325,8 @@ if __name__ == "__main__":
     images = f['images']
     labels = f['labels']
 
+    np.set_printoptions(precision=2)
+
     output_shape = (144, 192, 256, 4)
 
     training_indices = list(range(9))

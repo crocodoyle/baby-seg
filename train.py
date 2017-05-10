@@ -66,7 +66,7 @@ class SegVisCallback(Callback):
             plt.imsave(os.path.join(scratch_dir, 'segmentations', 'example_segmentation_' + str(i).zfill(4) + '.png'), seg)
 
         images = []
-        for filename in os.listdir(os.path.join(scratch_dir, 'segmentations')).sorted():
+        for filename in sorted(os.listdir(os.path.join(scratch_dir, 'segmentations'))):
             if '.png' in filename:
                 images.append(plt.imread(os.path.join(scratch_dir, 'segmentations', filename)))
 

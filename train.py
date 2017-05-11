@@ -179,7 +179,8 @@ def segmentation_model():
     pool3 = MaxPooling3D(pool_size=pool_size)(bn3)
 
     conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(pool3)
-    conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(conv4)
+    drop4 = Dropout(0.4)(conv4)
+    conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(drop4)
     drop4 = Dropout(0.4)(conv4)
     bn4 = BatchNormalization()(drop4)
     pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
@@ -193,7 +194,8 @@ def segmentation_model():
     up8 = UpSampling3D(size=pool_size)(bn5)
     concat8 = concatenate([up8, bn4])
     conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(concat8)
-    conv8 = Conv3D(32, conv_size, activation='relu', padding='same')(conv8)
+    drop8 = Dropout(0.4)(conv8)
+    conv8 = Conv3D(32, conv_size, activation='relu', padding='same')(drop8)
     drop8 = Dropout(0.4)(conv8)
     bn8 = BatchNormalization()(drop8)
 
@@ -239,7 +241,7 @@ def dice_coef(y_true, y_pred):
 
     score = 0
 
-    category_weight = [0.000001, 1.0, 1.0, 1.0]
+    category_weight = [0.000001, 0.8, 1.0, 0.8]
 
     for i, (c, w) in enumerate(zip(category_mapping, category_weight)):
         score += w*(2.0 * K.sum(y_true[..., i] * y_pred[..., i]) / (K.sum(y_true[..., i]) + K.sum(y_pred[..., i])))
@@ -338,8 +340,8 @@ if __name__ == "__main__":
     print('testing images:', testing_indices)
 
     affine = np.eye(4)
-    # affine[0, 0] = -1
-    # affine[1, 1] = -1
+    affine[0, 0] = -1
+    affine[1, 1] = -1
 
     model = segmentation_model()
     model.summary()
@@ -353,7 +355,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices),
         len(training_indices),
-        epochs=600,
+        epochs=1200,
         verbose=1,
         callbacks=[model_checkpoint, confusion_callback, segvis_callback],
         validation_data=batch(validation_indices),
@@ -366,7 +368,7 @@ if __name__ == "__main__":
         predicted = model.predict(images[i,...][np.newaxis, ...], batch_size=1)
         segmentation = from_categorical(predicted, category_mapping)
         image = nib.Nifti1Image(segmentation, affine)
-        nib.save(image, 'babylabels' + str(i).zfill(2) + '.nii.gz')
+        nib.save(image, scratch_dir + 'babylabels' + str(i).zfill(2) + '.nii.gz')
 
         print(labels[i,..., 0].shape, segmentation.shape)
         print('confusion matrix for', str(i))

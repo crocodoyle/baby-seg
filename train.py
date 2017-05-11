@@ -40,7 +40,7 @@ import argparse
 scratch_dir = '/data1/data/iSeg-2017/'
 input_file = scratch_dir + 'baby-seg.hdf5'
 
-category_mapping = [0, 10, 150, 250]
+category_mapping = [10, 150, 250]
 img_shape = (144, 192, 256)
 
 class SegVisCallback(Callback):
@@ -155,7 +155,7 @@ def segmentation_model():
     """
     3D U-net model, using very small convolutional kernels
     """
-    tissue_classes = 4
+    tissue_classes = 3
 
     conv_size = (5, 5, 5)
     pool_size = (2, 2, 2)
@@ -241,7 +241,7 @@ def dice_coef(y_true, y_pred):
 
     score = 0
 
-    category_weight = [0.000001, 0.8, 1.0, 0.8]
+    category_weight = [0.00001, 1.0, 0.8]
 
     for i, (c, w) in enumerate(zip(category_mapping, category_weight)):
         score += w*(2.0 * K.sum(y_true[..., i] * y_pred[..., i]) / (K.sum(y_true[..., i]) + K.sum(y_pred[..., i])))
@@ -329,7 +329,7 @@ if __name__ == "__main__":
 
     np.set_printoptions(precision=2)
 
-    output_shape = (144, 192, 256, 4)
+    output_shape = (144, 192, 256, 3)
 
     training_indices = list(range(9))
     validation_indices = [9]

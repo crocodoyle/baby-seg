@@ -89,6 +89,12 @@ def make_iseg():
         f['images'][i, ..., 0] = np.divide(f['images'][i, ..., 0], maxVal['T1'])
         f['images'][i, ..., 1] = np.divide(f['images'][i, ..., 1], maxVal['T2'])
 
+    # pretend background is CSF for easier training
+    for i in range(23):
+        label_img = f['labels'][i, ..., 0]
+        label_img[label_img == 0] = 10
+        f['labels'][i, ..., 0] =  label_img
+
     f.close()
 
     return

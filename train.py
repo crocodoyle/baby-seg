@@ -37,6 +37,10 @@ from sklearn.metrics import confusion_matrix
 
 import argparse
 
+
+import transformations as t
+import math
+
 scratch_dir = '/data1/data/iSeg-2017/'
 input_file = scratch_dir + 'baby-seg.hdf5'
 
@@ -290,7 +294,7 @@ def from_categorical(categorical, category_mapping):
 
     return segmentation
 
-def batch(indices):
+def batch(indices, augment=False):
     """
     :param indices: List of indices into the HDF5 dataset to draw samples from
     :return: (image, label)
@@ -302,9 +306,46 @@ def batch(indices):
     while True:
         np.random.shuffle(indices)
         for i in indices:
+
             try:
-                label = to_categorical(labels[i, ...])
-                yield (images[i, ...][np.newaxis, ...], label[np.newaxis, ...])
+                t1_image = images[i, ..., 0][..., np.newaxis]
+                t2_image = images[i, ..., 1][..., np.newaxis]
+                label = to_categorical(labels[i, ...])[..., np.newaxis]
+
+                return_imgs = np.zeros(images.shape[1:])
+                print(t1_image.shape)
+
+                if augment:
+
+                    # flip images
+                    if np.random.rand() > 0.5:
+                        mid = (72, 96, 128)
+                        normal = (0, 1, 0)
+
+                        reflection_matrix = t.reflection_matrix(mid, normal)
+
+                        t1_image = np.dot(t1_image, reflection_matrix)
+                        t2_image = np.dot(t2_image, reflection_matrix)
+                        label = np.dot(label, reflection_matrix)
+
+                    # random scale, shear, and rotation
+                    if np.random.rand() > 0.5:
+                        scale = (np.random.rand(3) - 0.5) * 0.1
+                        shear = (np.random.rand(3) - 0.5) * 0.05
+                        angles = (np.random.rand(3) - 0.5) * 0.05 * 2*math.pi
+
+                        transformation_matrix = t.compose_matrix(scale=scale, shear=shear, angles=angles)
+
+
+                        t1_image = np.dot(t1_image, transformation_matrix)
+                        t2_image = np.dot(t2_image, transformation_matrix)
+                        label = np.dot(label, transformation_matrix)
+
+                    return_imgs[..., 0] = t1_image
+                    return_imgs[..., 1] = t2_image
+
+                yield (return_imgs[np.newaxis, ...], label[np.newaxis, ...])
+
             except ValueError:
                 yield (images[i, ...][np.newaxis, ...])
 

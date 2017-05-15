@@ -322,6 +322,7 @@ def batch(indices, augment=False):
                         normal = (0, 1, 0)
 
                         reflection_matrix = t.reflection_matrix(mid, normal)
+                        print('reflection matrix:', reflection_matrix)
 
                         t1_image = affine_transform(t1_image, reflection_matrix)
                         t2_image = affine_transform(t2_image, reflection_matrix)
@@ -330,14 +331,25 @@ def batch(indices, augment=False):
                     # random scale, shear, and rotation
                     if np.random.rand() > 0.5:
                         scale = (np.random.rand(3) - 0.5) * 0.05 # +/- 5% scale
+                    else:
+                        scale = None
+
+                    if np.random.rand() > 0.5:
                         shear = (np.random.rand(3) - 0.5) * 0.05 # sheer of 5%
+                    else:
+                        shear = None
+
+                    if np.random.rand() > 0.5:
                         angles = (np.random.rand(3) - 0.5) * 0.05 * 2*math.pi # rotation up to 5 degrees
+                    else:
+                        angles = None
 
-                        transformation_matrix = t.compose_matrix(scale=scale, shear=shear, angles=angles)
+                    transformation_matrix = t.compose_matrix(scale=scale, shear=shear, angles=angles)
+                    print('transformation matrix', transformation_matrix)
 
-                        t1_image = affine_transform(t1_image, transformation_matrix)
-                        t2_image = affine_transform(t2_image, transformation_matrix)
-                        label = affine_transform(label, transformation_matrix, order=0) # nearest neighbour for labels
+                    t1_image = affine_transform(t1_image, transformation_matrix)
+                    t2_image = affine_transform(t2_image, transformation_matrix)
+                    label = affine_transform(label, transformation_matrix, order=0) # nearest neighbour for labels
 
                     return_imgs[..., 0] = t1_image
                     return_imgs[..., 1] = t2_image

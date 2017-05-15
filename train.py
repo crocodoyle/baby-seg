@@ -311,7 +311,7 @@ def batch(indices, augment=False):
                 t2_image = images[i, ..., 1]
                 label = to_categorical(labels[i, ...])
 
-                return_imgs = np.zeros(images.shape[1:-1])
+                return_imgs = np.zeros(images.shape[1:-1] + (2,))
                 # print(t1_image.shape)
 
                 if augment:
@@ -342,7 +342,7 @@ def batch(indices, augment=False):
                     return_imgs[..., 0] = t1_image
                     return_imgs[..., 1] = t2_image
 
-                yield (return_imgs[np.newaxis, ..., np.newaxis], label[np.newaxis, ...])
+                yield (return_imgs[np.newaxis, ...], label[np.newaxis, ...])
 
             except ValueError:
                 yield (images[i, ...][np.newaxis, ...])

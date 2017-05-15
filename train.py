@@ -355,9 +355,10 @@ def batch(indices, augment=False):
                     t2_image = affine_transform(t2_image, trans_mat)
                     true_labels = affine_transform(true_labels, trans_mat, order=0) # nearest neighbour for labels
 
-                    return_imgs[..., 0] = t1_image
-                    return_imgs[..., 1] = t2_image
-                    label = to_categorical(true_labels)
+                return_imgs[..., 0] = t1_image
+                return_imgs[..., 1] = t2_image
+
+                label = to_categorical(true_labels)
 
                 yield (return_imgs[np.newaxis, ...], label[np.newaxis, ...])
 

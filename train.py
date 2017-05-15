@@ -302,6 +302,8 @@ def batch(indices, augment=False):
     images = f['images']
     labels = f['labels']
 
+    return_imgs = np.zeros(images.shape[1:-1] + (2,))
+
     while True:
         np.random.shuffle(indices)
         for i in indices:
@@ -309,10 +311,6 @@ def batch(indices, augment=False):
                 t1_image = images[i, ..., 0]
                 t2_image = images[i, ..., 1]
                 true_labels = labels[i, ..., 0]
-
-                print(t1_image.shape, true_labels.shape)
-
-                return_imgs = np.zeros(images.shape[1:-1] + (2,))
 
                 if augment:
 
@@ -354,6 +352,9 @@ def batch(indices, augment=False):
                     t1_image = affine_transform(t1_image, trans_mat)
                     t2_image = affine_transform(t2_image, trans_mat)
                     true_labels = affine_transform(true_labels, trans_mat, order=0) # nearest neighbour for labels
+                    img = nib.Nifti1Image(true_labels, np.eye(4))
+                    nib.save(img, scratch_dir + 'test.nii.gz')
+
 
                 return_imgs[..., 0] = t1_image
                 return_imgs[..., 1] = t2_image

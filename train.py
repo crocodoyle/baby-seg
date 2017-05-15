@@ -321,8 +321,9 @@ def batch(indices, augment=False):
                         mid = (72, 96, 128)
                         normal = (0, 1, 0)
 
-                        reflection_matrix = [t.reflection_matrix(mid, normal)]
+                        reflection_matrix = t.reflection_matrix(mid, normal)
                         print('reflection matrix:', reflection_matrix)
+                        print(reflection_matrix.shape)
 
                         # reflection_matrix = reflection_matrix[0:2, 0:2]
 
@@ -346,8 +347,9 @@ def batch(indices, augment=False):
                     else:
                         angles = None
 
-                    transformation_matrix = [t.compose_matrix(scale=scale, shear=shear, angles=angles)]
+                    transformation_matrix = t.compose_matrix(scale=scale, shear=shear, angles=angles)
                     print('transformation matrix', transformation_matrix)
+                    print(transformation_matrix.shape)
 
                     transformation_matrix = transformation_matrix[0:2, 0:2]
 

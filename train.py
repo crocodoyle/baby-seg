@@ -160,7 +160,7 @@ def segmentation_model():
     """
     tissue_classes = 3
 
-    conv_size = (5, 5, 5)
+    conv_size = (3, 3, 3)
     pool_size = (2, 2, 2)
 
     inputs = Input(shape=(144, 192, 256, 2))
@@ -393,7 +393,7 @@ if __name__ == "__main__":
     segvis_callback = SegVisCallback()
 
     hist = model.fit_generator(
-        batch(training_indices),
+        batch(training_indices, augment=True),
         len(training_indices),
         epochs=1200,
         verbose=1,

@@ -307,12 +307,12 @@ def batch(indices, augment=False):
         for i in indices:
 
             try:
-                t1_image = images[i, ..., 0][..., np.newaxis]
-                t2_image = images[i, ..., 1][..., np.newaxis]
-                label = to_categorical(labels[i, ...])[..., np.newaxis]
+                t1_image = images[i, ..., 0]
+                t2_image = images[i, ..., 1]
+                label = to_categorical(labels[i, ...])
 
-                return_imgs = np.zeros(images.shape[1:])
-                print(t1_image.shape)
+                return_imgs = np.zeros(images.shape[1:-1])
+                # print(t1_image.shape)
 
                 if augment:
 
@@ -325,25 +325,24 @@ def batch(indices, augment=False):
 
                         t1_image = affine_transform(t1_image, reflection_matrix)
                         t2_image = affine_transform(t2_image, reflection_matrix)
-                        label = affine_transform(label, reflection_matrix, order=0)
+                        label = affine_transform(label, reflection_matrix, order=0) # nearest neighbour for labels
 
                     # random scale, shear, and rotation
                     if np.random.rand() > 0.5:
-                        scale = (np.random.rand(3) - 0.5) * 0.1
-                        shear = (np.random.rand(3) - 0.5) * 0.05
-                        angles = (np.random.rand(3) - 0.5) * 0.05 * 2*math.pi
+                        scale = (np.random.rand(3) - 0.5) * 0.05 # +/- 5% scale
+                        shear = (np.random.rand(3) - 0.5) * 0.05 # sheer of 5%
+                        angles = (np.random.rand(3) - 0.5) * 0.05 * 2*math.pi # rotation up to 5 degrees
 
                         transformation_matrix = t.compose_matrix(scale=scale, shear=shear, angles=angles)
 
-
                         t1_image = affine_transform(t1_image, transformation_matrix)
                         t2_image = affine_transform(t2_image, transformation_matrix)
-                        label = affine_transform(label, transformation_matrix, order=0)
+                        label = affine_transform(label, transformation_matrix, order=0) # nearest neighbour for labels
 
                     return_imgs[..., 0] = t1_image
                     return_imgs[..., 1] = t2_image
 
-                yield (return_imgs[np.newaxis, ...], label[np.newaxis, ...])
+                yield (return_imgs, label[np.newaxis, ...])
 
             except ValueError:
                 yield (images[i, ...][np.newaxis, ...])

@@ -351,8 +351,8 @@ def batch(indices, augment=False):
                     transformation_matrix = t.compose_matrix(scale=scale, shear=shear, angles=angles)
 
                     trans_mat = transformation_matrix[0:-1, 0:-1]
-                    print('transformation matrix', transformation_matrix)
-                    print(transformation_matrix.shape)
+                    print('transformation matrix', trans_mat)
+                    print(trans_mat.shape)
 
                     t1_image = affine_transform(t1_image, trans_mat)
                     t2_image = affine_transform(t2_image, trans_mat)

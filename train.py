@@ -360,7 +360,7 @@ def batch(indices, augment=False):
                 return_imgs[..., 1] = t2_image
 
                 label = to_categorical(np.reshape(true_labels, true_labels.shape + (1,)))
-
+                print(label.shape)
 
 
                 print(return_imgs[np.newaxis,...].shape, label[np.newaxis, ...].shape)

@@ -324,6 +324,8 @@ def batch(indices, augment=False):
                         reflection_matrix = t.reflection_matrix(mid, normal)
                         print('reflection matrix:', reflection_matrix)
 
+                        reflection_matrix = reflection_matrix[0:2, 0:2]
+
                         t1_image = affine_transform(t1_image, reflection_matrix)
                         t2_image = affine_transform(t2_image, reflection_matrix)
                         label = affine_transform(label, reflection_matrix, order=0) # nearest neighbour for labels
@@ -346,6 +348,8 @@ def batch(indices, augment=False):
 
                     transformation_matrix = t.compose_matrix(scale=scale, shear=shear, angles=angles)
                     print('transformation matrix', transformation_matrix)
+
+                    transformation_matrix = transformation_matrix[0:2, 0:2]
 
                     t1_image = affine_transform(t1_image, transformation_matrix)
                     t2_image = affine_transform(t2_image, transformation_matrix)

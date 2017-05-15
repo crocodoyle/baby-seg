@@ -305,7 +305,6 @@ def batch(indices, augment=False):
     while True:
         np.random.shuffle(indices)
         for i in indices:
-
             try:
                 t1_image = images[i, ..., 0]
                 t2_image = images[i, ..., 1]
@@ -363,6 +362,7 @@ def batch(indices, augment=False):
                 yield (return_imgs[np.newaxis, ...], label[np.newaxis, ...])
 
             except ValueError:
+                print('some sort of value error occurred')
                 yield (images[i, ...][np.newaxis, ...])
 
 def visualize_training_dice(hist):

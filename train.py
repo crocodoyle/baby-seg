@@ -352,16 +352,16 @@ def batch(indices, augment=False):
                     t1_image = affine_transform(t1_image, trans_mat)
                     t2_image = affine_transform(t2_image, trans_mat)
                     true_labels = affine_transform(true_labels, trans_mat, order=0) # nearest neighbour for labels
-                    img = nib.Nifti1Image(true_labels, np.eye(4))
-                    nib.save(img, scratch_dir + 'test.nii.gz')
 
+                    # img = nib.Nifti1Image(true_labels, np.eye(4))
+                    # nib.save(img, scratch_dir + 'test.nii.gz')
+                    print('augmented sample')
 
                 return_imgs[..., 0] = t1_image
                 return_imgs[..., 1] = t2_image
 
                 label = to_categorical(np.reshape(true_labels, true_labels.shape + (1,)))
                 print(label.shape)
-
 
                 print(return_imgs[np.newaxis,...].shape, label[np.newaxis, ...].shape)
                 yield (return_imgs[np.newaxis, ...], label[np.newaxis, ...])

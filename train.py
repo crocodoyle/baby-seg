@@ -61,7 +61,7 @@ class SegVisCallback(Callback):
         predicted = model.predict(self.images[0, ...][np.newaxis, ...], batch_size=1)
         segmentation = from_categorical(predicted, category_mapping)
 
-        slice = segmentation[:, :, 128]
+        slice = segmentation[:, :, 128].T
         self.segmentations.append(slice)
 
     def on_train_end(self, logs={}):
@@ -115,7 +115,7 @@ class ConfusionCallback(Callback):
 
         for epoch, conf in enumerate(self.confusion):
             filename = os.path.join(scratch_dir, 'confusion', 'confusion_' + str(epoch).zfill(4) + '.png')
-            save_confusion_matrix(conf, tissue_classes, filename, normalize=True)
+            save_confusion_matrix(conf, tissue_classes, filename)
 
         images = []
         for filename in os.listdir(os.path.join(scratch_dir, 'confusion')):
@@ -126,7 +126,6 @@ class ConfusionCallback(Callback):
 
 
 def save_confusion_matrix(cm, classes, filename,
-                          normalize=False,
                           title='Confusion matrix',
                           cmap=plt.cm.Blues):
     """
@@ -141,8 +140,7 @@ def save_confusion_matrix(cm, classes, filename,
     plt.xticks(tick_marks, classes, rotation=45)
     plt.yticks(tick_marks, classes)
 
-    if normalize:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 
     thresh = cm.max() / 2.
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
@@ -355,11 +353,12 @@ def visualize_training_dice(hist):
     dice_val = np.array(hist.history['val_dice_coef'])
 
     plt.clf()
-    plt.plot(epoch_num, dice_train, label='DICE Score Training')
-    plt.plot(epoch_num, dice_val, label="DICE Score Validation")
+    plt.plot(epoch_num, dice_train, label='DICE Score - Training')
+    plt.plot(epoch_num, dice_val, label="DICE Score - Validation")
     plt.legend(shadow=True)
     plt.xlabel("Training Epoch Number")
     plt.ylabel("Score")
+    plt.tight_layout()
     plt.savefig(scratch_dir + 'results.png')
     plt.close()
 

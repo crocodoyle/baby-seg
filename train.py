@@ -359,7 +359,7 @@ def batch(indices, augment=False):
                 return_imgs[..., 0] = t1_image
                 return_imgs[..., 1] = t2_image
 
-                label = to_categorical(true_labels[..., np.newaxis])
+                label = to_categorical(np.reshape(true_labels, true_labels.shape + (1,)))
 
                 yield (return_imgs[np.newaxis, ...], label[np.newaxis, ...])
 

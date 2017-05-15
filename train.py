@@ -266,7 +266,7 @@ def to_categorical(y):
     """
     categories = sorted(set(np.array(y, dtype="uint8").flatten()))
     num_classes = len(categories)
-    # print(categories)
+    print(categories)
 
     cat_shape = np.shape(y)[:-1] + (num_classes,)
     categorical = np.zeros(cat_shape, dtype='b')

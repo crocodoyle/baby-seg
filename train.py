@@ -313,7 +313,6 @@ def batch(indices, augment=False):
                 true_labels = labels[i, ..., 0]
 
                 if augment:
-
                     # flip images
                     # if np.random.rand() > 0.5:
                     #     mid = (72, 96, 128)
@@ -328,22 +327,17 @@ def batch(indices, augment=False):
                     #     t2_image = affine_transform(t2_image, reflect_mat)
                     #     true_labels = affine_transform(true_labels, reflect_mat, order=0) # nearest neighbour for labels
 
-                    # random scale, shear, and rotation
-                    # if np.random.rand() > 0.5:
-                    #     scale = (np.random.rand(3) - 0.5) * 0.05 # +/- 5% scale
-                    #     print('scale')
-                    # else:
-                    #     scale = None
-                    scale=None
+                    if np.random.rand() > 0.5:
+                        scale = 1 + (np.random.rand(3) - 0.5) * 0.05 # +/- 5% scale
+                    else:
+                        scale = None
 
                     if np.random.rand() > 0.5:
-                        print('shear')
                         shear = (np.random.rand(3) - 0.5) * 0.05 # sheer of 5%
                     else:
                         shear = None
 
                     if np.random.rand() > 0.5:
-                        print('rotate')
                         angles = (np.random.rand(3) - 0.5) * 0.05 * 2*math.pi # rotation up to 5 degrees
                     else:
                         angles = None
@@ -351,17 +345,17 @@ def batch(indices, augment=False):
                     trans_mat = t.compose_matrix(scale=scale, shear=shear, angles=angles)
                     trans_mat = trans_mat[0:-1, 0:-1]
 
-                    t1_image = affine_transform(t1_image, trans_mat)
-                    t2_image = affine_transform(t2_image, trans_mat)
-                    true_labels = affine_transform(true_labels, trans_mat, order=0) # nearest neighbour for labels
+                    t1_image = affine_transform(t1_image, trans_mat, cval=10)
+                    t2_image = affine_transform(t2_image, trans_mat, cval=10)
+                    true_labels = affine_transform(true_labels, trans_mat, order=0, cval=10) # nearest neighbour for labels
 
                 return_imgs[..., 0] = t1_image
                 return_imgs[..., 1] = t2_image
 
                 label = to_categorical(np.reshape(true_labels, true_labels.shape + (1,)))
-                print(label.shape)
+                # print(label.shape)
 
-                print(return_imgs[np.newaxis,...].shape, label[np.newaxis, ...].shape)
+                # print(return_imgs[np.newaxis,...].shape, label[np.newaxis, ...].shape)
                 yield (return_imgs[np.newaxis, ...], label[np.newaxis, ...])
 
             except ValueError:

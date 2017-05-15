@@ -322,10 +322,9 @@ def batch(indices, augment=False):
                         normal = (0, 1, 0)
 
                         reflection_matrix = t.reflection_matrix(mid, normal)
-                        print('reflection matrix:', reflection_matrix)
-                        print(reflection_matrix.shape)
-
                         reflect_mat = reflection_matrix[0:-1, 0:-1]
+                        print('reflection matrix:', reflect_mat)
+                        print(reflect_mat.shape)
 
                         # reflection_matrix = reflection_matrix[0:2, 0:2]
 

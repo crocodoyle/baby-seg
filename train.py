@@ -312,7 +312,7 @@ def batch(indices, augment=False):
                 label = to_categorical(labels[i, ...])
 
                 return_imgs = np.zeros(images.shape[1:-1] + (2,))
-                # print(t1_image.shape)
+                print(t1_image.shape)
 
                 if augment:
 

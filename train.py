@@ -37,6 +37,7 @@ from sklearn.metrics import confusion_matrix
 
 import argparse
 
+from scipy.ndimage.interpolation import affine_transform
 
 import transformations as t
 import math
@@ -322,9 +323,9 @@ def batch(indices, augment=False):
 
                         reflection_matrix = t.reflection_matrix(mid, normal)
 
-                        t1_image = np.dot(t1_image, reflection_matrix)
-                        t2_image = np.dot(t2_image, reflection_matrix)
-                        label = np.dot(label, reflection_matrix)
+                        t1_image = affine_transform(t1_image, reflection_matrix)
+                        t2_image = affine_transform(t2_image, reflection_matrix)
+                        label = affine_transform(label, reflection_matrix, order=0)
 
                     # random scale, shear, and rotation
                     if np.random.rand() > 0.5:
@@ -335,9 +336,9 @@ def batch(indices, augment=False):
                         transformation_matrix = t.compose_matrix(scale=scale, shear=shear, angles=angles)
 
 
-                        t1_image = np.dot(t1_image, transformation_matrix)
-                        t2_image = np.dot(t2_image, transformation_matrix)
-                        label = np.dot(label, transformation_matrix)
+                        t1_image = affine_transform(t1_image, transformation_matrix)
+                        t2_image = affine_transform(t2_image, transformation_matrix)
+                        label = affine_transform(label, transformation_matrix, order=0)
 
                     return_imgs[..., 0] = t1_image
                     return_imgs[..., 1] = t2_image

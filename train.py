@@ -323,8 +323,8 @@ def batch(indices, augment=False):
 
                         reflect_mat = t.reflection_matrix(mid, normal)
                         reflect_mat = reflect_mat[0:-1, 0:-1]
-                        print('reflection matrix:', reflect_mat)
-                        print(reflect_mat.shape)
+                        # print('reflection matrix:', reflect_mat)
+                        # print(reflect_mat.shape)
 
                         t1_image = affine_transform(t1_image, reflect_mat)
                         t2_image = affine_transform(t2_image, reflect_mat)
@@ -348,8 +348,8 @@ def batch(indices, augment=False):
 
                     trans_mat = t.compose_matrix(scale=scale, shear=shear, angles=angles)
                     trans_mat = trans_mat[0:-1, 0:-1]
-                    print('transformation matrix', trans_mat)
-                    print(trans_mat.shape)
+                    # print('transformation matrix', trans_mat)
+                    # print(trans_mat.shape)
 
                     t1_image = affine_transform(t1_image, trans_mat)
                     t2_image = affine_transform(t2_image, trans_mat)
@@ -358,7 +358,7 @@ def batch(indices, augment=False):
                 return_imgs[..., 0] = t1_image
                 return_imgs[..., 1] = t2_image
 
-                label = to_categorical(true_labels)
+                label = to_categorical(true_labels[..., np.newaxis])
 
                 yield (return_imgs[np.newaxis, ...], label[np.newaxis, ...])
 

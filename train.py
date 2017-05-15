@@ -317,18 +317,18 @@ def batch(indices, augment=False):
                 if augment:
 
                     # flip images
-                    if np.random.rand() > 0.5:
-                        mid = (72, 96, 128)
-                        normal = (0, 1, 0)
-
-                        reflect_mat = t.reflection_matrix(mid, normal)
-                        reflect_mat = reflect_mat[0:-1, 0:-1]
-                        # print('reflection matrix:', reflect_mat)
-                        # print(reflect_mat.shape)
-
-                        t1_image = affine_transform(t1_image, reflect_mat)
-                        t2_image = affine_transform(t2_image, reflect_mat)
-                        true_labels = affine_transform(true_labels, reflect_mat, order=0) # nearest neighbour for labels
+                    # if np.random.rand() > 0.5:
+                    #     mid = (72, 96, 128)
+                    #     normal = (0, 1, 0)
+                    #
+                    #     reflect_mat = t.reflection_matrix(mid, normal)
+                    #     reflect_mat = reflect_mat[0:-1, 0:-1]
+                    #     # print('reflection matrix:', reflect_mat)
+                    #     # print(reflect_mat.shape)
+                    #
+                    #     t1_image = affine_transform(t1_image, reflect_mat)
+                    #     t2_image = affine_transform(t2_image, reflect_mat)
+                    #     true_labels = affine_transform(true_labels, reflect_mat, order=0) # nearest neighbour for labels
 
                     # random scale, shear, and rotation
                     if np.random.rand() > 0.5:

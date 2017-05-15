@@ -325,11 +325,13 @@ def batch(indices, augment=False):
                         print('reflection matrix:', reflection_matrix)
                         print(reflection_matrix.shape)
 
+                        reflect_mat = reflection_matrix[0:-1, 0:-1]
+
                         # reflection_matrix = reflection_matrix[0:2, 0:2]
 
-                        t1_image = affine_transform(t1_image, reflection_matrix)
-                        t2_image = affine_transform(t2_image, reflection_matrix)
-                        label = affine_transform(label, reflection_matrix, order=0) # nearest neighbour for labels
+                        t1_image = affine_transform(t1_image, reflect_mat)
+                        t2_image = affine_transform(t2_image, reflect_mat)
+                        label = affine_transform(label, reflect_mat, order=0) # nearest neighbour for labels
 
                     # random scale, shear, and rotation
                     if np.random.rand() > 0.5:

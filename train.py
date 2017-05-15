@@ -309,7 +309,7 @@ def batch(indices, augment=False):
             try:
                 t1_image = images[i, ..., 0]
                 t2_image = images[i, ..., 1]
-                true_labels = labels[i, ...]
+                true_labels = labels[i, ..., 0]
 
                 print(t1_image.shape, true_labels.shape)
 
@@ -326,8 +326,6 @@ def batch(indices, augment=False):
                         reflect_mat = reflect_mat[0:-1, 0:-1]
                         print('reflection matrix:', reflect_mat)
                         print(reflect_mat.shape)
-
-                        # reflection_matrix = reflection_matrix[0:2, 0:2]
 
                         t1_image = affine_transform(t1_image, reflect_mat)
                         t2_image = affine_transform(t2_image, reflect_mat)

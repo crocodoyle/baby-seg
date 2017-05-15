@@ -112,7 +112,7 @@ class ConfusionCallback(Callback):
         self.confusion.append(conf)
 
     def on_train_end(self, logs={}):
-        tissue_classes = ["BG", "CSF", "GM", "WM"]
+        tissue_classes = ["CSF", "GM", "WM"]
 
         for epoch, conf in enumerate(self.confusion):
             filename = os.path.join(scratch_dir, 'confusion', 'confusion_' + str(epoch).zfill(4) + '.png')
@@ -321,8 +321,8 @@ def batch(indices, augment=False):
                         mid = (72, 96, 128)
                         normal = (0, 1, 0)
 
-                        reflection_matrix = t.reflection_matrix(mid, normal)
-                        reflect_mat = reflection_matrix[0:-1, 0:-1]
+                        reflect_mat = t.reflection_matrix(mid, normal)
+                        # reflect_mat = reflect_mat[0:-1, 0:-1]
                         print('reflection matrix:', reflect_mat)
                         print(reflect_mat.shape)
 
@@ -348,9 +348,9 @@ def batch(indices, augment=False):
                     else:
                         angles = None
 
-                    transformation_matrix = t.compose_matrix(scale=scale, shear=shear, angles=angles)
+                        trans_mat = t.compose_matrix(scale=scale, shear=shear, angles=angles)
 
-                    trans_mat = transformation_matrix[0:-1, 0:-1]
+                    # trans_mat = trans_mat[0:-1, 0:-1]
                     print('transformation matrix', trans_mat)
                     print(trans_mat.shape)
 

@@ -342,7 +342,7 @@ def batch(indices, augment=False):
                     return_imgs[..., 0] = t1_image
                     return_imgs[..., 1] = t2_image
 
-                yield (return_imgs, label[np.newaxis, ...])
+                yield (return_imgs[np.newaxis, ..., np.newaxis], label[np.newaxis, ...])
 
             except ValueError:
                 yield (images[i, ...][np.newaxis, ...])

@@ -361,10 +361,14 @@ def batch(indices, augment=False):
 
                 label = to_categorical(np.reshape(true_labels, true_labels.shape + (1,)))
 
+
+
+                print(return_imgs[np.newaxis,...].shape, label[np.newaxis, ...].shape)
                 yield (return_imgs[np.newaxis, ...], label[np.newaxis, ...])
 
             except ValueError:
                 print('some sort of value error occurred')
+                print(images[i, ...][np.newaxis, ...].shape)
                 yield (images[i, ...][np.newaxis, ...])
 
 def visualize_training_dice(hist):

@@ -348,8 +348,7 @@ def batch(indices, augment=False):
                     else:
                         angles = None
 
-                        trans_mat = t.compose_matrix(scale=scale, shear=shear, angles=angles)
-
+                    trans_mat = t.compose_matrix(scale=scale, shear=shear, angles=angles)
                     trans_mat = trans_mat[:, 0:-1]
                     print('transformation matrix', trans_mat)
                     print(trans_mat.shape)

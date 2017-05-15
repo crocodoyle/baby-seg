@@ -329,11 +329,12 @@ def batch(indices, augment=False):
                     #     true_labels = affine_transform(true_labels, reflect_mat, order=0) # nearest neighbour for labels
 
                     # random scale, shear, and rotation
-                    if np.random.rand() > 0.5:
-                        scale = (np.random.rand(3) - 0.5) * 0.05 # +/- 5% scale
-                        print('scale')
-                    else:
-                        scale = None
+                    # if np.random.rand() > 0.5:
+                    #     scale = (np.random.rand(3) - 0.5) * 0.05 # +/- 5% scale
+                    #     print('scale')
+                    # else:
+                    #     scale = None
+                    scale=None
 
                     if np.random.rand() > 0.5:
                         print('shear')

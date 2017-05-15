@@ -309,7 +309,6 @@ def batch(indices, augment=False):
             try:
                 t1_image = images[i, ..., 0]
                 t2_image = images[i, ..., 1]
-                label = to_categorical(labels[i, ...])
 
                 return_imgs = np.zeros(images.shape[1:-1] + (2,))
                 print(t1_image.shape)
@@ -330,7 +329,7 @@ def batch(indices, augment=False):
 
                         t1_image = affine_transform(t1_image, reflect_mat)
                         t2_image = affine_transform(t2_image, reflect_mat)
-                        label = affine_transform(label, reflect_mat, order=0) # nearest neighbour for labels
+                        label = affine_transform(labels[i, ...], reflect_mat, order=0) # nearest neighbour for labels
 
                     # random scale, shear, and rotation
                     if np.random.rand() > 0.5:
@@ -355,10 +354,11 @@ def batch(indices, augment=False):
 
                     t1_image = affine_transform(t1_image, trans_mat)
                     t2_image = affine_transform(t2_image, trans_mat)
-                    label = affine_transform(label, trans_mat, order=0) # nearest neighbour for labels
+                    label = affine_transform(labels[i, ...], trans_mat, order=0) # nearest neighbour for labels
 
                     return_imgs[..., 0] = t1_image
                     return_imgs[..., 1] = t2_image
+                    label = to_categorical(label)
 
                 yield (return_imgs[np.newaxis, ...], label[np.newaxis, ...])
 

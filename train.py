@@ -353,6 +353,7 @@ def batch(indices, augment=False):
 
                 return_imgs[..., 0] = t1_image
                 return_imgs[..., 1] = t2_image
+                return_imgs[..., 2] = ratio_img
 
                 label = to_categorical(np.reshape(true_labels, true_labels.shape + (1,)))
                 # print(label.shape)

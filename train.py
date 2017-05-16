@@ -129,11 +129,11 @@ class ConfusionCallback(Callback):
 def save_confusion_matrix(cm, classes, filename,
                           title='Confusion matrix',
                           cmap=plt.cm.Blues):
-    """
-    This function prints and plots the confusion matrix.
-    Normalization can be applied by setting `normalize=True`.
-    """
+    """This function plots the confusion matrix."""
     plt.clf()
+
+    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
     plt.title(title)
     plt.colorbar()
@@ -141,11 +141,9 @@ def save_confusion_matrix(cm, classes, filename,
     plt.xticks(tick_marks, classes, rotation=45)
     plt.yticks(tick_marks, classes)
 
-    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-
     thresh = cm.max() / 2.
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, cm[i, j],
+        plt.text(j, i, round(cm[i, j], 2),
                  horizontalalignment="center",
                  color="white" if cm[i, j] > thresh else "black")
 
@@ -163,7 +161,7 @@ def segmentation_model():
     conv_size = (3, 3, 3)
     pool_size = (2, 2, 2)
 
-    inputs = Input(shape=(144, 192, 256, 2))
+    inputs = Input(shape=(144, 192, 256, 3))
 
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(inputs)
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(conv1)
@@ -188,15 +186,15 @@ def segmentation_model():
     bn4 = BatchNormalization()(drop4)
     pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
 
-    conv5 = Conv3D(96, conv_size, activation='relu', padding='same')(pool4)
+    conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(pool4)
     drop5 = Dropout(0.5)(conv5)
-    conv5 = Conv3D(96, conv_size, activation='relu', padding='same')(drop5)
+    conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(drop5)
     drop5 = Dropout(0.5)(conv5)
     bn5 = BatchNormalization()(drop5)
 
     up8 = UpSampling3D(size=pool_size)(bn5)
     concat8 = concatenate([up8, bn4])
-    conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(concat8)
+    conv8 = Conv3D(32, conv_size, activation='relu', padding='same')(concat8)
     drop8 = Dropout(0.4)(conv8)
     conv8 = Conv3D(32, conv_size, activation='relu', padding='same')(drop8)
     drop8 = Dropout(0.4)(conv8)
@@ -226,7 +224,7 @@ def segmentation_model():
 
     model = Model(input=[inputs], output=[conv14])
 
-    model.compile(optimizer=Adam(lr=1e-4, decay=1e-7), loss=dice_coef_loss, metrics=[dice_coef])
+    model.compile(optimizer=Adam(lr=1e-4, decay=1e-6), loss=dice_coef_loss, metrics=[dice_coef])
     # sgd = SGD(lr=0.0001, decay=1e-7, momentum=0.9, nesterov=True)
     # model.compile(optimizer=sgd, loss=dice_coef_loss, metrics=[dice_coef])
 
@@ -244,7 +242,7 @@ def dice_coef(y_true, y_pred):
 
     score = 0
 
-    category_weight = [0.00001, 1.0, 0.8]
+    category_weight = [0.00001, 1.0, 0.9]
 
     for i, (c, w) in enumerate(zip(category_mapping, category_weight)):
         score += w*(2.0 * K.sum(y_true[..., i] * y_pred[..., i]) / (K.sum(y_true[..., i]) + K.sum(y_pred[..., i])))
@@ -310,6 +308,8 @@ def batch(indices, augment=False):
             try:
                 t1_image = images[i, ..., 0]
                 t2_image = images[i, ..., 1]
+                ratio_img = images[i, ..., 2]
+
                 true_labels = labels[i, ..., 0]
 
                 if augment:
@@ -347,6 +347,8 @@ def batch(indices, augment=False):
 
                     t1_image = affine_transform(t1_image, trans_mat, cval=10)
                     t2_image = affine_transform(t2_image, trans_mat, cval=10)
+                    ratio_img = affine_transform(ratio_img, trans_mat, cval=10)
+
                     true_labels = affine_transform(true_labels, trans_mat, order=0, cval=10) # nearest neighbour for labels
 
                 return_imgs[..., 0] = t1_image
@@ -383,8 +385,6 @@ if __name__ == "__main__":
     images = f['images']
     labels = f['labels']
 
-    np.set_printoptions(precision=2)
-
     output_shape = (144, 192, 256, 3)
 
     training_indices = list(range(9))
@@ -411,7 +411,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices, augment=True),
         len(training_indices),
-        epochs=1200,
+        epochs=400,
         verbose=1,
         callbacks=[model_checkpoint, confusion_callback, segvis_callback],
         validation_data=batch(validation_indices),

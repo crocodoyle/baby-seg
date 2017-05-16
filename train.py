@@ -300,7 +300,7 @@ def batch(indices, augment=False):
     images = f['images']
     labels = f['labels']
 
-    return_imgs = np.zeros(images.shape[1:-1] + (2,))
+    return_imgs = np.zeros(images.shape[1:-1] + (3,))
 
     while True:
         np.random.shuffle(indices)

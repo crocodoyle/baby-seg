@@ -306,9 +306,9 @@ def batch(indices, augment=False):
         np.random.shuffle(indices)
         for i in indices:
             try:
-                t1_image = images[i, ..., 0]
-                t2_image = images[i, ..., 1]
-                ratio_img = images[i, ..., 2]
+                t1_image = np.asarray(images[i, ..., 0], dtype='float32')
+                t2_image = np.asarray(images[i, ..., 1], dtype='float32')
+                ratio_img = np.asarray(images[i, ..., 2], dtype='float32')
 
                 true_labels = labels[i, ..., 0]
 

@@ -188,7 +188,7 @@ def segmentation_model():
 
     conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(pool4)
     drop5 = Dropout(0.5)(conv5)
-    conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(drop5)
+    conv5 = Conv3D(64, conv_size, activation='relu', padding='same', strides=2)(drop5)
     drop5 = Dropout(0.5)(conv5)
     bn5 = BatchNormalization()(drop5)
     pool5 = MaxPooling3D(pool_size=pool_size)(bn5)

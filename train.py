@@ -158,7 +158,7 @@ def segmentation_model():
     """
     tissue_classes = 3
 
-    conv_size = (3, 3, 3)
+    conv_size = (5, 5, 5)
     pool_size = (2, 2, 2)
 
     inputs = Input(shape=(144, 192, 256, 3))

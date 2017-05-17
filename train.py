@@ -198,10 +198,10 @@ def segmentation_model():
     conv6 = Conv3D(64, conv_size, activation='relu', padding='same')(drop6)
     drop6 = Dropout(0.5)(conv6)
     bn6 = BatchNormalization()(drop6)
-    pool7 = MaxPooling3D(pool_size=pool_size)(bn6)
+    pool6 = MaxPooling3D(pool_size=pool_size)(bn6)
 
-    up7 = UpSampling3D(size=pool_size)(pool7)
-    concat7 = concatenate([up7, bn6])
+    up7 = UpSampling3D(size=pool_size)(pool6)
+    concat7 = concatenate([up7, bn5])
     conv7 = Conv3D(32, conv_size, activation='relu', padding='same')(concat7)
     drop7 = Dropout(0.4)(conv7)
     conv7 = Conv3D(32, conv_size, activation='relu', padding='same')(drop7)

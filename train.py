@@ -201,7 +201,7 @@ def segmentation_model():
     # pool6 = MaxPooling3D(pool_size=pool_size)(bn6)
 
     up7 = UpSampling3D(size=pool_size)(bn6)
-    zp7 = ZeroPadding3D(padding=((1,0), (0, 0), (0, 0)))
+    zp7 = ZeroPadding3D(padding=((1,0), (0, 0), (0, 0)))(up7)
     concat7 = concatenate([zp7, bn5])
     conv7 = Conv3D(32, conv_size, activation='relu', padding='same')(concat7)
     drop7 = Dropout(0.4)(conv7)

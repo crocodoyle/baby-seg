@@ -191,8 +191,23 @@ def segmentation_model():
     conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(drop5)
     drop5 = Dropout(0.5)(conv5)
     bn5 = BatchNormalization()(drop5)
+    pool5 = MaxPooling3D(pool_size=pool_size)(bn5)
 
-    up8 = UpSampling3D(size=pool_size)(bn5)
+    conv6 = Conv3D(64, conv_size, activation='relu', padding='same')(pool5)
+    drop6 = Dropout(0.5)(conv6)
+    conv6 = Conv3D(64, conv_size, activation='relu', padding='same')(drop6)
+    drop6 = Dropout(0.5)(conv6)
+    bn6 = BatchNormalization()(drop6)
+
+    up7 = UpSampling3D(size=pool_size)(bn6)
+    concat7 = concatenate([up7, bn6])
+    conv7 = Conv3D(32, conv_size, activation='relu', padding='same')(concat7)
+    drop7 = Dropout(0.4)(conv7)
+    conv7 = Conv3D(32, conv_size, activation='relu', padding='same')(drop7)
+    drop7 = Dropout(0.4)(conv7)
+    bn7 = BatchNormalization()(drop7)
+
+    up8 = UpSampling3D(size=pool_size)(bn7)
     concat8 = concatenate([up8, bn4])
     conv8 = Conv3D(32, conv_size, activation='relu', padding='same')(concat8)
     drop8 = Dropout(0.4)(conv8)
@@ -224,7 +239,7 @@ def segmentation_model():
 
     model = Model(input=[inputs], output=[conv14])
 
-    model.compile(optimizer=Adam(lr=1e-4, decay=1e-6), loss=dice_coef_loss, metrics=[dice_coef])
+    model.compile(optimizer=Adam(lr=1e-4, decay=1e-7), loss=dice_coef_loss, metrics=[dice_coef])
     # sgd = SGD(lr=0.0001, decay=1e-7, momentum=0.9, nesterov=True)
     # model.compile(optimizer=sgd, loss=dice_coef_loss, metrics=[dice_coef])
 
@@ -264,7 +279,7 @@ def to_categorical(y):
     """
     categories = sorted(set(np.array(y, dtype="uint8").flatten()))
     num_classes = len(categories)
-    print(categories)
+    # print(categories)
 
     cat_shape = np.shape(y)[:-1] + (num_classes,)
     categorical = np.zeros(cat_shape, dtype='b')
@@ -409,6 +424,17 @@ if __name__ == "__main__":
     confusion_callback = ConfusionCallback()
     segvis_callback = SegVisCallback()
 
+    # train without augmentation (easier)
+    hist = model.fit_generator(
+        batch(training_indices),
+        len(training_indices),
+        epochs=100,
+        verbose=1,
+        callbacks=[model_checkpoint, confusion_callback, segvis_callback],
+        validation_data=batch(validation_indices),
+        validation_steps=len(validation_indices))
+
+    # train the rest of the way with data augmentation
     hist = model.fit_generator(
         batch(training_indices, augment=True),
         len(training_indices),
@@ -416,7 +442,7 @@ if __name__ == "__main__":
         verbose=1,
         callbacks=[model_checkpoint, confusion_callback, segvis_callback],
         validation_data=batch(validation_indices),
-        validation_steps=1)
+        validation_steps=len(validation_indices))
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
     model.save(scratch_dir + 'unet-3d-iseg2017.hdf5')

@@ -1,7 +1,7 @@
 from keras.models import Model
 from keras.layers import Input, Dense, Dropout, Activation, Convolution2D, MaxPooling2D, Flatten, BatchNormalization, \
     SpatialDropout2D, merge, Reshape
-from keras.layers import Conv3D, MaxPooling3D, SpatialDropout3D, UpSampling3D
+from keras.layers import Conv3D, MaxPooling3D, SpatialDropout3D, UpSampling3D, ZeroPadding3D
 from keras.layers.merge import Concatenate
 from keras.layers import concatenate
 from keras.optimizers import SGD, Adam
@@ -201,7 +201,8 @@ def segmentation_model():
     # pool6 = MaxPooling3D(pool_size=pool_size)(bn6)
 
     up7 = UpSampling3D(size=pool_size)(bn6)
-    concat7 = concatenate([up7, bn5])
+    zp7 = ZeroPadding3D(padding=((1,0), (0, 0), (0, 0)))
+    concat7 = concatenate([zp7, bn5])
     conv7 = Conv3D(32, conv_size, activation='relu', padding='same')(concat7)
     drop7 = Dropout(0.4)(conv7)
     conv7 = Conv3D(32, conv_size, activation='relu', padding='same')(drop7)

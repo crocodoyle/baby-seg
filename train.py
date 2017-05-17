@@ -328,17 +328,17 @@ def batch(indices, augment=False):
                     #     true_labels = affine_transform(true_labels, reflect_mat, order=0) # nearest neighbour for labels
 
                     if np.random.rand() > 0.5:
-                        scale = 1 + (np.random.rand(3) - 0.5) * 0.05 # +/- 5% scale
+                        scale = 1 + (np.random.rand(3) - 0.5) * 0.1 # up to 5% scale
                     else:
                         scale = None
 
                     if np.random.rand() > 0.5:
-                        shear = (np.random.rand(3) - 0.5) * 0.05 # sheer of 5%
+                        shear = (np.random.rand(3) - 0.5) * 0.2 # sheer of up to 10%
                     else:
                         shear = None
 
                     if np.random.rand() > 0.5:
-                        angles = (np.random.rand(3) - 0.5) * 0.05 * 2*math.pi # rotation up to 5 degrees
+                        angles = (np.random.rand(3) - 0.5) * 0.1 * 2*math.pi # rotation up to 5 degrees
                     else:
                         angles = None
 
@@ -412,7 +412,7 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices, augment=True),
         len(training_indices),
-        epochs=400,
+        epochs=600,
         verbose=1,
         callbacks=[model_checkpoint, confusion_callback, segvis_callback],
         validation_data=batch(validation_indices),

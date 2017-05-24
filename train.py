@@ -257,7 +257,7 @@ def brain_seg():
     down2 = MaxPooling3D(pool_size=pool_size)(frac2)
     frac3 = fractal_block(2*f, b, c, dp)(down2)
     down3 = MaxPooling3D(pool_size=pool_size)(frac3)
-    frac4 = fractal_block(4*f, b, c, dp)(down3)
+    frac4 = fractal_block(2*f, b, c, dp)(down3)
 
     # down4 = MaxPooling3D(pool_size=pool_size)(frac4)
     # frac5 = fractal_block(16*f, b, c, dp)(down4)

@@ -244,7 +244,7 @@ def brain_seg():
 
     tissue_classes = 3
 
-    f = 4
+    f = 8
     b = 1
     c = 4
     dp = 0.5
@@ -254,8 +254,8 @@ def brain_seg():
     frac1 = fractal_block(f, 1, c, dp)(inputs)
     down1 = MaxPooling3D(pool_size=pool_size)(frac1)
     frac2 = fractal_block(2*f, b, c, dp)(down1)
-    down2 = MaxPooling3D(pool_size=pool_size)(frac2)
-    frac3 = fractal_block(2*f, b, c, dp)(down2)
+    # down2 = MaxPooling3D(pool_size=pool_size)(frac2)
+    # frac3 = fractal_block(2*f, b, c, dp)(down2)
     # down3 = MaxPooling3D(pool_size=pool_size)(frac3)
     # frac4 = fractal_block(2*f, b, c, dp)(down3)
 
@@ -267,12 +267,12 @@ def brain_seg():
 
     # up2 = concatenate([UpSampling3D(size=pool_size)(frac4), frac3])
     # frac7 = fractal_block(2*f, b, c, dp)(up2)
-    up3 = add([UpSampling3D(size=pool_size)(frac3), frac2])
-    frac8 = fractal_block(f, b, c, dp)(up3)
-    up4 = add([UpSampling3D(size=pool_size)(frac8), frac1])
+    # up3 = add([UpSampling3D(size=pool_size)(frac3), frac2])
+    # frac8 = fractal_block(f, b, c, dp)(up3)
+    up4 = add([UpSampling3D(size=pool_size)(frac2), frac1])
     frac9 = fractal_block(f, b, c, dp)(up4)
 
-    out8 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', kernel_initializer='glorot_normal', padding='same')(frac8)
+    out8 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', kernel_initializer='glorot_normal', padding='same')(frac2)
     out9 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', kernel_initializer='glorot_normal', padding='same')(frac9)
     outputs = multiply([UpSampling3D(size=pool_size)(out8), out9])
 

@@ -224,7 +224,7 @@ def segmentation_model():
 
     model = Model(input=[inputs], output=[conv14])
 
-    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
+    model.compile(optimizer=Adam(lr=1e-4), loss=dice_coef_loss, metrics=[dice_coef])
     # sgd = SGD(lr=0.0001, decay=1e-7, momentum=0.9, nesterov=True)
     # model.compile(optimizer=sgd, loss=dice_coef_loss, metrics=[dice_coef])
 
@@ -245,8 +245,8 @@ def brain_seg():
     tissue_classes = 3
 
     f = 4
-    b = 1
-    c = 3
+    b = 2
+    c = 4
     dp = 0.5
 
     inputs = Input(shape=(144, 192, 256, 2))
@@ -272,8 +272,8 @@ def brain_seg():
     up4 = add([UpSampling3D(size=pool_size)(frac8), frac1])
     frac9 = fractal_block(f, b, c, dp)(up4)
 
-    out8 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='same')(frac8)
-    out9 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='same')(frac9)
+    out8 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', kernel_initializer='glorot_normal', padding='same')(frac8)
+    out9 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', kernel_initializer='glorot_normal', padding='same')(frac9)
     outputs = multiply([UpSampling3D(size=pool_size)(out8), out9])
 
     model = Model(inputs=[inputs], outputs=[outputs])

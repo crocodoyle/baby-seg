@@ -224,7 +224,7 @@ def segmentation_model():
 
     model = Model(input=[inputs], output=[conv14])
 
-    model.compile(optimizer=Adam(lr=1e-5, decay=1e-7), loss=dice_coef_loss, metrics=[dice_coef])
+    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
     # sgd = SGD(lr=0.0001, decay=1e-7, momentum=0.9, nesterov=True)
     # model.compile(optimizer=sgd, loss=dice_coef_loss, metrics=[dice_coef])
 
@@ -244,7 +244,7 @@ def brain_seg():
 
     tissue_classes = 3
 
-    f = 4
+    f = 8
     b = 1
     c = 3
     dp = 0.5
@@ -366,18 +366,10 @@ def batch(indices, augment=False):
 
                 if augment:
                     # flip images
-                    # if np.random.rand() > 0.5:
-                    #     mid = (72, 96, 128)
-                    #     normal = (0, 1, 0)
-                    #
-                    #     reflect_mat = t.reflection_matrix(mid, normal)
-                    #     reflect_mat = reflect_mat[0:-1, 0:-1]
-                    #     # print('reflection matrix:', reflect_mat)
-                    #     # print(reflect_mat.shape)
-                    #
-                    #     t1_image = affine_transform(t1_image, reflect_mat)
-                    #     t2_image = affine_transform(t2_image, reflect_mat)
-                    #     true_labels = affine_transform(true_labels, reflect_mat, order=0) # nearest neighbour for labels
+                    if np.random.rand() > 0.5:
+                        t1_image = np.flip(t1_image, axis=1)
+                        t2_image = np.flip(t2_image, axis=1)
+                        true_labels = np.flip(true_labels, axis=1)
 
                     if np.random.rand() > 0.5:
                         scale = 1 + (np.random.rand(3) - 0.5) * 0.1 # up to 5% scale

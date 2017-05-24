@@ -265,7 +265,7 @@ def brain_seg():
     # up1 = concatenate([UpSampling3D(size=pool_size)(frac5), frac4])
     # frac6 = fractal_block(12 * f, b, c, dp, 0.1)(up1)
 
-    up2 = concatenate([UpSampling3D(size=pool_size)(frac6), frac3])
+    up2 = concatenate([UpSampling3D(size=pool_size)(frac4), frac3])
     frac7 = fractal_block(4*f, b, c, dp)(up2)
     up3 = concatenate([UpSampling3D(size=pool_size)(frac7), frac2])
     frac8 = fractal_block(2*f, b, c, dp)(up3)

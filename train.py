@@ -244,12 +244,12 @@ def brain_seg():
 
     tissue_classes = 3
 
-    f = 8
+    f = 4
     b = 2
-    c = 4
+    c = 3
     dp = 0.5
 
-    inputs = Input(shape=(144, 192, 256, 3))
+    inputs = Input(shape=(144, 192, 256, 2))
 
     frac1 = fractal_block(f, 1, c, dp)(inputs)
     down1 = MaxPooling3D(pool_size=pool_size)(frac1)
@@ -257,21 +257,23 @@ def brain_seg():
     down2 = MaxPooling3D(pool_size=pool_size)(frac2)
     frac3 = fractal_block(4*f, b, c, dp)(down2)
     down3 = MaxPooling3D(pool_size=pool_size)(frac3)
-    frac4 = fractal_block(8*f, b, c, dp)(down3)
-    down4 = MaxPooling3D(pool_size=pool_size)(frac4)
-    frac5 = fractal_block(16*f, b, c, dp)(down4)
+    frac4 = fractal_block(4*f, b, c, dp)(down3)
 
-    up1 = concatenate([UpSampling3D(size=pool_size)(frac5), frac4])
-    frac6 = fractal_block(12 * f, b, c, dp, 0.1)(up1)
+    # down4 = MaxPooling3D(pool_size=pool_size)(frac4)
+    # frac5 = fractal_block(16*f, b, c, dp)(down4)
+    #
+    # up1 = concatenate([UpSampling3D(size=pool_size)(frac5), frac4])
+    # frac6 = fractal_block(12 * f, b, c, dp, 0.1)(up1)
+
     up2 = concatenate([UpSampling3D(size=pool_size)(frac6), frac3])
-    frac7 = fractal_block(8 * f, b, c, dp, 0.2)(up2)
+    frac7 = fractal_block(4*f, b, c, dp)(up2)
     up3 = concatenate([UpSampling3D(size=pool_size)(frac7), frac2])
-    frac8 = fractal_block(5 * f, b, c, dp, 0.3)(up3)
+    frac8 = fractal_block(2*f, b, c, dp)(up3)
     up4 = concatenate([UpSampling3D(size=pool_size)(frac8), frac1])
-    frac9 = fractal_block(3 * f, 1, c, dp, 0.4)(up4)
+    frac9 = fractal_block(f, b, c, dp)(up4)
 
-    out8 = Conv3D(tissue_classes, (1, 1, 1), activation='hard_sigmoid', padding='same')(frac8)
-    out9 = Conv3D(tissue_classes, (1, 1, 1), activation='hard_sigmoid', padding='same')(frac9)
+    out8 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='same')(frac8)
+    out9 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='same')(frac9)
     outputs = multiply([UpSampling3D(size=pool_size)(out8), out9])
 
     model = Model(inputs=[inputs], outputs=[outputs])
@@ -350,7 +352,7 @@ def batch(indices, augment=False):
     images = f['images']
     labels = f['labels']
 
-    return_imgs = np.zeros(images.shape[1:-1] + (3,))
+    return_imgs = np.zeros(images.shape[1:-1] + (2,))
 
     while True:
         np.random.shuffle(indices)
@@ -358,7 +360,7 @@ def batch(indices, augment=False):
             try:
                 t1_image = np.asarray(images[i, ..., 0], dtype='float32')
                 t2_image = np.asarray(images[i, ..., 1], dtype='float32')
-                ratio_img = np.asarray(images[i, ..., 2], dtype='float32')
+                # ratio_img = np.asarray(images[i, ..., 2], dtype='float32')
 
                 true_labels = labels[i, ..., 0]
 
@@ -403,7 +405,7 @@ def batch(indices, augment=False):
 
                 return_imgs[..., 0] = t1_image
                 return_imgs[..., 1] = t2_image
-                return_imgs[..., 2] = ratio_img
+                # return_imgs[..., 2] = ratio_img
 
                 label = to_categorical(np.reshape(true_labels, true_labels.shape + (1,)))
                 # print(label.shape)

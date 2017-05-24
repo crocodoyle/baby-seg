@@ -244,7 +244,7 @@ def brain_seg():
 
     tissue_classes = 3
 
-    f = 6
+    f = 8
     b = 1
     c = 4
     dp = 0.5
@@ -256,8 +256,8 @@ def brain_seg():
     frac2 = fractal_block(2*f, b, c, dp)(down1)
     down2 = MaxPooling3D(pool_size=pool_size)(frac2)
     frac3 = fractal_block(2*f, b, c, dp)(down2)
-    down3 = MaxPooling3D(pool_size=pool_size)(frac3)
-    frac4 = fractal_block(2*f, b, c, dp)(down3)
+    # down3 = MaxPooling3D(pool_size=pool_size)(frac3)
+    # frac4 = fractal_block(2*f, b, c, dp)(down3)
 
     # down4 = MaxPooling3D(pool_size=pool_size)(frac4)
     # frac5 = fractal_block(16*f, b, c, dp)(down4)
@@ -265,9 +265,9 @@ def brain_seg():
     # up1 = concatenate([UpSampling3D(size=pool_size)(frac5), frac4])
     # frac6 = fractal_block(12 * f, b, c, dp, 0.1)(up1)
 
-    up2 = concatenate([UpSampling3D(size=pool_size)(frac4), frac3])
-    frac7 = fractal_block(2*f, b, c, dp)(up2)
-    up3 = add([UpSampling3D(size=pool_size)(frac7), frac2])
+    # up2 = concatenate([UpSampling3D(size=pool_size)(frac4), frac3])
+    # frac7 = fractal_block(2*f, b, c, dp)(up2)
+    up3 = add([UpSampling3D(size=pool_size)(frac3), frac2])
     frac8 = fractal_block(f, b, c, dp)(up3)
     up4 = add([UpSampling3D(size=pool_size)(frac8), frac1])
     frac9 = fractal_block(f, b, c, dp)(up4)

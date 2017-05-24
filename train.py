@@ -416,7 +416,7 @@ def batch(indices, augment=False):
             except ValueError:
                 print('some sort of value error occurred')
                 print(images[i, ...][np.newaxis, ...].shape)
-                yield (images[i, ..., 0:1][np.newaxis, ...])
+                yield (images[i, ...][np.newaxis, ...])
 
 def visualize_training_dice(hist):
     epoch_num = range(len(hist.history['dice_coef']))

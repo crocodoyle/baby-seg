@@ -56,7 +56,7 @@ class JoinLayer(Layer):
         super(JoinLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        print("build")
+        # print("build")
         self.average_shape = list(input_shape[0])[1:]
 
     def _random_arr(self, count, p):
@@ -110,7 +110,7 @@ class JoinLayer(Layer):
         return output
 
     def compute_output_shape(self, input_shape):
-        print("compute_output_shape", input_shape)
+        # print("compute_output_shape", input_shape)
         return input_shape[0]
 
 class JoinLayerGen:

@@ -25,7 +25,7 @@ def make_iseg():
     z_dim = 256
 
     f = h5py.File(scratch_dir + 'baby-seg.hdf5', 'w')
-    f.create_dataset('images', (numImgs, x_dim, y_dim, z_dim, 3), dtype='float16')
+    f.create_dataset('images', (numImgs, x_dim, y_dim, z_dim, 2), dtype='float16')
     f.create_dataset('labels', (numImgs, x_dim, y_dim, z_dim, 1), dtype='uint8')
 
     numSeen = {}
@@ -86,7 +86,7 @@ def make_iseg():
     for i in range(23):
         f['images'][i, ..., 0] = np.divide(f['images'][i, ..., 0], maxVal['T1'])
         f['images'][i, ..., 1] = np.divide(f['images'][i, ..., 1], maxVal['T2'])
-        f['images'][i, ..., 2] = np.divide(f['images'][i, ..., 0], f['images'][i, ..., 1])
+        # f['images'][i, ..., 2] = np.divide(f['images'][i, ..., 0], f['images'][i, ..., 1])
 
     # pretend background is CSF for easier training
     for i in range(23):

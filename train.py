@@ -240,8 +240,6 @@ def fractal_block(nb_filter,b,c,drop_path,dropout=0):
     return f
 
 def brain_seg():
-    from fractalnet import fractal_block
-
     pool_size = (2, 2, 2)
 
     f = 8
@@ -261,13 +259,13 @@ def brain_seg():
     down4 = MaxPooling3D(pool_size=pool_size)(frac4)
     frac5 = fractal_block(16*f, b, c, dp)(down4)
 
-    up1 = concatenate([UpSampling3D(size=(2, 2, 2))(frac5), frac4])
+    up1 = concatenate([UpSampling3D(size=pool_size)(frac5), frac4])
     frac6 = fractal_block(12 * f, b, c, dp, 0.1)(up1)
-    up2 = concatenate([UpSampling3D(size=(2, 2))(frac6), frac3])
+    up2 = concatenate([UpSampling3D(size=pool_size)(frac6), frac3])
     frac7 = fractal_block(8 * f, b, c, dp, 0.2)(up2)
-    up3 = concatenate([UpSampling3D(size=(2, 2))(frac7), frac2])
+    up3 = concatenate([UpSampling3D(size=pool_size)(frac7), frac2])
     frac8 = fractal_block(5 * f, b, c, dp, 0.3)(up3)
-    up4 = concatenate([UpSampling3D(size=(2, 2))(frac8), frac1])
+    up4 = concatenate([UpSampling3D(size=pool_size)(frac8), frac1])
     frac9 = fractal_block(3 * f, 1, c, dp, 0.4)(up4)
 
     out8 = Conv3D(1, (1, 1, 1), activation='hard_sigmoid', padding='same')(frac8)

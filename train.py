@@ -244,8 +244,6 @@ def brain_seg():
 
     pool_size = (2, 2, 2)
 
-    tissue_classes = 3
-
     f = 8
     b = 2
     c = 4
@@ -264,21 +262,19 @@ def brain_seg():
     frac5 = fractal_block(16*f, b, c, dp)(down4)
 
     up1 = concatenate([UpSampling3D(size=(2, 2, 2))(frac5), frac4])
-    frac6 = fractal_block(12 * f, b, c, dp)(up1)
-    up2 = concatenate([UpSampling3D(size=(2, 2, 2))(frac6), frac3])
-    frac7 = fractal_block(8 * f, b, c, dp)(up2)
-    up3 = concatenate([UpSampling3D(size=(2, 2, 2))(frac7), frac2])
-    frac8 = fractal_block(5 * f, b, c, dp)(up3)
-    up4 = concatenate([UpSampling3D(size=(2, 2, 2))(frac8), frac1])
-    frac9 = fractal_block(3 * f, 1, c, dp)(up4)
+    frac6 = fractal_block(12 * f, b, c, dp, 0.1)(up1)
+    up2 = concatenate([UpSampling3D(size=(2, 2))(frac6), frac3])
+    frac7 = fractal_block(8 * f, b, c, dp, 0.2)(up2)
+    up3 = concatenate([UpSampling3D(size=(2, 2))(frac7), frac2])
+    frac8 = fractal_block(5 * f, b, c, dp, 0.3)(up3)
+    up4 = concatenate([UpSampling3D(size=(2, 2))(frac8), frac1])
+    frac9 = fractal_block(3 * f, 1, c, dp, 0.4)(up4)
 
-    out8 = Conv3D(tissue_classes, (1, 1, 1), activation='hard_sigmoid', padding='same')(frac8)
-    out9 = Conv3D(tissue_classes, (1, 1, 1), activation='hard_sigmoid', padding='same')(frac9)
+    out8 = Conv3D(1, (1, 1, 1), activation='hard_sigmoid', padding='same')(frac8)
+    out9 = Conv3D(1, (1, 1, 1), activation='hard_sigmoid', padding='same')(frac9)
     outputs = multiply([UpSampling3D(size=(2, 2, 2))(out8), out9])
 
     model = Model(input=inputs, output=outputs)
-
-    model.compile(optimizer=Adam(lr=1e-5, decay=1e-7), loss=dice_coef_loss, metrics=[dice_coef])
 
     return model
 
@@ -452,8 +448,7 @@ if __name__ == "__main__":
     affine[0, 0] = -1
     affine[1, 1] = -1
 
-    # model = segmentation_model()
-    model = brain_seg()
+    model = segmentation_model()
     model.summary()
 
     model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_dice_coef", verbose=1,

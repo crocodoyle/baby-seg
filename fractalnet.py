@@ -109,7 +109,7 @@ class JoinLayer(Layer):
         output = K.in_train_phase(self._drop_path(inputs), self._ave(inputs))
         return output
 
-    def get_output_shape_for(self, input_shape):
+    def compute_output_shape(self, input_shape):
         #print("get_output_shape_for", input_shape)
         return input_shape[0]
 
@@ -195,6 +195,5 @@ def fractal_net(b, c, conv, drop_path, global_p=0.5, dropout=None):
                                    img_shape=img_shape,
                                    drop_p=drop_path,
                                    dropout=dropout_i)(output)
-            # output = MaxPooling3D(pool_size=(2,2,2))(output)
         return output
     return f

@@ -256,8 +256,8 @@ def brain_seg():
     frac2 = fractal_block(2*f, b, c, dp)(down1)
     down2 = MaxPooling3D(pool_size=pool_size)(frac2)
     frac3 = fractal_block(2*f, b, c, dp)(down2)
-    # down3 = MaxPooling3D(pool_size=pool_size)(frac3)
-    # frac4 = fractal_block(4*f, b, c, dp)(down3)
+    down3 = MaxPooling3D(pool_size=pool_size)(frac3)
+    frac4 = fractal_block(4*f, b, c, dp)(down3)
 
     # down4 = MaxPooling3D(pool_size=pool_size)(frac4)
     # frac5 = fractal_block(16*f, b, c, dp)(down4)
@@ -265,11 +265,11 @@ def brain_seg():
     # up1 = concatenate([UpSampling3D(size=pool_size)(frac5), frac4])
     # frac6 = fractal_block(12 * f, b, c, dp, 0.1)(up1)
 
-    # up2 = concatenate([UpSampling3D(size=pool_size)(frac4), frac3])
-    # frac7 = fractal_block(4*f, b, c, dp)(up2)
-    up3 = concatenate([UpSampling3D(size=pool_size)(frac3), frac2])
-    frac8 = fractal_block(2*f, b, c, dp)(up3)
-    up4 = concatenate([UpSampling3D(size=pool_size)(frac8), frac1])
+    up2 = concatenate([UpSampling3D(size=pool_size)(frac4), frac3])
+    frac7 = fractal_block(2*f, b, c, dp)(up2)
+    up3 = add([UpSampling3D(size=pool_size)(frac7), frac2])
+    frac8 = fractal_block(f, b, c, dp)(up3)
+    up4 = add([UpSampling3D(size=pool_size)(frac8), frac1])
     frac9 = fractal_block(f, b, c, dp)(up4)
 
     out8 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='same')(frac8)
@@ -399,7 +399,7 @@ def batch(indices, augment=False):
 
                     t1_image = affine_transform(t1_image, trans_mat, cval=10)
                     t2_image = affine_transform(t2_image, trans_mat, cval=10)
-                    ratio_img = affine_transform(ratio_img, trans_mat, cval=10)
+                    # ratio_img = affine_transform(ratio_img, trans_mat, cval=10)
 
                     true_labels = affine_transform(true_labels, trans_mat, order=0, cval=10) # nearest neighbour for labels
 
@@ -416,7 +416,7 @@ def batch(indices, augment=False):
             except ValueError:
                 print('some sort of value error occurred')
                 print(images[i, ...][np.newaxis, ...].shape)
-                yield (images[i, ...][np.newaxis, ...])
+                yield (images[i, ..., 0:1][np.newaxis, ...])
 
 def visualize_training_dice(hist):
     epoch_num = range(len(hist.history['dice_coef']))

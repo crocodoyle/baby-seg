@@ -147,7 +147,7 @@ def fractal_conv(filter, img_shape, dropout=None):
     def f(prev):
         conv = prev
         conv = Conv3D(filter, img_shape, kernel_initializer='glorot_normal', padding='same')(conv)
-        conv = BatchNormalization(mode=0, axis=1)(conv)
+        conv = BatchNormalization()(conv)
         conv = Activation('relu')(conv)
         if dropout:
             conv = Dropout(dropout)(conv)

@@ -1,11 +1,11 @@
 from keras.models import Model
 from keras.layers import Input, Dense, Dropout, Activation, Convolution2D, MaxPooling2D, Flatten, BatchNormalization, \
     SpatialDropout2D, merge, Reshape
-from keras.layers import Conv3D, MaxPooling3D, SpatialDropout3D, UpSampling3D, ZeroPadding3D
-from keras.layers.merge import Concatenate
-from keras.layers import concatenate
+from keras.layers import Conv3D, MaxPooling3D, UpSampling3D, ZeroPadding3D
+from keras.layers import concatenate, add, multiply
 from keras.optimizers import SGD, Adam
-from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
+from keras.callbacks import ModelCheckpoint
+
 # from keras.utils.visualize_util import plot
 from keras.callbacks import Callback
 from keras import backend as K
@@ -230,6 +230,58 @@ def segmentation_model():
 
     return model
 
+def fractal_block(nb_filter,b,c,drop_path,dropout=0):
+    from fractalnet import fractal_net
+
+    conv_size = (3, 3, 3)
+
+    def f(input):
+        return fractal_net(b=b, c=c, conv=b*[(nb_filter, conv_size)], drop_path=drop_path, dropout=b*[dropout])(input)
+    return f
+
+def brain_seg():
+    from fractalnet import fractal_block
+
+    pool_size = (2, 2, 2)
+
+    tissue_classes = 3
+
+    f = 8
+    b = 2
+    c = 4
+    dp = 0.5
+
+    inputs = Input(shape=(144, 192, 256, 3))
+
+    frac1 = fractal_block(f, 1, c, dp)(inputs)
+    down1 = MaxPooling3D(pool_size=pool_size)(frac1)
+    frac2 = fractal_block(2*f, b, c, dp)(down1)
+    down2 = MaxPooling3D(pool_size=pool_size)(frac2)
+    frac3 = fractal_block(4*f, b, c, dp)(down2)
+    down3 = MaxPooling3D(pool_size=pool_size)(frac3)
+    frac4 = fractal_block(8*f, b, c, dp)(down3)
+    down4 = MaxPooling3D(pool_size=pool_size)(frac4)
+    frac5 = fractal_block(16*f, b, c, dp)(down4)
+
+    up1 = concatenate([UpSampling3D(size=(2, 2, 2))(frac5), frac4])
+    frac6 = fractal_block(12 * f, b, c, dp)(up1)
+    up2 = concatenate([UpSampling3D(size=(2, 2, 2))(frac6), frac3])
+    frac7 = fractal_block(8 * f, b, c, dp)(up2)
+    up3 = concatenate([UpSampling3D(size=(2, 2, 2))(frac7), frac2])
+    frac8 = fractal_block(5 * f, b, c, dp)(up3)
+    up4 = concatenate([UpSampling3D(size=(2, 2, 2))(frac8), frac1])
+    frac9 = fractal_block(3 * f, 1, c, dp)(up4)
+
+    out8 = Conv3D(tissue_classes, (1, 1, 1), activation='hard_sigmoid', padding='same')(frac8)
+    out9 = Conv3D(tissue_classes, (1, 1, 1), activation='hard_sigmoid', padding='same')(frac9)
+    outputs = multiply([UpSampling3D(size=(2, 2, 2))(out8), out9])
+
+    model = Model(input=inputs, output=outputs)
+
+    model.compile(optimizer=Adam(lr=1e-5, decay=1e-7), loss=dice_coef_loss, metrics=[dice_coef])
+
+    return model
+
 def dice_coef(y_true, y_pred):
     """ DICE coefficient: 2TP / (2TP + FP + FN). An additional smoothness term is added to ensure no / 0
     :param y_true: True labels.
@@ -400,7 +452,8 @@ if __name__ == "__main__":
     affine[0, 0] = -1
     affine[1, 1] = -1
 
-    model = segmentation_model()
+    # model = segmentation_model()
+    model = brain_seg()
     model.summary()
 
     model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_dice_coef", verbose=1,

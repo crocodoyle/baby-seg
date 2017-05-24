@@ -448,7 +448,8 @@ if __name__ == "__main__":
     affine[0, 0] = -1
     affine[1, 1] = -1
 
-    model = segmentation_model()
+    # model = segmentation_model()
+    model = brain_seg()
     model.summary()
 
     model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_dice_coef", verbose=1,

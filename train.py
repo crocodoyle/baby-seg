@@ -244,7 +244,7 @@ def brain_seg():
 
     tissue_classes = 3
 
-    f = 8
+    f = 16
     b = 1
     c = 4
     dp = 0.5
@@ -253,7 +253,7 @@ def brain_seg():
 
     frac1 = fractal_block(f, 1, c, dp)(inputs)
     down1 = MaxPooling3D(pool_size=pool_size)(frac1)
-    frac2 = fractal_block(2*f, b, c, dp)(down1)
+    frac2 = fractal_block(f, b, c, dp)(down1)
     # down2 = MaxPooling3D(pool_size=pool_size)(frac2)
     # frac3 = fractal_block(2*f, b, c, dp)(down2)
     # down3 = MaxPooling3D(pool_size=pool_size)(frac3)

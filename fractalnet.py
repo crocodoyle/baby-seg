@@ -146,9 +146,9 @@ class JoinLayerGen:
 def fractal_conv(filter, filter_shape, dropout=None):
     def f(prev):
         conv = prev
-        conv = Conv3D(filter, filter_shape, kernel_initializer='glorot_normal', padding='same')(conv)
-        conv = BatchNormalization()(conv)
-        conv = Activation('relu')(conv)
+        conv = Conv3D(filter, filter_shape, kernel_initializer='glorot_normal', padding='same', activation='relu')(conv)
+        # conv = BatchNormalization()(conv)
+        # conv = Activation('relu')(conv)
         if dropout:
             conv = Dropout(dropout)(conv)
         return conv

@@ -246,7 +246,7 @@ def brain_seg():
 
     f = 4
     b = 1
-    c = 4
+    c = 3
     dp = 0.5
 
     inputs = Input(shape=(144, 192, 256, 2))

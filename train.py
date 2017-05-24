@@ -244,8 +244,8 @@ def brain_seg():
 
     tissue_classes = 3
 
-    f = 4
-    b = 2
+    f = 6
+    b = 1
     c = 4
     dp = 0.5
 

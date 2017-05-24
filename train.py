@@ -272,7 +272,7 @@ def brain_seg():
     out9 = Conv3D(1, (1, 1, 1), activation='hard_sigmoid', padding='same')(frac9)
     outputs = multiply([UpSampling3D(size=(2, 2, 2))(out8), out9])
 
-    model = Model(input=[inputs], output=[outputs])
+    model = Model(inputs=[inputs], outputs=[outputs])
 
     model.compile(optimizer=Adam(lr=1e-5, decay=1e-7), loss=dice_coef_loss, metrics=[dice_coef])
 

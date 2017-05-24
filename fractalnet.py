@@ -56,7 +56,7 @@ class JoinLayer(Layer):
         super(JoinLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        #print("build")
+        print("build")
         self.average_shape = list(input_shape[0])[1:]
 
     def _random_arr(self, count, p):
@@ -110,7 +110,7 @@ class JoinLayer(Layer):
         return output
 
     def compute_output_shape(self, input_shape):
-        #print("get_output_shape_for", input_shape)
+        print("compute_output_shape", input_shape)
         return input_shape[0]
 
 class JoinLayerGen:
@@ -143,10 +143,10 @@ class JoinLayerGen:
         global_path = self.path_array
         return JoinLayer(drop_p=drop_p, is_global=global_switch, global_path=global_path)
 
-def fractal_conv(filter, img_shape, dropout=None):
+def fractal_conv(filter, filter_shape, dropout=None):
     def f(prev):
         conv = prev
-        conv = Conv3D(filter, img_shape, kernel_initializer='glorot_normal', padding='same')(conv)
+        conv = Conv3D(filter, filter_shape, kernel_initializer='glorot_normal', padding='same')(conv)
         conv = BatchNormalization()(conv)
         conv = Activation('relu')(conv)
         if dropout:
@@ -154,7 +154,7 @@ def fractal_conv(filter, img_shape, dropout=None):
         return conv
     return f
 
-def fractal_block(join_gen, c, filter, img_shape, drop_p, dropout=None):
+def fractal_block(join_gen, c, filter, filter_shape, drop_p, dropout=None):
     def f(z):
         columns = [[z] for _ in range(c)]
         for row in range(2**(c-1)):
@@ -165,7 +165,7 @@ def fractal_block(join_gen, c, filter, img_shape, drop_p, dropout=None):
                 if (row+1) % prop == 0:
                     t_col = columns[col]
                     t_col.append(fractal_conv(filter=filter,
-                                              img_shape=img_shape,
+                                              filter_shape=filter_shape,
                                               dropout=dropout)(t_col[-1]))
                     t_row.append(col)
             # Merge (if needed)
@@ -188,11 +188,11 @@ def fractal_net(b, c, conv, drop_path, global_p=0.5, dropout=None):
         # JoinLayers that share the same global droppath
         join_gen = JoinLayerGen(width=c, global_p=global_p)
         for i in range(b):
-            (filter, img_shape) = conv[i]
+            (filter, filter_shape) = conv[i]
             dropout_i = dropout[i] if dropout else None
             output = fractal_block(join_gen=join_gen,
                                    c=c, filter=filter,
-                                   img_shape=img_shape,
+                                   filter_shape=filter_shape,
                                    drop_p=drop_path,
                                    dropout=dropout_i)(output)
         return output

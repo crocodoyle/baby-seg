@@ -242,6 +242,8 @@ def fractal_block(nb_filter,b,c,drop_path,dropout=0):
 def brain_seg():
     pool_size = (2, 2, 2)
 
+    tissue_classes = 3
+
     f = 8
     b = 2
     c = 4
@@ -268,9 +270,9 @@ def brain_seg():
     up4 = concatenate([UpSampling3D(size=pool_size)(frac8), frac1])
     frac9 = fractal_block(3 * f, 1, c, dp, 0.4)(up4)
 
-    out8 = Conv3D(1, (1, 1, 1), activation='hard_sigmoid', padding='same')(frac8)
-    out9 = Conv3D(1, (1, 1, 1), activation='hard_sigmoid', padding='same')(frac9)
-    outputs = multiply([UpSampling3D(size=(2, 2, 2))(out8), out9])
+    out8 = Conv3D(tissue_classes, (1, 1, 1), activation='hard_sigmoid', padding='same')(frac8)
+    out9 = Conv3D(tissue_classes, (1, 1, 1), activation='hard_sigmoid', padding='same')(frac9)
+    outputs = multiply([UpSampling3D(size=pool_size)(out8), out9])
 
     model = Model(inputs=[inputs], outputs=[outputs])
 

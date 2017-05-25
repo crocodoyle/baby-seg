@@ -59,7 +59,7 @@ class SegVisCallback(Callback):
     def on_epoch_end(self, batch, logs={}):
         model = self.model
 
-        predicted = model.predict(self.images[0, ...][np.newaxis, ...], batch_size=1)
+        predicted = model.predict(self.images[9, ...][np.newaxis, ...], batch_size=1)
         segmentation = from_categorical(predicted, category_mapping)
 
         slice = segmentation[:, :, 128].T
@@ -123,7 +123,7 @@ class ConfusionCallback(Callback):
             if '.png' in filename and not 'results' in filename:
                 images.append(plt.imread(os.path.join(scratch_dir, 'confusion', filename)))
 
-            imageio.mimsave(os.path.join(scratch_dir, 'confusion', 'confusion.gif'), images)
+            # imageio.mimsave(os.path.join(scratch_dir, 'confusion', 'confusion.gif'), images)
 
 
 def save_confusion_matrix(cm, classes, filename,
@@ -158,10 +158,10 @@ def segmentation_model():
     """
     tissue_classes = 3
 
-    conv_size = (5, 5, 5)
+    conv_size = (3, 3, 3)
     pool_size = (2, 2, 2)
 
-    inputs = Input(shape=(144, 192, 256, 3))
+    inputs = Input(shape=(144, 192, 256, 2))
 
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(inputs)
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(conv1)
@@ -435,17 +435,21 @@ if __name__ == "__main__":
     training_indices = list(range(9))
     validation_indices = [9]
     testing_indices = list(range(10, 23))
+    ibis_indices = list(range(24, 75))
+
+    training_indices = training_indices + ibis_indices
 
     print('training images:', training_indices)
     print('validation images:', validation_indices)
     print('testing images:', testing_indices)
+    print('ibis images:', ibis_indices)
 
     affine = np.eye(4)
     affine[0, 0] = -1
     affine[1, 1] = -1
 
     # model = segmentation_model()
-    model = brain_seg()
+    model = segmentation_model()
     model.summary()
 
     model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_dice_coef", verbose=1,
@@ -458,21 +462,21 @@ if __name__ == "__main__":
     hist = model.fit_generator(
         batch(training_indices),
         len(training_indices),
-        epochs=100,
-        verbose=1,
-        callbacks=[model_checkpoint, confusion_callback, segvis_callback],
-        validation_data=batch(validation_indices),
-        validation_steps=len(validation_indices))
-
-    # train the rest of the way with data augmentation
-    hist = model.fit_generator(
-        batch(training_indices, augment=True),
-        len(training_indices),
         epochs=600,
         verbose=1,
         callbacks=[model_checkpoint, confusion_callback, segvis_callback],
         validation_data=batch(validation_indices),
         validation_steps=len(validation_indices))
+
+    # # train the rest of the way with data augmentation
+    # hist = model.fit_generator(
+    #     batch(training_indices, augment=True),
+    #     len(training_indices),
+    #     epochs=600,
+    #     verbose=1,
+    #     callbacks=[model_checkpoint, confusion_callback, segvis_callback],
+    #     validation_data=batch(validation_indices),
+    #     validation_steps=len(validation_indices))
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
     model.save(scratch_dir + 'unet-3d-iseg2017.hdf5')

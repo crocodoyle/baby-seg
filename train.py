@@ -435,7 +435,7 @@ if __name__ == "__main__":
     training_indices = list(range(9))
     validation_indices = [9]
     testing_indices = list(range(10, 23))
-    ibis_indices = list(range(24, 75))
+    ibis_indices = list(range(24, 73))
 
     training_indices = training_indices + ibis_indices
 

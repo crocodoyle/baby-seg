@@ -363,7 +363,7 @@ def batch(indices, augment=False):
     images = f['images']
     labels = f['labels']
 
-    return_imgs = np.zeros(images.shape[1:-1] + (2,))
+    return_imgs = np.zeros(cropped_shape + (2,))
 
     while True:
         np.random.shuffle(indices)
@@ -375,7 +375,7 @@ def batch(indices, augment=False):
                 # cropped_shape = (144-(5+5), 192-(24+11), 256-(80+55))
                 # ratio_img = np.asarray(images[i, ..., 2], dtype='float32')
 
-                true_labels = labels[i, ..., 0]
+                true_labels = labels[i, :, :, 80:-48, 0]
 
                 if augment:
                     # flip images
@@ -420,8 +420,8 @@ def batch(indices, augment=False):
 
             except ValueError:
                 print('some sort of value error occurred')
-                print(images[i, ...][np.newaxis, ...].shape)
-                yield (images[i, ...][np.newaxis, ...])
+                print(images[i, :, :, 80:-48][np.newaxis, ...].shape)
+                yield (images[i, :, :, 80:-48][np.newaxis, ...])
 
 def visualize_training_dice(hist):
     epoch_num = range(len(hist.history['dice_coef']))

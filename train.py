@@ -48,7 +48,7 @@ input_file = scratch_dir + 'baby-seg.hdf5'
 category_mapping = [10, 150, 250]
 img_shape = (144, 192, 256)
 
-cropped_shape = (144 - (5 + 5), 192 - (24 + 11), 256 - (80 + 55))
+cropped_shape = (144 - (5 + 5), 192 - (24 + 10), 256 - (80 + 50))
 
 
 class SegVisCallback(Callback):
@@ -360,8 +360,8 @@ def batch(indices, augment=False):
         np.random.shuffle(indices)
         for i in indices:
             try:
-                t1_image = np.asarray(images[i, 5:-5, 24:-11, 80:-55, 0], dtype='float32')
-                t2_image = np.asarray(images[i, 5:-5, 24:-11, 80:-55, 1], dtype='float32')
+                t1_image = np.asarray(images[i, 5:-5, 24:-10, 80:-50, 0], dtype='float32')
+                t2_image = np.asarray(images[i, 5:-5, 24:-10, 80:-50, 1], dtype='float32')
 
                 # cropped_shape = (144-(5+5), 192-(24+11), 256-(80+55))
                 # ratio_img = np.asarray(images[i, ..., 2], dtype='float32')

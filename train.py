@@ -97,7 +97,7 @@ class ConfusionCallback(Callback):
 
         print('\n')
         for i in range(1):
-            predicted = model.predict(self.images[i,...][np.newaxis, ...], batch_size=1)
+            predicted = model.predict(self.images[i,:, :, 80:-48][np.newaxis, ...], batch_size=1)
             segmentation = from_categorical(predicted, category_mapping)
 
             y_true = self.labels[i,...,0].flatten()

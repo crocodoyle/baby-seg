@@ -372,9 +372,6 @@ def batch(indices, augment=False):
                 t1_image = np.asarray(images[i, :, :, 80:-48, 0], dtype='float32')
                 t2_image = np.asarray(images[i, :, :, 80:-48, 1], dtype='float32')
 
-                # cropped_shape = (144-(5+5), 192-(24+11), 256-(80+55))
-                # ratio_img = np.asarray(images[i, ..., 2], dtype='float32')
-
                 true_labels = labels[i, :, :, 80:-48, 0]
 
                 if augment:
@@ -410,12 +407,9 @@ def batch(indices, augment=False):
 
                 return_imgs[..., 0] = t1_image
                 return_imgs[..., 1] = t2_image
-                # return_imgs[..., 2] = ratio_img
 
                 label = to_categorical(np.reshape(true_labels, true_labels.shape + (1,)))
-                # print(label.shape)
 
-                # print(return_imgs[np.newaxis,...].shape, label[np.newaxis, ...].shape)
                 yield (return_imgs[np.newaxis, ...], label[np.newaxis, ...])
 
             except ValueError:
@@ -510,13 +504,13 @@ if __name__ == "__main__":
     model.save(scratch_dir + 'unet-3d-iseg2017.hdf5')
 
     for i in training_indices + validation_indices + testing_indices:
-        predicted = model.predict(images[i,...][np.newaxis, ...], batch_size=1)
+        predicted = model.predict(images[i, :, :, 80:-48][np.newaxis, ...], batch_size=1)
         segmentation = from_categorical(predicted, category_mapping)
         image = nib.Nifti1Image(segmentation, affine)
-        nib.save(image, scratch_dir + 'babylabels' + str(i).zfill(2) + '.nii.gz')
+        nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
 
         print(labels[i,..., 0].shape, segmentation.shape)
         print('confusion matrix for', str(i))
-        print(confusion_matrix(labels[i, ..., 0].flatten(), segmentation.flatten()))
+        print(confusion_matrix(labels[i, :, :, 80:-48, 0].flatten(), segmentation.flatten()))
 
     visualize_training_dice(hist)

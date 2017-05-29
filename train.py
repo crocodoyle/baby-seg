@@ -62,10 +62,10 @@ class SegVisCallback(Callback):
     def on_epoch_end(self, batch, logs={}):
         model = self.model
 
-        predicted = model.predict(self.images[9, ...][np.newaxis, ...], batch_size=1)
+        predicted = model.predict(self.images[9, :, :, 80:-48][np.newaxis, ...], batch_size=1)
         segmentation = from_categorical(predicted, category_mapping)
 
-        slice = segmentation[:, :, 128].T
+        slice = segmentation[:, :, 64].T
         self.segmentations.append(slice)
 
     def on_train_end(self, logs={}):

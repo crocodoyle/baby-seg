@@ -476,7 +476,8 @@ if __name__ == "__main__":
 
     #reduce learning rate by factor of 10 every 100 epochs
     def schedule(epoch):
-        new_lr = model.optimizer.lr
+        new_lr = float(model.optimizer.lr)
+        print('learning rate:', new_lr)
 
         if epoch % 100 == 0:
             new_lr = new_lr/10

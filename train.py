@@ -193,17 +193,17 @@ def segmentation_model():
     conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(conv5)
     # drop5 = Dropout(0.5)(conv5)
     # bn5 = BatchNormalization()(drop5)
-    pool5 = MaxPooling3D(pool_size=pool_size)(conv5)
+    # pool5 = MaxPooling3D(pool_size=pool_size)(conv5)
+    #
+    # conv6 = Conv3D(128, conv_size, activation='relu', padding='same')(pool5)
+    # conv6 = Conv3D(128, conv_size, activation='relu', padding='same')(conv6)
+    #
+    # up7 = UpSampling3D(size=pool_size)(conv6)
+    # concat7 = concatenate([up7, conv5])
+    # conv7 = Conv3D(64, conv_size, activation='relu', padding='same')(concat7)
+    # conv7 = Conv3D(64, conv_size, activation='relu', padding='same')(conv6)
 
-    conv6 = Conv3D(128, conv_size, activation='relu', padding='same')(pool5)
-    conv6 = Conv3D(128, conv_size, activation='relu', padding='same')(conv6)
-
-    up7 = UpSampling3D(size=pool_size)(conv6)
-    concat7 = concatenate([up7, conv5])
-    conv7 = Conv3D(64, conv_size, activation='relu', padding='same')(concat7)
-    conv7 = Conv3D(64, conv_size, activation='relu', padding='same')(conv6)
-
-    up8 = UpSampling3D(size=pool_size)(conv7)
+    up8 = UpSampling3D(size=pool_size)(conv5)
     concat8 = concatenate([up8, conv4])
     conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(concat8)
     # drop8 = Dropout(0.4)(conv8)

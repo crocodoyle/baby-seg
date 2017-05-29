@@ -465,7 +465,7 @@ if __name__ == "__main__":
     model = segmentation_model()
     model.summary()
 
-    print('model', model)
+    print('model', dir(model))
 
     model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_dice_coef", verbose=1,
                                        save_best_only=True, save_weights_only=False, mode='max')

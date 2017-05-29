@@ -48,6 +48,9 @@ input_file = scratch_dir + 'baby-seg.hdf5'
 category_mapping = [10, 150, 250]
 img_shape = (144, 192, 256)
 
+cropped_shape = (144 - (5 + 5), 192 - (24 + 11), 256 - (80 + 55))
+
+
 class SegVisCallback(Callback):
 
     def on_train_begin(self, logs={}):
@@ -158,8 +161,6 @@ def segmentation_model():
 
     conv_size = (3, 3, 3)
     pool_size = (2, 2, 2)
-
-    cropped_shape = (144 - (5 + 5), 192 - (24 + 12), 256 - (80 + 56))
 
     # inputs = Input(shape=(144, 192, 256, 2))
     inputs = Input(shape=(cropped_shape) + (2,))
@@ -359,10 +360,10 @@ def batch(indices, augment=False):
         np.random.shuffle(indices)
         for i in indices:
             try:
-                t1_image = np.asarray(images[i, 5:-5, 24:-12, 80:-56, 0], dtype='float32')
-                t2_image = np.asarray(images[i, 5:-5, 24:-12, 80:-56, 1], dtype='float32')
+                t1_image = np.asarray(images[i, 5:-5, 24:-11, 80:-55, 0], dtype='float32')
+                t2_image = np.asarray(images[i, 5:-5, 24:-11, 80:-55, 1], dtype='float32')
 
-                cropped_shape = (144-(5+5), 192-(24+12), 256-(80+56))
+                # cropped_shape = (144-(5+5), 192-(24+11), 256-(80+55))
                 # ratio_img = np.asarray(images[i, ..., 2], dtype='float32')
 
                 true_labels = labels[i, ..., 0]

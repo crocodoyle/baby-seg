@@ -203,7 +203,7 @@ def segmentation_model():
     conv7 = Conv3D(64, conv_size, activation='relu', padding='same')(concat7)
     conv7 = Conv3D(64, conv_size, activation='relu', padding='same')(conv6)
 
-    up8 = UpSampling3D(size=pool_size)(conv5)
+    up8 = UpSampling3D(size=pool_size)(conv7)
     concat8 = concatenate([up8, conv4])
     conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(concat8)
     # drop8 = Dropout(0.4)(conv8)

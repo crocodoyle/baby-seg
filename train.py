@@ -100,7 +100,7 @@ class ConfusionCallback(Callback):
             predicted = model.predict(self.images[i,:, :, 80:-48][np.newaxis, ...], batch_size=1)
             segmentation = from_categorical(predicted, category_mapping)
 
-            y_true = self.labels[i,...,0].flatten()
+            y_true = self.labels[i,:, :, 80:-48,0].flatten()
             y_pred = segmentation.flatten()
 
             conf = confusion_matrix(y_true, y_pred)

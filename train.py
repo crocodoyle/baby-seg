@@ -4,7 +4,7 @@ from keras.layers import Input, Dense, Dropout, Activation, Convolution2D, MaxPo
 from keras.layers import Conv3D, MaxPooling3D, UpSampling3D, ZeroPadding3D
 from keras.layers import concatenate, add, multiply
 from keras.optimizers import SGD, Adam
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, TensorBoard, LearningRateScheduler
 
 # from keras.utils.visualize_util import plot
 from keras.callbacks import Callback
@@ -153,15 +153,16 @@ def save_confusion_matrix(cm, classes, filename,
     plt.savefig(filename, bbox_inches='tight')
 
 def segmentation_model():
-    """
-    3D U-net model, using very small convolutional kernels
-    """
+    """3D U-net model, using very small convolutional kernels"""
     tissue_classes = 3
 
     conv_size = (3, 3, 3)
     pool_size = (2, 2, 2)
 
-    inputs = Input(shape=(144, 192, 256, 2))
+    cropped_shape = (144 - (5 + 5), 192 - (24 + 12), 256 - (80 + 56))
+
+    # inputs = Input(shape=(144, 192, 256, 2))
+    inputs = Input(shape=(cropped_shape) + (2,))
 
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(inputs)
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(conv1)
@@ -358,8 +359,10 @@ def batch(indices, augment=False):
         np.random.shuffle(indices)
         for i in indices:
             try:
-                t1_image = np.asarray(images[i, ..., 0], dtype='float32')
-                t2_image = np.asarray(images[i, ..., 1], dtype='float32')
+                t1_image = np.asarray(images[i, 5:-5, 24:-12, 80:-56, 0], dtype='float32')
+                t2_image = np.asarray(images[i, 5:-5, 24:-12, 80:-56, 1], dtype='float32')
+
+                cropped_shape = (144-(5+5), 192-(24+12), 256-(80+56))
                 # ratio_img = np.asarray(images[i, ..., 2], dtype='float32')
 
                 true_labels = labels[i, ..., 0]
@@ -457,6 +460,18 @@ if __name__ == "__main__":
 
     confusion_callback = ConfusionCallback()
     segvis_callback = SegVisCallback()
+    tensorboard = TensorBoard(scratch_dir)
+
+    #reduce learning rate by factor of 10 every 100 epochs
+    def schedule(epoch):
+        new_lr = model.lr.get_value()
+
+        if epoch % 100 == 0:
+            new_lr = new_lr/10
+
+        return new_lr
+
+    lr_scheduler = LearningRateScheduler(schedule)
 
     # train without augmentation (easier)
     hist = model.fit_generator(
@@ -464,7 +479,7 @@ if __name__ == "__main__":
         len(training_indices),
         epochs=600,
         verbose=1,
-        callbacks=[model_checkpoint, confusion_callback, segvis_callback],
+        callbacks=[model_checkpoint, confusion_callback, segvis_callback, tensorboard, lr_scheduler],
         validation_data=batch(validation_indices),
         validation_steps=len(validation_indices))
 

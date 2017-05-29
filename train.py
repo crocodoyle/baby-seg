@@ -465,7 +465,7 @@ if __name__ == "__main__":
     model = segmentation_model()
     model.summary()
 
-    print('model', dir(model))
+    # print('model', dir(model))
 
     model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_dice_coef", verbose=1,
                                        save_best_only=True, save_weights_only=False, mode='max')
@@ -476,7 +476,7 @@ if __name__ == "__main__":
 
     #reduce learning rate by factor of 10 every 100 epochs
     def schedule(epoch):
-        new_lr = model.lr.get_value()
+        new_lr = model.optimizer.lr
 
         if epoch % 100 == 0:
             new_lr = new_lr/10

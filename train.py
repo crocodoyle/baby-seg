@@ -368,10 +368,10 @@ def batch(indices, augment=False):
     while True:
         np.random.shuffle(indices)
         for i in indices:
-            try:
-                t1_image = np.asarray(images[i, :, :, 80:-48, 0], dtype='float32')
-                t2_image = np.asarray(images[i, :, :, 80:-48, 1], dtype='float32')
+            t1_image = np.asarray(images[i, :, :, 80:-48, 0], dtype='float32')
+            t2_image = np.asarray(images[i, :, :, 80:-48, 1], dtype='float32')
 
+            try:
                 true_labels = labels[i, :, :, 80:-48, 0]
 
                 if augment:
@@ -414,8 +414,8 @@ def batch(indices, augment=False):
 
             except ValueError:
                 print('some sort of value error occurred')
-                print(images[i, :, :, 80:-48][np.newaxis, ...].shape)
-                yield (images[i, :, :, 80:-48][np.newaxis, ...])
+                # print(images[i, :, :, 80:-48][np.newaxis, ...].shape)
+                yield (return_imgs[np.newaxis, ...])
 
 def visualize_training_dice(hist):
     epoch_num = range(len(hist.history['dice_coef']))

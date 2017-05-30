@@ -235,7 +235,7 @@ def segmentation_model():
 
     model = Model(input=[inputs], output=[conv14])
 
-    model.compile(optimizer=Adam(lr=1e-4), loss=dice_coef_loss, metrics=[dice_coef])
+    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
     # sgd = SGD(lr=0.0001, decay=1e-7, momentum=0.9, nesterov=True)
     # model.compile(optimizer=sgd, loss=dice_coef_loss, metrics=[dice_coef])
 
@@ -354,7 +354,7 @@ def from_categorical(categorical, category_mapping):
 
     return segmentation
 
-def batch(indices, augment=False):
+def batch(indices, augmentMode=None):
     """
     :param indices: List of indices into the HDF5 dataset to draw samples from
     :return: (image, label)
@@ -374,12 +374,14 @@ def batch(indices, augment=False):
             try:
                 true_labels = labels[i, :, :, 80:-48, 0]
 
-                if augment:
+                if 'flip' in augmentMode:
                     # flip images
                     if np.random.rand() > 0.5:
                         t1_image = np.flip(t1_image, axis=1)
                         t2_image = np.flip(t2_image, axis=1)
                         true_labels = np.flip(true_labels, axis=1)
+
+                if 'affine' in augmentMode:
 
                     if np.random.rand() > 0.5:
                         scale = 1 + (np.random.rand(3) - 0.5) * 0.1 # up to 5% scale
@@ -482,23 +484,13 @@ if __name__ == "__main__":
 
     # train without augmentation (easier)
     hist = model.fit_generator(
-        batch(training_indices),
+        batch(training_indices, augmentMode='flip'),
         len(training_indices),
-        epochs=600,
+        epochs=300,
         verbose=1,
         callbacks=[model_checkpoint, confusion_callback, segvis_callback, tensorboard, lr_scheduler],
         validation_data=batch(validation_indices),
         validation_steps=len(validation_indices))
-
-    # # train the rest of the way with data augmentation
-    # hist = model.fit_generator(
-    #     batch(training_indices, augment=True),
-    #     len(training_indices),
-    #     epochs=600,
-    #     verbose=1,
-    #     callbacks=[model_checkpoint, confusion_callback, segvis_callback],
-    #     validation_data=batch(validation_indices),
-    #     validation_steps=len(validation_indices))
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
     model.save(scratch_dir + 'unet-3d-iseg2017.hdf5')
@@ -506,6 +498,7 @@ if __name__ == "__main__":
     for i in training_indices + validation_indices + testing_indices:
         predicted = model.predict(images[i, :, :, 80:-48][np.newaxis, ...], batch_size=1)
         segmentation = from_categorical(predicted, category_mapping)
+        segmentation = np.pad(segmentation, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=10)
         image = nib.Nifti1Image(segmentation, affine)
         nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
 

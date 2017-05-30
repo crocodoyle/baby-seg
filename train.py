@@ -167,32 +167,32 @@ def segmentation_model():
 
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(inputs)
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(conv1)
-    # bn1 = BatchNormalization()(conv1)
-    pool1 = MaxPooling3D(pool_size=pool_size)(conv1)
+    bn1 = BatchNormalization()(conv1)
+    pool1 = MaxPooling3D(pool_size=pool_size)(bn1)
 
     conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(pool1)
     conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(conv2)
-    # bn2 = BatchNormalization()(conv2)
-    pool2 = MaxPooling3D(pool_size=pool_size)(conv2)
+    bn2 = BatchNormalization()(conv2)
+    pool2 = MaxPooling3D(pool_size=pool_size)(bn2)
 
     conv3 = Conv3D(64, conv_size, activation='relu', padding='same')(pool2)
     conv3 = Conv3D(64, conv_size, activation='relu', padding='same')(conv3)
     # drop3 = Dropout(0.3)(conv3)
-    # bn3 = BatchNormalization()(drop3)
-    pool3 = MaxPooling3D(pool_size=pool_size)(conv3)
+    bn3 = BatchNormalization()(conv3)
+    pool3 = MaxPooling3D(pool_size=pool_size)(bn3)
 
     conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(pool3)
     # drop4 = Dropout(0.4)(conv4)
     conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(conv4)
     # drop4 = Dropout(0.4)(conv4)
-    # bn4 = BatchNormalization()(drop4)
-    pool4 = MaxPooling3D(pool_size=pool_size)(conv4)
+    bn4 = BatchNormalization()(conv4)
+    pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
 
     conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(pool4)
     # drop5 = Dropout(0.5)(conv5)
     conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(conv5)
     # drop5 = Dropout(0.5)(conv5)
-    # bn5 = BatchNormalization()(drop5)
+    bn5 = BatchNormalization()(conv5)
     # pool5 = MaxPooling3D(pool_size=pool_size)(conv5)
     #
     # conv6 = Conv3D(128, conv_size, activation='relu', padding='same')(pool5)
@@ -203,37 +203,37 @@ def segmentation_model():
     # conv7 = Conv3D(64, conv_size, activation='relu', padding='same')(concat7)
     # conv7 = Conv3D(64, conv_size, activation='relu', padding='same')(conv6)
 
-    up8 = UpSampling3D(size=pool_size)(conv5)
-    concat8 = concatenate([up8, conv4])
+    up8 = UpSampling3D(size=pool_size)(bn5)
+    concat8 = concatenate([up8, bn4])
     conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(concat8)
     # drop8 = Dropout(0.4)(conv8)
     conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(conv8)
     # drop8 = Dropout(0.4)(conv8)
-    # bn8 = BatchNormalization()(drop8)
+    bn8 = BatchNormalization()(conv8)
 
-    up9 = UpSampling3D(size=pool_size)(conv8)
-    concat9 = concatenate([up9, conv3])
+    up9 = UpSampling3D(size=pool_size)(bn8)
+    concat9 = concatenate([up9, bn3])
     conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(concat9)
     conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(conv9)
-    # drop8 = Dropout(0.3)(conv9)
-    # bn9 = BatchNormalization()(drop8)
+    # drop9 = Dropout(0.3)(conv9)
+    bn9 = BatchNormalization()(conv9)
 
-    up10 = UpSampling3D(size=pool_size)(conv9)
-    concat10 = concatenate([up10, conv2])
+    up10 = UpSampling3D(size=pool_size)(bn9)
+    concat10 = concatenate([up10, bn2])
     conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(concat10)
     conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(conv10)
     # bn10 = BatchNormalization()(conv10)
 
     up11 = UpSampling3D(size=pool_size)(conv10)
-    concat11 = concatenate([up11, conv1])
+    concat11 = concatenate([up11, bn1])
     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(concat11)
     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(conv11)
-    # bn11 = BatchNormalization()(conv11)
+    bn11 = BatchNormalization()(conv11)
 
     # need as many output channel as tissue classes
-    conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='valid')(conv11)
+    conv12 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='valid')(bn11)
 
-    model = Model(input=[inputs], output=[conv14])
+    model = Model(input=[inputs], output=[conv12])
 
     model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
     # sgd = SGD(lr=0.0001, decay=1e-7, momentum=0.9, nesterov=True)
@@ -286,6 +286,39 @@ def brain_seg():
 
     return model
 
+
+def train_tl():
+    from neuroembedding import encoder, decoder
+
+    training_indices = list(range(0,10))
+    validation_indices = [9]
+    testing_indices = list(range(10, 24))
+    ibis_indices = list(range(24, 53))
+
+
+    mri_inputs = Input(shape=(144, 192, 128, 2))
+    label_inputs = Input(shape=(144, 192, 128, 3))
+
+    enc = encoder()(label_inputs)
+    dec = decoder()(enc)
+
+    outputs = dec
+
+    autoencoder = Model(inputs=[label_inputs], outputs=[outputs])
+
+    sgd = SGD(lr=0.0001, decay=1e-7, momentum=0.9, nesterov=True)
+
+    autoencoder.compile(optimizer=sgd, loss='categorical_crossentropy')
+
+    hist_one = autoencoder.fit_generator(
+        label_batch(training_indices),
+        len(training_indices),
+        epochs=200,
+        verbose=1,
+        callbacks=[],
+        validation_data=[label_batch(validation_indices)],
+        validation_steps=[len(validation_indices)]
+    )
 
 
 
@@ -414,6 +447,20 @@ def batch(indices, augmentMode=None):
                 print('some sort of value error occurred')
                 # print(images[i, :, :, 80:-48][np.newaxis, ...].shape)
                 yield (return_imgs[np.newaxis, ...])
+
+def label_batch(indices):
+    f = h5py.File(input_file)
+    labels = f['labels']
+
+    while True:
+        np.shuffle(indices)
+
+        for i in indices:
+            true_labels[i, :, :, 80:-48, 0]
+            label = to_categorical(np.reshape(true_labels, true_labels.shape + (1,)))
+
+            return (label[np.newaxis, ...])
+
 
 def visualize_training_dice(hist):
     epoch_num = range(len(hist.history['dice_coef']))

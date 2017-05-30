@@ -251,7 +251,10 @@ def fractal_block(nb_filter,b,c,drop_path,dropout=0):
     return f
 
 def brain_seg():
+    from neuroembedding import encoder, decoder
+
     pool_size = (2, 2, 2)
+    conv_size = (3, 3, 3)
 
     tissue_classes = 3
 
@@ -260,38 +263,31 @@ def brain_seg():
     c = 4
     dp = 0.5
 
-    inputs = Input(shape=(144, 192, 256, 2))
+    inputs = Input(shape=(144, 192, 128, 2))
 
-    frac1 = fractal_block(f, 1, c, dp)(inputs)
-    down1 = MaxPooling3D(pool_size=pool_size)(frac1)
-    frac2 = fractal_block(f, b, c, dp)(down1)
-    # down2 = MaxPooling3D(pool_size=pool_size)(frac2)
-    # frac3 = fractal_block(2*f, b, c, dp)(down2)
-    # down3 = MaxPooling3D(pool_size=pool_size)(frac3)
-    # frac4 = fractal_block(2*f, b, c, dp)(down3)
+    conv1 = Conv3D(f, conv_size, activation='relu', padding='valid')(inputs)
+    drop1 = Dropout(0.5)(conv1)
+    conv2 = Conv3D(f, conv_size, activation='relu', padding='valid')(drop1)
+    drop2 = Dropout(0.5)(conv2)
+    conv3 = Conv3D(f, conv_size, activation='relu', padding='valid')(drop2)
+    drop3 = Dropout(0.5)(conv3)
+    conv4 = Conv3D(f, conv_size, activation='relu', padding='valid')(drop3)
+    drop4 = Dropout(0.5)(conv4)
 
-    # down4 = MaxPooling3D(pool_size=pool_size)(frac4)
-    # frac5 = fractal_block(16*f, b, c, dp)(down4)
-    #
-    # up1 = concatenate([UpSampling3D(size=pool_size)(frac5), frac4])
-    # frac6 = fractal_block(12 * f, b, c, dp, 0.1)(up1)
+    latent = encoder(inputs)
 
-    # up2 = concatenate([UpSampling3D(size=pool_size)(frac4), frac3])
-    # frac7 = fractal_block(2*f, b, c, dp)(up2)
-    # up3 = add([UpSampling3D(size=pool_size)(frac3), frac2])
-    # frac8 = fractal_block(f, b, c, dp)(up3)
-    up4 = add([UpSampling3D(size=pool_size)(frac2), frac1])
-    frac9 = fractal_block(f, b, c, dp)(up4)
 
-    out8 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', kernel_initializer='glorot_normal', padding='same')(frac2)
-    out9 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', kernel_initializer='glorot_normal', padding='same')(frac9)
-    outputs = multiply([UpSampling3D(size=pool_size)(out8), out9])
+    dec = decoder(latent)
 
-    model = Model(inputs=[inputs], outputs=[outputs])
+
+    model = Model(inputs=[inputs], outputs=[dec])
 
     model.compile(optimizer=Adam(lr=1e-5, decay=1e-7), loss=dice_coef_loss, metrics=[dice_coef])
 
     return model
+
+
+
 
 def dice_coef(y_true, y_pred):
     """ DICE coefficient: 2TP / (2TP + FP + FN). An additional smoothness term is added to ensure no / 0

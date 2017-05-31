@@ -554,4 +554,8 @@ def train_unet():
 
 
 if __name__ == "__main__":
+    f = h5py.File(input_file)
+    images = f['images']
+    labels = f['labels']
+    
     train_unet()

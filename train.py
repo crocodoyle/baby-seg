@@ -554,4 +554,4 @@ def train_unet():
 
 
 if __name__ == "__main__":
-    train_tl()
+    train_unet()

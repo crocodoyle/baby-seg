@@ -3,7 +3,7 @@ from keras.layers import Conv3D
 from keras.engine import InputSpec
 from keras import backend as K
 from keras.utils import conv_utils
-""" create by lin """
+
 def _preprocess_deconv3d_output_shape(x, shape, data_format):
     if data_format == 'channels_first':
         shape = (shape[0], shape[2], shape[3], shape[4], shape[1])
@@ -49,7 +49,7 @@ def conv3d_transpose(x, kernel, output_shape, strides=(1, 1, 1),
                                padding=padding)
     x = _postprocess_conv3d_output(x, data_format)
     return x
-""" End """
+
 class Conv3DTranspose(Conv3D):
     """Transposed convolution layer (sometimes called Deconvolution).
     The need for transposed convolutions generally arises
@@ -264,7 +264,3 @@ class Conv3DTranspose(Conv3D):
         config = super(Conv3DTranspose, self).get_config()
         config.pop('dilation_rate')
         return config
-'''
-End --------------------------------
-'''
-print "success"

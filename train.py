@@ -155,6 +155,7 @@ def save_confusion_matrix(cm, classes, filename,
     plt.xlabel('Predicted label')
     plt.savefig(filename, bbox_inches='tight')
 
+
 def segmentation_model():
     """3D U-net model, using very small convolutional kernels"""
     tissue_classes = 3
@@ -241,6 +242,7 @@ def segmentation_model():
 
     return model
 
+
 def fractal_block(nb_filter,b,c,drop_path,dropout=0):
     from fractalnet import fractal_net
 
@@ -250,70 +252,24 @@ def fractal_block(nb_filter,b,c,drop_path,dropout=0):
         return fractal_net(b=b, c=c, conv=b*[(nb_filter, conv_size)], drop_path=drop_path, dropout=b*[dropout])(input)
     return f
 
-def brain_seg():
-    from neuroembedding import encoder, decoder
-
-    pool_size = (2, 2, 2)
-    conv_size = (3, 3, 3)
-
-    tissue_classes = 3
-
-    f = 4
-    b = 1
-    c = 4
-    dp = 0.5
-
-    inputs = Input(shape=(144, 192, 128, 2))
-
-    conv1 = Conv3D(f, conv_size, activation='relu', padding='valid')(inputs)
-    drop1 = Dropout(0.5)(conv1)
-    conv2 = Conv3D(f, conv_size, activation='relu', padding='valid')(drop1)
-    drop2 = Dropout(0.5)(conv2)
-    conv3 = Conv3D(f, conv_size, activation='relu', padding='valid')(drop2)
-    drop3 = Dropout(0.5)(conv3)
-    conv4 = Conv3D(f, conv_size, activation='relu', padding='valid')(drop3)
-    drop4 = Dropout(0.5)(conv4)
-
-    latent = encoder(inputs)
-
-
-    dec = decoder(latent)
-
-
-    model = Model(inputs=[inputs], outputs=[dec])
-
-    model.compile(optimizer=Adam(lr=1e-5, decay=1e-7), loss=dice_coef_loss, metrics=[dice_coef])
-
-    return model
-
 
 def train_tl():
-    from neuroembedding import encoder, decoder
+    from neuroembedding import autoencoder, t_net, tl_net
 
     training_indices = list(range(0,10))
     validation_indices = [9]
     testing_indices = list(range(10, 24))
     ibis_indices = list(range(24, 53))
 
+    autoencoder = autoencoder()
 
-    mri_inputs = Input(shape=(144, 192, 128, 2))
-    label_inputs = Input(shape=(144, 192, 128, 3))
-
-    enc = encoder()(label_inputs)
-    dec = decoder()(enc)
-
-    outputs = dec
-
-    autoencoder = Model(inputs=[label_inputs], outputs=[outputs])
-
-    sgd = SGD(lr=0.0001, decay=1e-7, momentum=0.9, nesterov=True)
+    sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
 
     autoencoder.compile(optimizer=sgd, loss='categorical_crossentropy')
 
     # reduce learning rate by factor of 10 every 100 epochs
     def schedule(epoch):
         new_lr = K.get_value(autoencoder.optimizer.lr)
-        # print('learning rate:', new_lr)
 
         if epoch % 100 == 0:
             new_lr = new_lr / 10
@@ -321,17 +277,23 @@ def train_tl():
         return new_lr
 
     lr_scheduler = LearningRateScheduler(schedule)
+    model_checkpoint = ModelCheckpoint(scratch_dir + 'autoencoder.hdf5', save_best_only=True, save_weights_only=True)
 
     hist_one = autoencoder.fit_generator(
         label_batch(training_indices),
         len(training_indices),
         epochs=200,
         verbose=1,
-        callbacks=[lr_scheduler],
+        callbacks=[lr_scheduler, model_checkpoint],
         validation_data=[label_batch(validation_indices)],
         validation_steps=[len(validation_indices)]
     )
 
+    #training autoencoder should be complete here
+
+    t_net = t_net()
+    t_net.load_weights(scratch_dir + 'autoencoder.hdf5', by_name=True)
+    t_net.compile(optimizer=Adam(lr=1e-5, decay=1e-7), loss=dice_coef_loss, metrics=[dice_coef])
 
 
 def dice_coef(y_true, y_pred):
@@ -353,8 +315,10 @@ def dice_coef(y_true, y_pred):
 
     return score / np.sum(category_weight)
 
+
 def dice_coef_loss(y_true, y_pred):
     return -dice_coef(y_true, y_pred)
+
 
 def to_categorical(y):
     """Converts a class vector (integers) to binary class matrix.
@@ -379,6 +343,7 @@ def to_categorical(y):
 
     return categorical
 
+
 def from_categorical(categorical, category_mapping):
     """Combines several binary masks for tissue classes into a single segmentation image
     :param categorical:
@@ -394,6 +359,7 @@ def from_categorical(categorical, category_mapping):
         segmentation[cat_img == i] = cat
 
     return segmentation
+
 
 def batch(indices, augmentMode=None):
     """
@@ -429,7 +395,7 @@ def batch(indices, augmentMode=None):
                             scale = 1 + (np.random.rand(3) - 0.5) * 0.1 # up to 5% scale
                         else:
                             scale = None
-    
+
                         if np.random.rand() > 0.5:
                             shear = (np.random.rand(3) - 0.5) * 0.2 # sheer of up to 10%
                         else:
@@ -461,6 +427,7 @@ def batch(indices, augmentMode=None):
                 # print(images[i, :, :, 80:-48][np.newaxis, ...].shape)
                 yield (return_imgs[np.newaxis, ...])
 
+
 def label_batch(indices):
     f = h5py.File(input_file)
     labels = f['labels']
@@ -489,6 +456,7 @@ def visualize_training_dice(hist):
     plt.tight_layout()
     plt.savefig(scratch_dir + 'results.png')
     plt.close()
+
 
 def train_unet():
     f = h5py.File(input_file)
@@ -519,7 +487,7 @@ def train_unet():
 
     # print('model', dir(model))
 
-    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_dice_coef", verbose=1,
+    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_dice_coef",
                                        save_best_only=True, save_weights_only=False, mode='max')
 
     confusion_callback = ConfusionCallback()

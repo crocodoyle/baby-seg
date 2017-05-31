@@ -86,7 +86,7 @@ class ConfusionCallback(Callback):
     def on_train_begin(self, logs={}):
         self.confusion = []
 
-        self.f = h5py.File(input_file)
+        f = h5py.File(input_file)
         self.images = f['images']
         self.labels = f['labels']
 

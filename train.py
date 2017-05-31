@@ -188,9 +188,9 @@ def segmentation_model():
     bn4 = BatchNormalization()(conv4)
     pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
 
-    conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(pool4)
+    conv5 = Conv3D(128, conv_size, activation='relu', padding='same')(pool4)
     # drop5 = Dropout(0.5)(conv5)
-    conv5 = Conv3D(64, conv_size, activation='relu', padding='same')(conv5)
+    conv5 = Conv3D(128, conv_size, activation='relu', padding='same')(conv5)
     # drop5 = Dropout(0.5)(conv5)
     bn5 = BatchNormalization()(conv5)
     # pool5 = MaxPooling3D(pool_size=pool_size)(conv5)
@@ -310,12 +310,14 @@ def train_tl():
 
     autoencoder.compile(optimizer=sgd, loss='categorical_crossentropy')
 
+    lr_scheduler = LearningRateScheduler(schedule)
+
     hist_one = autoencoder.fit_generator(
         label_batch(training_indices),
         len(training_indices),
         epochs=200,
         verbose=1,
-        callbacks=[],
+        callbacks=[lr_scheduler],
         validation_data=[label_batch(validation_indices)],
         validation_steps=[len(validation_indices)]
     )
@@ -456,10 +458,10 @@ def label_batch(indices):
         np.shuffle(indices)
 
         for i in indices:
-            true_labels[i, :, :, 80:-48, 0]
+            true_labels = labels[i, :, :, 80:-48, 0]
             label = to_categorical(np.reshape(true_labels, true_labels.shape + (1,)))
 
-            return (label[np.newaxis, ...])
+            return (label[np.newaxis, ...], label[np.newaxis, ...])
 
 
 def visualize_training_dice(hist):
@@ -477,7 +479,17 @@ def visualize_training_dice(hist):
     plt.savefig(scratch_dir + 'results.png')
     plt.close()
 
-if __name__ == "__main__":
+#reduce learning rate by factor of 10 every 100 epochs
+def schedule(epoch):
+    new_lr = K.get_value(model.optimizer.lr)
+    # print('learning rate:', new_lr)
+
+    if epoch % 100 == 0:
+        new_lr = new_lr/10
+
+    return new_lr
+
+def train_unet():
     f = h5py.File(input_file)
     images = f['images']
     labels = f['labels']
@@ -512,17 +524,6 @@ if __name__ == "__main__":
     confusion_callback = ConfusionCallback()
     segvis_callback = SegVisCallback()
     tensorboard = TensorBoard(scratch_dir)
-
-    #reduce learning rate by factor of 10 every 100 epochs
-    def schedule(epoch):
-        new_lr = K.get_value(model.optimizer.lr)
-        # print('learning rate:', new_lr)
-
-        if epoch % 100 == 0:
-            new_lr = new_lr/10
-
-        return new_lr
-
     lr_scheduler = LearningRateScheduler(schedule)
 
     # train without augmentation (easier)
@@ -550,3 +551,7 @@ if __name__ == "__main__":
         print(confusion_matrix(labels[i, :, :, 80:-48, 0].flatten(), segmentation.flatten()))
 
     visualize_training_dice(hist)
+
+
+if __name__ == "__main__":
+    train_tl()

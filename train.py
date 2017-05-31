@@ -415,38 +415,39 @@ def batch(indices, augmentMode=None):
             try:
                 true_labels = labels[i, :, :, 80:-48, 0]
 
-                if 'flip' in augmentMode:
-                    # flip images
-                    if np.random.rand() > 0.5:
-                        t1_image = np.flip(t1_image, axis=1)
-                        t2_image = np.flip(t2_image, axis=1)
-                        true_labels = np.flip(true_labels, axis=1)
+                if augmentMode is not None:
+                    if 'flip' in augmentMode:
+                        # flip images
+                        if np.random.rand() > 0.5:
+                            t1_image = np.flip(t1_image, axis=1)
+                            t2_image = np.flip(t2_image, axis=1)
+                            true_labels = np.flip(true_labels, axis=1)
 
-                if 'affine' in augmentMode:
+                    if 'affine' in augmentMode:
 
-                    if np.random.rand() > 0.5:
-                        scale = 1 + (np.random.rand(3) - 0.5) * 0.1 # up to 5% scale
-                    else:
-                        scale = None
+                        if np.random.rand() > 0.5:
+                            scale = 1 + (np.random.rand(3) - 0.5) * 0.1 # up to 5% scale
+                        else:
+                            scale = None
+    
+                        if np.random.rand() > 0.5:
+                            shear = (np.random.rand(3) - 0.5) * 0.2 # sheer of up to 10%
+                        else:
+                            shear = None
 
-                    if np.random.rand() > 0.5:
-                        shear = (np.random.rand(3) - 0.5) * 0.2 # sheer of up to 10%
-                    else:
-                        shear = None
+                        if np.random.rand() > 0.5:
+                            angles = (np.random.rand(3) - 0.5) * 0.1 * 2*math.pi # rotation up to 5 degrees
+                        else:
+                            angles = None
 
-                    if np.random.rand() > 0.5:
-                        angles = (np.random.rand(3) - 0.5) * 0.1 * 2*math.pi # rotation up to 5 degrees
-                    else:
-                        angles = None
+                        trans_mat = t.compose_matrix(scale=scale, shear=shear, angles=angles)
+                        trans_mat = trans_mat[0:-1, 0:-1]
 
-                    trans_mat = t.compose_matrix(scale=scale, shear=shear, angles=angles)
-                    trans_mat = trans_mat[0:-1, 0:-1]
+                        t1_image = affine_transform(t1_image, trans_mat, cval=10)
+                        t2_image = affine_transform(t2_image, trans_mat, cval=10)
+                        # ratio_img = affine_transform(ratio_img, trans_mat, cval=10)
 
-                    t1_image = affine_transform(t1_image, trans_mat, cval=10)
-                    t2_image = affine_transform(t2_image, trans_mat, cval=10)
-                    # ratio_img = affine_transform(ratio_img, trans_mat, cval=10)
-
-                    true_labels = affine_transform(true_labels, trans_mat, order=0, cval=10) # nearest neighbour for labels
+                        true_labels = affine_transform(true_labels, trans_mat, order=0, cval=10) # nearest neighbour for labels
 
                 return_imgs[..., 0] = t1_image
                 return_imgs[..., 1] = t2_image

@@ -310,6 +310,16 @@ def train_tl():
 
     autoencoder.compile(optimizer=sgd, loss='categorical_crossentropy')
 
+    # reduce learning rate by factor of 10 every 100 epochs
+    def schedule(epoch):
+        new_lr = K.get_value(autoencoder.optimizer.lr)
+        # print('learning rate:', new_lr)
+
+        if epoch % 100 == 0:
+            new_lr = new_lr / 10
+
+        return new_lr
+
     lr_scheduler = LearningRateScheduler(schedule)
 
     hist_one = autoencoder.fit_generator(
@@ -479,16 +489,6 @@ def visualize_training_dice(hist):
     plt.savefig(scratch_dir + 'results.png')
     plt.close()
 
-#reduce learning rate by factor of 10 every 100 epochs
-def schedule(epoch):
-    new_lr = K.get_value(model.optimizer.lr)
-    # print('learning rate:', new_lr)
-
-    if epoch % 100 == 0:
-        new_lr = new_lr/10
-
-    return new_lr
-
 def train_unet():
     f = h5py.File(input_file)
     images = f['images']
@@ -524,6 +524,17 @@ def train_unet():
     confusion_callback = ConfusionCallback()
     segvis_callback = SegVisCallback()
     tensorboard = TensorBoard(scratch_dir)
+
+    # reduce learning rate by factor of 10 every 100 epochs
+    def schedule(epoch):
+        new_lr = K.get_value(model.optimizer.lr)
+        # print('learning rate:', new_lr)
+
+        if epoch % 100 == 0:
+            new_lr = new_lr / 10
+
+        return new_lr
+
     lr_scheduler = LearningRateScheduler(schedule)
 
     # train without augmentation (easier)
@@ -557,5 +568,5 @@ if __name__ == "__main__":
     f = h5py.File(input_file)
     images = f['images']
     labels = f['labels']
-    
+
     train_unet()

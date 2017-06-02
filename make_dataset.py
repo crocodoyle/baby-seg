@@ -23,7 +23,7 @@ def make_iseg():
 
     x_dim = 144
     y_dim = 192
-    z_dim = 256
+    z_dim = 128
 
     f = h5py.File(scratch_dir + 'baby-seg.hdf5', 'w')
     f.create_dataset('images', (numImgs, x_dim, y_dim, z_dim, 2), dtype='float16')
@@ -48,9 +48,9 @@ def make_iseg():
 
         i = int(filenum) - 1
 
-        f['images'][i, ..., 0] = nib.load(os.path.join(training_dir, t1)).get_data()[:, :, :, 0]
-        f['images'][i, ..., 1] = nib.load(os.path.join(training_dir, t2)).get_data()[:, :, :, 0]
-        f['labels'][i, ...] = nib.load(os.path.join(training_dir, label)).get_data()
+        f['images'][i, ..., 0] = nib.load(os.path.join(training_dir, t1)).get_data()[:, :, 80:-48, 0]
+        f['images'][i, ..., 1] = nib.load(os.path.join(training_dir, t2)).get_data()[:, :, 80:-48, 0]
+        f['labels'][i, ...] = nib.load(os.path.join(training_dir, label)).get_data()[:, :, 80:-48]
 
     for filenum in range(11, 24):
 
@@ -62,11 +62,11 @@ def make_iseg():
         i = int(filenum) - 1
 
         if '23' in str(filenum):
-            f['images'][i, ..., 0] = nib.load(os.path.join(testing_dir, t1)).get_data()[8:-8, :, :, 0]
-            f['images'][i, ..., 1] = nib.load(os.path.join(testing_dir, t2)).get_data()[8:-8, :, :, 0]
+            f['images'][i, ..., 0] = nib.load(os.path.join(testing_dir, t1)).get_data()[8:-8, :, 80:-48, 0]
+            f['images'][i, ..., 1] = nib.load(os.path.join(testing_dir, t2)).get_data()[8:-8, :, 80:-48, 0]
         else:
-            f['images'][i, ..., 0] = nib.load(os.path.join(testing_dir, t1)).get_data()[:, :, :, 0]
-            f['images'][i, ..., 1] = nib.load(os.path.join(testing_dir, t2)).get_data()[:, :, :, 0]
+            f['images'][i, ..., 0] = nib.load(os.path.join(testing_dir, t1)).get_data()[:, :, 80:-48, 0]
+            f['images'][i, ..., 1] = nib.load(os.path.join(testing_dir, t2)).get_data()[:, :, 80:-48, 0]
 
     i = 23
     for filename in os.listdir(ibis_dir):
@@ -80,9 +80,9 @@ def make_iseg():
             t2 = id + '_V06_T2.nii.gz'
             label = id + '_V06_label.nii.gz'
 
-            f['images'][i, ..., 0] = nib.load(os.path.join(ibis_dir, t1)).get_data()
-            f['images'][i, ..., 1] = nib.load(os.path.join(ibis_dir, t2)).get_data()
-            f['labels'][i, ..., 0] = nib.load(os.path.join(ibis_dir, label)).get_data()
+            f['images'][i, ..., 0] = nib.load(os.path.join(ibis_dir, t1)).get_data()[:, :, 80:-48]
+            f['images'][i, ..., 1] = nib.load(os.path.join(ibis_dir, t2)).get_data()[:, :, 80:-48]
+            f['labels'][i, ..., 0] = nib.load(os.path.join(ibis_dir, label)).get_data()[:, :, 80:-48]
 
             i += 1
 
@@ -109,6 +109,7 @@ def make_iseg():
 
     # pretend background is CSF for easier training
     for i in range(numImgs):
+        print('normalizing', i)
         label_img = f['labels'][i, ..., 0]
         label_img[label_img == 0] = 10
         f['labels'][i, ..., 0] = label_img

@@ -46,9 +46,7 @@ scratch_dir = '/data1/data/iSeg-2017/'
 input_file = scratch_dir + 'baby-seg.hdf5'
 
 category_mapping = [10, 150, 250]
-img_shape = (144, 192, 256)
-
-cropped_shape = (144, 192, 256 - (80 + 48))
+img_shape = (144, 192, 128)
 
 
 class SegVisCallback(Callback):
@@ -62,7 +60,7 @@ class SegVisCallback(Callback):
     def on_epoch_end(self, batch, logs={}):
         model = self.model
 
-        predicted = model.predict(self.images[9, :, :, 80:-48][np.newaxis, ...], batch_size=1)
+        predicted = model.predict(self.images[9, ...][np.newaxis, ...], batch_size=1)
         segmentation = from_categorical(predicted, category_mapping)
 
         slice = segmentation[:, :, 64].T
@@ -97,10 +95,10 @@ class ConfusionCallback(Callback):
 
         print('\n')
         for i in range(1):
-            predicted = model.predict(self.images[i,:, :, 80:-48][np.newaxis, ...], batch_size=1)
+            predicted = model.predict(self.images[i,...][np.newaxis, ...], batch_size=1)
             segmentation = from_categorical(predicted, category_mapping)
 
-            y_true = self.labels[i,:, :, 80:-48,0].flatten()
+            y_true = self.labels[i, ..., 0].flatten()
             y_pred = segmentation.flatten()
 
             conf = confusion_matrix(y_true, y_pred)
@@ -164,7 +162,7 @@ def segmentation_model():
     pool_size = (2, 2, 2)
 
     # inputs = Input(shape=(144, 192, 256, 2))
-    inputs = Input(shape=(cropped_shape) + (2,))
+    inputs = Input(shape=(img_shape) + (2,))
 
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(inputs)
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(conv1)
@@ -370,16 +368,16 @@ def batch(indices, augmentMode=None):
     images = f['images']
     labels = f['labels']
 
-    return_imgs = np.zeros(cropped_shape + (2,))
+    return_imgs = np.zeros(img_shape + (2,))
 
     while True:
         np.random.shuffle(indices)
         for i in indices:
-            t1_image = np.asarray(images[i, :, :, 80:-48, 0], dtype='float32')
-            t2_image = np.asarray(images[i, :, :, 80:-48, 1], dtype='float32')
+            t1_image = np.asarray(images[i, ..., 0], dtype='float32')
+            t2_image = np.asarray(images[i, ..., 1], dtype='float32')
 
             try:
-                true_labels = labels[i, :, :, 80:-48, 0]
+                true_labels = labels[i, ..., 0]
 
                 if augmentMode is not None:
                     if 'flip' in augmentMode:
@@ -436,7 +434,7 @@ def label_batch(indices):
         np.shuffle(indices)
 
         for i in indices:
-            true_labels = labels[i, :, :, 80:-48, 0]
+            true_labels = labels[i, ..., 0]
             label = to_categorical(np.reshape(true_labels, true_labels.shape + (1,)))
 
             return (label[np.newaxis, ...], label[np.newaxis, ...])
@@ -463,12 +461,10 @@ def train_unet():
     images = f['images']
     labels = f['labels']
 
-    output_shape = (144, 192, 256, 3)
-
     training_indices = list(range(9))
     validation_indices = [9]
     testing_indices = list(range(10, 23))
-    ibis_indices = list(range(24, 73))
+    ibis_indices = list(range(24, 72))
 
     training_indices = training_indices + ibis_indices
 
@@ -520,7 +516,7 @@ def train_unet():
     model.save(scratch_dir + 'unet-3d-iseg2017.hdf5')
 
     for i in training_indices + validation_indices + testing_indices:
-        predicted = model.predict(images[i, :, :, 80:-48][np.newaxis, ...], batch_size=1)
+        predicted = model.predict(images[i, ...][np.newaxis, ...], batch_size=1)
         segmentation = from_categorical(predicted, category_mapping)
         segmentation = np.pad(segmentation, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=10)
         image = nib.Nifti1Image(segmentation, affine)
@@ -528,7 +524,7 @@ def train_unet():
 
         print(labels[i,..., 0].shape, segmentation.shape)
         print('confusion matrix for', str(i))
-        print(confusion_matrix(labels[i, :, :, 80:-48, 0].flatten(), segmentation.flatten()))
+        print(confusion_matrix(labels[i, ..., 0].flatten(), segmentation.flatten()))
 
     visualize_training_dice(hist)
 

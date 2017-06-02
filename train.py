@@ -317,6 +317,14 @@ def dice_coef(y_true, y_pred):
 def dice_coef_loss(y_true, y_pred):
     return -dice_coef(y_true, y_pred)
 
+def final_dice_score(y_true, y_pred):
+    dice = {}
+    for i, c in enumerate(zip(category_mapping)):
+        dice[str(c)] = (2.0 * K.sum(y_true[..., i] * y_pred[..., i]) / (K.sum(y_true[..., i]) + K.sum(y_pred[..., i])))
+
+    return dice
+
+
 
 def to_categorical(y):
     """Converts a class vector (integers) to binary class matrix.
@@ -522,9 +530,9 @@ def train_unet():
         image = nib.Nifti1Image(segmentation, affine)
         nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
 
-        print(labels[i,..., 0].shape, segmentation.shape)
-        print('confusion matrix for', str(i))
-        print(confusion_matrix(labels[i, ..., 0].flatten(), segmentation.flatten()))
+        if i in training_indices or i in testing_indices:
+            print(final_dice_score(labels[i, ..., 0].flatten(), segmentation.flatten()))
+            print(confusion_matrix(labels[i, ..., 0].flatten(), segmentation.flatten()))
 
     visualize_training_dice(hist)
 

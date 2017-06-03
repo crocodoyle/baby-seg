@@ -514,7 +514,7 @@ def train_unet():
     hist = model.fit_generator(
         batch(training_indices, augmentMode='flip'),
         len(training_indices),
-        epochs=300,
+        epochs=500,
         verbose=1,
         callbacks=[model_checkpoint, confusion_callback, segvis_callback, tensorboard, lr_scheduler],
         validation_data=batch(validation_indices),

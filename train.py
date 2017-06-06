@@ -524,7 +524,7 @@ def train_unet():
     testing_indices = list(range(10, 23))
     ibis_indices = list(range(24, 72))
 
-    training_indices = training_indices + ibis_indices
+    # training_indices = training_indices + ibis_indices
 
     print('training images:', training_indices)
     print('validation images:', validation_indices)

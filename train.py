@@ -234,10 +234,6 @@ def segmentation_model():
 
     model = Model(inputs=[inputs], outputs=[conv12])
 
-    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
-    # sgd = SGD(lr=0.0001, decay=1e-7, momentum=0.9, nesterov=True)
-    # model.compile(optimizer=sgd, loss=dice_coef_loss, metrics=[dice_coef])
-
     return model
 
 
@@ -487,6 +483,12 @@ def train_unet():
 
     # model = segmentation_model()
     model = segmentation_model()
+
+    sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
+    adam = Adam(lr=1e-5)
+
+    model.compile(optimizer=sgd, loss=dice_coef_loss, metrics=[dice_coef])
+
     model.summary()
 
     # print('model', dir(model))
@@ -531,7 +533,7 @@ def train_unet():
         nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
 
         if i in training_indices or i in testing_indices:
-            print(final_dice_score(labels[i, ..., 0].flatten(), segmentation.flatten()))
+            print(final_dice_score(labels[i, ..., 0], segmentation))
             print(confusion_matrix(labels[i, ..., 0].flatten(), segmentation.flatten()))
 
     visualize_training_dice(hist)

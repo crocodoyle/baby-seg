@@ -29,8 +29,8 @@ def encoder():
     enc_conv3a = Conv3D(3*filters, conv_size, activation='relu', padding='same')(enc_pool2)
     enc_conv3b = Conv3D(3*filters, conv_size, activation='relu', padding='same')(enc_conv3a)
     enc_pool3 = MaxPooling3D(pool_size)(enc_conv3b)
-    enc_conv4a = Conv3D(3*filters, conv_size, activation='relu', padding='same')(enc_pool3)
-    enc_conv4b = Conv3D(3*filters, conv_size, activation='relu', padding='same')(enc_conv4a)
+    enc_conv4a = Conv3D(4*filters, conv_size, activation='relu', padding='same')(enc_pool3)
+    enc_conv4b = Conv3D(4*filters, conv_size, activation='relu', padding='same')(enc_conv4a)
     encoded = MaxPooling3D(pool_size)(enc_conv4b)
 
     # enc_flat = Flatten()(enc_pool3)
@@ -76,12 +76,12 @@ def autoencoder():
 def t_net():
     mri_inputs = Input(shape=(144, 192, 128, 2))
 
-    decoder = decoder()
-    decoder.trainable = False
+    decod = decoder()
+    decod.trainable = False
 
     conv = convnet()(mri_inputs)
 
-    decoded = decoder(conv)
+    decoded = decod(conv)
 
     return Model(inputs=[mri_inputs], outputs=[decoded])
 

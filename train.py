@@ -539,9 +539,9 @@ def train_unet():
     model = segmentation_model()
 
     sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
-    adam = Adam(lr=1e-5)
+    adam = Adam(lr=1e-3)
 
-    model.compile(optimizer=sgd, loss=dice_coef_loss, metrics=[dice_coef])
+    model.compile(optimizer=adam, loss=dice_coef_loss, metrics=[dice_coef])
 
     model.summary()
 

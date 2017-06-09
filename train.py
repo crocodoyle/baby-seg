@@ -137,7 +137,7 @@ def lr_scheduler(model):
         new_lr = K.get_value(model.optimizer.lr)
 
         if epoch % 100 == 0:
-            new_lr = new_lr / 10
+            new_lr = new_lr / 2
 
         return new_lr
 
@@ -543,7 +543,7 @@ def train_unet():
     model = segmentation_model()
 
     sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
-    adam = Adam(lr=1e-3)
+    adam = Adam(lr=1e-4)
 
     model.compile(optimizer=adam, loss=dice_coef_loss, metrics=[dice_coef])
 
@@ -561,7 +561,7 @@ def train_unet():
     hist = model.fit_generator(
         batch(training_indices, augmentMode='flip'),
         len(training_indices),
-        epochs=500,
+        epochs=600,
         verbose=1,
         callbacks=[model_checkpoint, confusion_callback, segvis_callback, tensorboard, lr_scheduler(model)],
         validation_data=batch(validation_indices),
@@ -578,7 +578,7 @@ def train_unet():
         nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
 
         if i in training_indices or i in testing_indices:
-            print(final_dice_score(labels[i, ..., 0], segmentation))
+            # print(final_dice_score(labels[i, ..., 0], segmentation))
             print(confusion_matrix(labels[i, ..., 0].flatten(), segmentation.flatten()))
 
     visualize_training_dice(hist)

@@ -182,27 +182,27 @@ def segmentation_model():
     inputs = Input(shape=img_shape + (2,))
 
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(inputs)
-    conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(conv1)
+    # conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(conv1)
     bn1 = BatchNormalization()(conv1)
     pool1 = MaxPooling3D(pool_size=pool_size)(bn1)
 
     conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(pool1)
-    conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(conv2)
+    # conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(conv2)
     drop2 = Dropout(0.2)(conv2)
     bn2 = BatchNormalization()(drop2)
     pool2 = MaxPooling3D(pool_size=pool_size)(bn2)
 
     conv3 = Conv3D(64, conv_size, activation='relu', padding='same')(pool2)
     drop3 = Dropout(0.3)(conv3)
-    conv3 = Conv3D(64, conv_size, activation='relu', padding='same')(drop3)
-    drop3 = Dropout(0.3)(conv3)
+    # conv3 = Conv3D(64, conv_size, activation='relu', padding='same')(drop3)
+    # drop3 = Dropout(0.3)(conv3)
     bn3 = BatchNormalization()(drop3)
     pool3 = MaxPooling3D(pool_size=pool_size)(bn3)
 
     conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(pool3)
     drop4 = Dropout(0.4)(conv4)
-    conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(drop4)
-    drop4 = Dropout(0.4)(conv4)
+    # conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(drop4)
+    # drop4 = Dropout(0.4)(conv4)
     bn4 = BatchNormalization()(drop4)
     pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
 
@@ -225,29 +225,29 @@ def segmentation_model():
     concat8 = concatenate([up8, bn4])
     conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(concat8)
     drop8 = Dropout(0.4)(conv8)
-    conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(drop8)
-    drop8 = Dropout(0.4)(conv8)
+    # conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(drop8)
+    # drop8 = Dropout(0.4)(conv8)
     bn8 = BatchNormalization()(drop8)
 
     up9 = UpSampling3D(size=pool_size)(bn8)
     concat9 = concatenate([up9, bn3])
     conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(concat9)
     drop9 = Dropout(0.3)(conv9)
-    conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(drop9)
-    drop9 = Dropout(0.3)(conv9)
+    # conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(drop9)
+    # drop9 = Dropout(0.3)(conv9)
     bn9 = BatchNormalization()(drop9)
 
     up10 = UpSampling3D(size=pool_size)(bn9)
     concat10 = concatenate([up10, bn2])
+    # conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(concat10)
+    # drop10 = Dropout(0.2)(conv10)
     conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(concat10)
-    drop10 = Dropout(0.2)(conv10)
-    conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(drop10)
     bn10 = BatchNormalization()(conv10)
 
     up11 = UpSampling3D(size=pool_size)(bn10)
     concat11 = concatenate([up11, bn1])
     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(concat11)
-    conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(conv11)
+    # conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(conv11)
     bn11 = BatchNormalization()(conv11)
 
     # need as many output channel as tissue classes
@@ -543,7 +543,7 @@ def train_unet():
     model = segmentation_model()
 
     sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
-    adam = Adam(lr=1e-4)
+    adam = Adam(lr=1e-5, decay=1e-7)
 
     model.compile(optimizer=adam, loss=dice_coef_loss, metrics=[dice_coef])
 
@@ -563,7 +563,7 @@ def train_unet():
         len(training_indices),
         epochs=1200,
         verbose=1,
-        callbacks=[model_checkpoint, confusion_callback, segvis_callback, tensorboard, lr_scheduler(model)],
+        callbacks=[model_checkpoint, confusion_callback, segvis_callback, tensorboard],
         validation_data=batch(validation_indices),
         validation_steps=len(validation_indices))
 
@@ -573,8 +573,8 @@ def train_unet():
     for i in training_indices + validation_indices + testing_indices:
         predicted = model.predict(images[i, ...][np.newaxis, ...], batch_size=1)
         segmentation = from_categorical(predicted, category_mapping)
-        segmentation = np.pad(segmentation, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=10)
-        image = nib.Nifti1Image(segmentation, affine)
+        segmentation_padded = np.pad(segmentation, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=10)
+        image = nib.Nifti1Image(segmentation_padded, affine)
         nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
 
         if i in training_indices or i in testing_indices:

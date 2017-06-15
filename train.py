@@ -182,25 +182,26 @@ def segmentation_model():
     inputs = Input(shape=img_shape + (2,))
 
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(inputs)
+    drop1 = Dropout(0.5)(conv1)
     # conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(conv1)
-    bn1 = BatchNormalization()(conv1)
+    bn1 = BatchNormalization()(drop1)
     pool1 = MaxPooling3D(pool_size=pool_size)(bn1)
 
     conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(pool1)
     # conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(conv2)
-    drop2 = Dropout(0.2)(conv2)
+    drop2 = Dropout(0.5)(conv2)
     bn2 = BatchNormalization()(drop2)
     pool2 = MaxPooling3D(pool_size=pool_size)(bn2)
 
     conv3 = Conv3D(64, conv_size, activation='relu', padding='same')(pool2)
-    drop3 = Dropout(0.3)(conv3)
+    drop3 = Dropout(0.5)(conv3)
     # conv3 = Conv3D(64, conv_size, activation='relu', padding='same')(drop3)
     # drop3 = Dropout(0.3)(conv3)
     bn3 = BatchNormalization()(drop3)
     pool3 = MaxPooling3D(pool_size=pool_size)(bn3)
 
     conv4 = Conv3D(128, conv_size, activation='relu', padding='same')(pool3)
-    drop4 = Dropout(0.4)(conv4)
+    drop4 = Dropout(0.5)(conv4)
     # conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(drop4)
     # drop4 = Dropout(0.4)(conv4)
     bn4 = BatchNormalization()(drop4)
@@ -224,7 +225,7 @@ def segmentation_model():
     up8 = UpSampling3D(size=pool_size)(drop5)
     concat8 = concatenate([up8, bn4])
     conv8 = Conv3D(128, conv_size, activation='relu', padding='same')(concat8)
-    drop8 = Dropout(0.4)(conv8)
+    drop8 = Dropout(0.5)(conv8)
     # conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(drop8)
     # drop8 = Dropout(0.4)(conv8)
     bn8 = BatchNormalization()(drop8)
@@ -232,7 +233,7 @@ def segmentation_model():
     up9 = UpSampling3D(size=pool_size)(bn8)
     concat9 = concatenate([up9, bn3])
     conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(concat9)
-    drop9 = Dropout(0.3)(conv9)
+    drop9 = Dropout(0.5)(conv9)
     # conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(drop9)
     # drop9 = Dropout(0.3)(conv9)
     bn9 = BatchNormalization()(drop9)
@@ -242,7 +243,8 @@ def segmentation_model():
     # conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(concat10)
     # drop10 = Dropout(0.2)(conv10)
     conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(concat10)
-    bn10 = BatchNormalization()(conv10)
+    drop10 = Dropout(0.5)(conv10)
+    bn10 = BatchNormalization()(drop10)
 
     up11 = UpSampling3D(size=pool_size)(bn10)
     concat11 = concatenate([up11, bn1])
@@ -360,7 +362,7 @@ def dice_coef(y_true, y_pred):
 
     score = 0
 
-    category_weight = [0.01, 1.0, 1.0]
+    category_weight = [0.1, 1.0, 1.0]
 
     for i, (c, w) in enumerate(zip(category_mapping, category_weight)):
         score += w*(2.0 * K.sum(y_true[..., i] * y_pred[..., i]) / (K.sum(y_true[..., i]) + K.sum(y_pred[..., i])))

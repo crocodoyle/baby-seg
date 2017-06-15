@@ -199,14 +199,14 @@ def segmentation_model():
     bn3 = BatchNormalization()(drop3)
     pool3 = MaxPooling3D(pool_size=pool_size)(bn3)
 
-    conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(pool3)
+    conv4 = Conv3D(128, conv_size, activation='relu', padding='same')(pool3)
     drop4 = Dropout(0.4)(conv4)
     # conv4 = Conv3D(64, conv_size, activation='relu', padding='same')(drop4)
     # drop4 = Dropout(0.4)(conv4)
     bn4 = BatchNormalization()(drop4)
     pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
 
-    conv5 = Conv3D(128, conv_size, activation='relu', padding='same')(pool4)
+    conv5 = Conv3D(256, conv_size, activation='relu', padding='same')(pool4)
     drop5 = Dropout(0.5)(conv5)
     # conv5 = Conv3D(128, conv_size, activation='relu', padding='same')(drop5)
     # drop5 = Dropout(0.5)(conv5)
@@ -223,7 +223,7 @@ def segmentation_model():
 
     up8 = UpSampling3D(size=pool_size)(drop5)
     concat8 = concatenate([up8, bn4])
-    conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(concat8)
+    conv8 = Conv3D(128, conv_size, activation='relu', padding='same')(concat8)
     drop8 = Dropout(0.4)(conv8)
     # conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(drop8)
     # drop8 = Dropout(0.4)(conv8)
@@ -360,7 +360,7 @@ def dice_coef(y_true, y_pred):
 
     score = 0
 
-    category_weight = [0.000001, 1.0, 1.0]
+    category_weight = [0.01, 1.0, 1.0]
 
     for i, (c, w) in enumerate(zip(category_mapping, category_weight)):
         score += w*(2.0 * K.sum(y_true[..., i] * y_pred[..., i]) / (K.sum(y_true[..., i]) + K.sum(y_pred[..., i])))
@@ -561,7 +561,7 @@ def train_unet():
     hist = model.fit_generator(
         batch(training_indices, augmentMode='flip'),
         len(training_indices),
-        epochs=1200,
+        epochs=2400,
         verbose=1,
         callbacks=[model_checkpoint, confusion_callback, segvis_callback, tensorboard],
         validation_data=batch(validation_indices),

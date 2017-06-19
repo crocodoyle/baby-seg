@@ -15,9 +15,9 @@ def make_iseg():
     Reads data from the MICCAI 2017 Grand Challenge (iSeg 2017) and creates an HDF5 dataset.
     Subject 23 has a different size than the others.
     """
-    training_dir = 'E:/baby-seg/training/'
-    testing_dir  = 'E:/baby-seg/testing/'
-    ibis_dir = 'E:/IBIS_iSeg/'
+    training_dir = 'E:/iseg2017/training/'
+    testing_dir  = 'E:/iseg2017/testing/'
+    ibis_dir = 'E:/iseg2017/IBIS/'
     scratch_dir = 'E:/'
     numImgs = 23 + 50
 
@@ -108,11 +108,11 @@ def make_iseg():
     #     # f['images'][i, ..., 2] = np.divide(f['images'][i, ..., 0], f['images'][i, ..., 1])
 
     # pretend background is CSF for easier training
-    for i in range(numImgs):
-        print('normalizing', i)
-        label_img = f['labels'][i, ..., 0]
-        label_img[label_img == 0] = 10
-        f['labels'][i, ..., 0] = label_img
+    # for i in range(numImgs):
+    #     print('normalizing', i)
+    #     label_img = f['labels'][i, ..., 0]
+    #     label_img[label_img == 0] = 10
+    #     f['labels'][i, ..., 0] = label_img
 
     f.close()
 

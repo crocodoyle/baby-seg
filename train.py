@@ -45,7 +45,7 @@ import math
 scratch_dir = '/data1/data/iSeg-2017/'
 input_file = scratch_dir + 'baby-seg.hdf5'
 
-category_mapping = [10, 150, 250]
+category_mapping = [0, 10, 150, 250]
 img_shape = (144, 192, 128)
 
 
@@ -113,7 +113,7 @@ class ConfusionCallback(Callback):
         self.confusion.append(conf)
 
     def on_train_end(self, logs={}):
-        tissue_classes = ["CSF", "GM", "WM"]
+        tissue_classes = ["BG", "CSF", "GM", "WM"]
 
         for epoch, conf in enumerate(self.confusion):
             filename = os.path.join(scratch_dir, 'confusion', 'confusion_' + str(epoch).zfill(4) + '.png')
@@ -173,7 +173,7 @@ def save_confusion_matrix(cm, classes, filename,
 
 def segmentation_model():
     """3D U-net model, using very small convolutional kernels"""
-    tissue_classes = 3
+    tissue_classes = 4
 
     conv_size = (3, 3, 3)
     pool_size = (2, 2, 2)
@@ -273,7 +273,7 @@ def fractal_block(nb_filter,b,c,drop_path,dropout=0):
 def train_tl():
     from neuroembedding import autoencoder, encoder, t_net, tl_net
 
-    training_indices = list(range(0,10))
+    training_indices = list(range(0, 10))
     validation_indices = [9]
     testing_indices = list(range(10, 24))
     ibis_indices = list(range(24, 53))
@@ -362,7 +362,7 @@ def dice_coef(y_true, y_pred):
 
     score = 0
 
-    category_weight = [0.1, 1.0, 1.0]
+    category_weight = [0.001, 0.1, 1.0, 1.0]
 
     for i, (c, w) in enumerate(zip(category_mapping, category_weight)):
         score += w*(2.0 * K.sum(y_true[..., i] * y_pred[..., i]) / (K.sum(y_true[..., i]) + K.sum(y_pred[..., i])))
@@ -563,7 +563,7 @@ def train_unet():
     hist = model.fit_generator(
         batch(training_indices, augmentMode='flip'),
         len(training_indices),
-        epochs=2400,
+        epochs=1000,
         verbose=1,
         callbacks=[model_checkpoint, confusion_callback, segvis_callback, tensorboard],
         validation_data=batch(validation_indices),

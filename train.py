@@ -362,7 +362,7 @@ def dice_coef(y_true, y_pred):
 
     score = 0
 
-    category_weight = [0.0001, 0.8, 1.0, 1.0]
+    category_weight = [1.35, 17.85, 8.27, 11.98]
 
     for i, (c, w) in enumerate(zip(category_mapping, category_weight)):
         score += w*(2.0 * K.sum(y_true[..., i] * y_pred[..., i]) / (K.sum(y_true[..., i]) + K.sum(y_pred[..., i])))
@@ -545,7 +545,7 @@ def train_unet():
     model = segmentation_model()
 
     sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
-    adam = Adam(lr=1e-4, decay=1e-7)
+    adam = Adam(lr=1e-5, decay=1e-7)
 
     model.compile(optimizer=adam, loss=dice_coef_loss, metrics=[dice_coef])
 

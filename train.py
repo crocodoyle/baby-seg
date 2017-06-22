@@ -179,7 +179,7 @@ def segmentation_model():
     conv_size = (5, 5, 5)
     pool_size = (2, 2, 2)
 
-    inputs = Input(shape=(144, 192, 256, 2))
+    inputs = Input(shape=(144, 192, 128, 2))
 
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(inputs)
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(conv1)
@@ -241,9 +241,6 @@ def segmentation_model():
     conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='valid')(bn11)
 
     model = Model(input=[inputs], output=[conv14])
-
-    # sgd = SGD(lr=0.0001, decay=1e-7, momentum=0.9, nesterov=True)
-    # model.compile(optimizer=sgd, loss=dice_coef_loss, metrics=[dice_coef])
 
     return model
 

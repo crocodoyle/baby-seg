@@ -174,7 +174,7 @@ def segmentation_model():
     """
     3D U-net model, using very small convolutional kernels
     """
-    tissue_classes = 3
+    tissue_classes = 4
 
     conv_size = (5, 5, 5)
     pool_size = (2, 2, 2)

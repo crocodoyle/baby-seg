@@ -638,10 +638,9 @@ def crop_safe(img, point, size):
     cropped = np.zeros(size)
 
     x, y, z = point[0], point[1], point[2]
+    print(x, y, z)
 
     cropped = img[x-x/2:x+x/2, y-y/2:y+y/2, z-z/2:z+z/2]
-
-
 
     return cropped
 

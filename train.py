@@ -48,6 +48,7 @@ input_file = scratch_dir + 'baby-seg.hdf5'
 category_mapping = [0, 10, 150, 250]
 img_shape = (144, 192, 128)
 
+n_tissues = 4
 
 class SegVisCallback(Callback):
 
@@ -170,11 +171,27 @@ def save_confusion_matrix(cm, classes, filename,
     plt.xlabel('Predicted label')
     plt.savefig(filename, bbox_inches='tight')
 
+def convnet():
+    inputs = Input(shape=(32, 32, 32, 2))
+
+    conv_size = (3, 3, 3)
+
+    conv1 = Conv3D(32, conv_size, activation='relu', padding='valid')(inputs)
+    conv2 = Conv3D(64, conv_size, activation='relu', padding='valid')(conv1)
+    conv3 = Conv3D(64, conv_size, activation='relu', padding='valid')(conv2)
+    conv4 = Conv3D(64, conv_size, activation='relu', padding='valid')(conv3)
+    conv5 = Conv3D(64, conv_size, activation='relu', padding='valid')(conv4)
+
+    outputs = Conv3D(n_tissues, (1, 1, 1), activation='softmax', padding='valid')(conv5)
+
+    model = Model(inputs=[inputs], outputs=[outputs])
+
+    return model
+
 def segmentation_model():
     """
     3D U-net model, using very small convolutional kernels
     """
-    tissue_classes = 4
 
     conv_size = (3, 3, 3)
     pool_size = (2, 2, 2)
@@ -233,7 +250,7 @@ def segmentation_model():
     bn11 = BatchNormalization()(conv11)
 
     # need as many output channel as tissue classes
-    conv14 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='valid')(bn11)
+    conv14 = Conv3D(n_tissues, (1, 1, 1), activation='softmax', padding='valid')(bn11)
 
     model = Model(input=[inputs], output=[conv14])
 
@@ -573,7 +590,55 @@ def label_batch(indices):
             true_labels = labels[i, ..., 0]
             label = to_categorical(np.reshape(true_labels, true_labels.shape + (1,)))
 
-            return (label[np.newaxis, ...], label[np.newaxis, ...])
+            yield (label[np.newaxis, ...], label[np.newaxis, ...])
+
+def patch_generator(patch_shape, indices, n, augmentMode=None):
+    f = h5py.File(input_file)
+    images = f['images']
+    labels = f['labels']
+
+    while True:
+        np.random.shuffle(indices)
+        for i in indices:
+            t1_image = np.pad(np.asarray(images[i, ..., 0], dtype='float32'), patch_shape[0], 'constant')
+            t2_image = np.pad(np.asarray(images[i, ..., 1], dtype='float32'), patch_shape[0], 'constant')
+
+            true_labels = labels[i, ..., 0]
+
+            patches_x = np.zeros((n,) + patch_shape + (2,), dtype='float32')
+            patches_y_ints = np.zeros((n,), dtype='uint8')
+
+            patch_num = 0
+
+            for j, t in enumerate(category_mapping):
+                points = true_labels[true_labels == t]
+                np.random.shuffle(points)
+
+                for p in points[0:n/n_tissues]:
+                    patches_x[patch_num, ..., 0] = crop_safe(t1_image, p, patch_shape)
+                    patches_x[patch_num, ..., 1] = crop_safe(t2_image, p, patch_shape)
+
+                    patches_y_ints[patch_num] = t
+
+
+                    patch_num += 1
+
+            patches_y = to_categorical(patches_y_ints)
+
+            yield (patches_x, patches_y)
+
+
+#crop safe is not actually safe yet, but that's the plan
+def crop_safe(img, point, size):
+    cropped = np.zeros(size)
+
+    x, y, z = point
+
+    cropped = img[x-x/2:x+x/2, y-y/2:y+y/2, z-z/2:z+z/2]
+
+
+
+    return cropped
 
 
 def visualize_training_dice(hist):
@@ -591,6 +656,68 @@ def visualize_training_dice(hist):
     plt.savefig(scratch_dir + 'results.png')
     plt.close()
 
+
+def train_patch_classifier():
+    f = h5py.File(input_file)
+    images = f['images']
+    labels = f['labels']
+
+    training_indices = list(range(9))
+    validation_indices = [9]
+    testing_indices = list(range(10, 23))
+    ibis_indices = list(range(24, 72))
+
+    # training_indices = training_indices + ibis_indices
+
+    print('training images:', training_indices)
+    print('validation images:', validation_indices)
+    print('testing images:', testing_indices)
+    print('ibis images:', ibis_indices)
+
+    affine = np.eye(4)
+
+    # model = segmentation_model()
+    model = convnet()
+
+    adam = Adam(lr=1e-4, decay=1e-7)
+
+    model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy'])
+
+    model.summary()
+
+    # print('model', dir(model))
+
+    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_accuracy",
+                                       save_best_only=True, save_weights_only=False)
+    confusion_callback = ConfusionCallback()
+    segvis_callback = SegVisCallback()
+    tensorboard = TensorBoard(scratch_dir)
+
+    # train without augmentation (easier)
+    hist = model.fit_generator(
+        patch_generator(training_indices, 400, augmentMode='flip'),
+        len(training_indices)*10,
+        epochs=10,
+        verbose=1,
+        callbacks=[model_checkpoint, confusion_callback, segvis_callback, tensorboard],
+        validation_data=batch(validation_indices),
+        validation_steps=len(validation_indices))
+
+    model.load_weights(scratch_dir + 'best_seg_model.hdf5')
+    model.save(scratch_dir + 'unet-3d-iseg2017.hdf5')
+    #
+    # for i in training_indices + validation_indices + testing_indices:
+    #     predicted = model.predict(images[i, ...][np.newaxis, ...], batch_size=1)
+    #     segmentation = from_categorical(predicted, category_mapping)
+    #     segmentation_padded = np.pad(segmentation, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=10)
+    #     image = nib.Nifti1Image(segmentation_padded, affine)
+    #     nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
+    #
+    #     if i in training_indices or i in testing_indices:
+    #         # print(final_dice_score(labels[i, ..., 0], segmentation))
+    #         print(confusion_matrix(labels[i, ..., 0].flatten(), segmentation.flatten()))
+    #
+    # visualize_training_dice(hist)
 
 def train_unet():
     f = h5py.File(input_file)
@@ -663,4 +790,4 @@ if __name__ == "__main__":
     images = f['images']
     labels = f['labels']
 
-    train_unet()
+    train_patch_classifier()

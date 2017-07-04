@@ -608,7 +608,7 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
             patches_x = np.zeros(((n,) + patch_shape + (2,)), dtype='float32')
             patches_y_ints = np.zeros((n,), dtype='uint8')
 
-            print(patches_x.shape, patches_y.shape)
+            print(patches_x.shape)
 
             patch_num = 0
 
@@ -631,6 +631,8 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
                     patch_num += 1
 
             patches_y = to_categorical(patches_y_ints)
+            print(patches_y.shape)
+
 
             yield (patches_x, patches_y)
 

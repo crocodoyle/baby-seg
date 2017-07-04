@@ -632,7 +632,7 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
 def crop_safe(img, point, size):
     cropped = np.zeros(size)
 
-    (x, y, z) = point
+    x, y, z = point[0], point[1], point[2]
 
     cropped = img[x-x/2:x+x/2, y-y/2:y+y/2, z-z/2:z+z/2]
 

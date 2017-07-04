@@ -600,8 +600,8 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
     while True:
         np.random.shuffle(indices)
         for i in indices:
-            t1_image = np.pad(np.asarray(images[i, ..., 0], dtype='float32'), patch_shape[0], 'constant')
-            t2_image = np.pad(np.asarray(images[i, ..., 1], dtype='float32'), patch_shape[0], 'constant')
+            t1_image = np.asarray(images[i, ..., 0], dtype='float32')
+            t2_image = np.asarray(images[i, ..., 1], dtype='float32')
 
             true_labels = labels[i, ..., 0]
 
@@ -611,8 +611,8 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
             patch_num = 0
 
             for j, t in enumerate(category_mapping):
-                points = np.where(true_labels == t)
-                # print(points.shape)
+                points_x, points_y, points_z = np.where(true_labels == t)
+                points = zip(points_x, points_y, points_z)
                 print(points)
 
                 np.random.shuffle(points)

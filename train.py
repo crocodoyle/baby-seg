@@ -605,8 +605,10 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
 
             true_labels = labels[i, ..., 0]
 
-            patches_x = np.zeros(((n,) + tuple(patch_shape) + (2,)), dtype='float32')
+            patches_x = np.zeros(((n,) + patch_shape + (2,)), dtype='float32')
             patches_y_ints = np.zeros((n,), dtype='uint8')
+
+            print(patches_x.shape, patches_y.shape)
 
             patch_num = 0
 

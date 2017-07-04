@@ -620,8 +620,8 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
 
                     print('point', p)
 
-                    patches_x[patch_num, ..., 0] = crop_safe(np.pad(t1_image, patch_shape[0]), p, patch_shape)
-                    patches_x[patch_num, ..., 1] = crop_safe(np.pad(t2_image, patch_shape[0]), p, patch_shape)
+                    patches_x[patch_num, ..., 0] = crop_safe(np.pad(t1_image, patch_shape[0], 'constant'), p, patch_shape)
+                    patches_x[patch_num, ..., 1] = crop_safe(np.pad(t2_image, patch_shape[0], 'constant'), p, patch_shape)
 
                     patches_y_ints[patch_num] = t
 

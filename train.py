@@ -605,7 +605,7 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
 
             true_labels = labels[i, ..., 0]
 
-            patches_x = np.zeros(((n,) + patch_shape + (2,)), dtype='float32')
+            patches_x = np.zeros(((n,) + tuple(patch_shape) + (2,)), dtype='float32')
             patches_y_ints = np.zeros((n,), dtype='uint8')
 
             patch_num = 0
@@ -695,7 +695,7 @@ def train_patch_classifier():
 
     # train without augmentation (easier)
     hist = model.fit_generator(
-        patch_generator(training_indices, training_indices, 400, augmentMode='flip'),
+        patch_generator((32, 32, 32), training_indices, 400, augmentMode='flip'),
         len(training_indices)*10,
         epochs=10,
         verbose=1,

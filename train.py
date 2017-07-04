@@ -695,7 +695,7 @@ def train_patch_classifier():
 
     # train without augmentation (easier)
     hist = model.fit_generator(
-        patch_generator(training_indices, 400, augmentMode='flip'),
+        patch_generator(training_indices, training_indices, 400, augmentMode='flip'),
         len(training_indices)*10,
         epochs=10,
         verbose=1,

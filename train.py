@@ -611,7 +611,7 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
             patch_num = 0
 
             for j, t in enumerate(category_mapping):
-                points = true_labels[true_labels == t]
+                points = true_labels == t
                 print(points.shape)
                 print(points[0])
                 np.random.shuffle(points)

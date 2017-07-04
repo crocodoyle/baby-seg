@@ -614,7 +614,7 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
                 points = true_labels[true_labels == t]
                 np.random.shuffle(points)
 
-                for p in points[0:n/n_tissues]:
+                for p in points[0:n//n_tissues]:
                     patches_x[patch_num, ..., 0] = crop_safe(t1_image, p, patch_shape)
                     patches_x[patch_num, ..., 1] = crop_safe(t2_image, p, patch_shape)
 

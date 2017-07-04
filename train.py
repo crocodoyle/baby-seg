@@ -618,7 +618,7 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
 
                 for p in points[0:n//n_tissues]:
 
-                    print('point', p)
+                    # print('point', p)
 
                     patches_x[patch_num, ..., 0] = crop_safe(np.pad(t1_image, patch_shape[0], 'constant'), p, patch_shape)
                     patches_x[patch_num, ..., 1] = crop_safe(np.pad(t2_image, patch_shape[0], 'constant'), p, patch_shape)
@@ -638,8 +638,8 @@ def crop_safe(img, point, size):
     cropped = np.zeros(size)
 
     x, y, z = point[0], point[1], point[2]
-    print(x, y, z)
-    print(img.shape)
+    # print(x, y, z)
+    # print(img.shape)
 
     cropped = img[x-size[0]//2:x+size[0]//2, y-size[1]//2:y+size[1]//2, z-size[2]//2:z+size[2]//2]
 

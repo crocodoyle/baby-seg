@@ -613,11 +613,10 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
             for j, t in enumerate(category_mapping):
                 points_x, points_y, points_z = np.where(true_labels == t)
                 points = list(zip(list(points_x), list(points_y), list(points_z)))
-                print(points)
 
                 np.random.shuffle(points)
 
-                for p in points[0:n//n_tissues, ...]:
+                for p in points[0:n//n_tissues]:
 
                     print('point', p)
 

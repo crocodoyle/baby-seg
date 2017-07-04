@@ -640,7 +640,7 @@ def crop_safe(img, point, size):
     x, y, z = point[0], point[1], point[2]
     print(x, y, z)
 
-    cropped = img[x-x//2:x+x//2, y-y//2:y+y//2, z-z//2:z+z//2]
+    cropped = img[x-size[0]//2:x+size[0]//2, y-size[1]//2:y+size[1]//2, z-size[2]//2:z+size[2]//2]
 
     return cropped
 

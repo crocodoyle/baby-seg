@@ -10,6 +10,8 @@ from keras.callbacks import ModelCheckpoint, TensorBoard, LearningRateScheduler
 from keras.callbacks import Callback
 from keras import backend as K
 
+from keras.utils import to_categorical as to_cat
+
 import tensorflow as tf
 
 from sklearn.metrics import confusion_matrix
@@ -25,6 +27,7 @@ import h5py
 import itertools
 import imageio
 
+from numpy.lib.stride_tricks import as_strided
 
 import os
 import nibabel as nib
@@ -176,13 +179,18 @@ def convnet():
 
     conv_size = (3, 3, 3)
 
-    conv1 = Conv3D(32, conv_size, activation='relu', padding='valid')(inputs)
-    conv2 = Conv3D(64, conv_size, activation='relu', padding='valid')(conv1)
+    conv1 = Conv3D(64, conv_size, activation='relu', strides=(2, 2, 2), padding='valid')(inputs)
+    conv2 = Conv3D(64, conv_size, activation='relu', strides=(2, 2, 2), padding='valid')(conv1)
     conv3 = Conv3D(64, conv_size, activation='relu', padding='valid')(conv2)
     conv4 = Conv3D(64, conv_size, activation='relu', padding='valid')(conv3)
     conv5 = Conv3D(64, conv_size, activation='relu', padding='valid')(conv4)
 
-    outputs = Conv3D(n_tissues, (1, 1, 1), activation='softmax', padding='valid')(conv5)
+    flat = Flatten()(conv5)
+
+    fc1 = Dense(10)(flat)
+    fc2 = Dense(10)(fc1)
+
+    outputs = Dense(n_tissues, activation='softmax')(fc2)
 
     model = Model(inputs=[inputs], outputs=[outputs])
 
@@ -494,6 +502,14 @@ def to_categorical(y):
 
     return categorical
 
+def patch_label_categorical(y):
+    n_samples = y.shape[0]
+    cat_shape = (n_samples,) + (n_tissues,)
+    categorical = np.zeros(cat_shape, dtype='b')
+
+    for i, cat in enumerate(category_mapping):
+        categorical[..., i] = np.equal(y[..., 0], np.ones(np.shape(y[..., 0]))*cat)
+
 
 def from_categorical(categorical, category_mapping):
     """Combines several binary masks for tissue classes into a single segmentation image
@@ -606,9 +622,9 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
             true_labels = labels[i, ..., 0]
 
             patches_x = np.zeros(((n,) + patch_shape + (2,)), dtype='float32')
-            patches_y_ints = np.zeros((n,), dtype='uint8')
+            patches_y_ints = np.zeros((n, 1), dtype='uint8')
 
-            print(patches_x.shape)
+            # print(patches_x.shape)
 
             patch_num = 0
 
@@ -626,13 +642,14 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
                     patches_x[patch_num, ..., 1] = crop_safe(np.pad(t2_image, patch_shape[0], 'constant'), p, patch_shape)
 
                     patches_y_ints[patch_num] = t
+                    # print(patches_y_ints.shape)
 
 
                     patch_num += 1
 
+            # print(patches_y_ints)
             patches_y = to_categorical(patches_y_ints)
-            print(patches_y.shape)
-
+            # print(patches_y.shape)
 
             yield (patches_x, patches_y)
 
@@ -696,11 +713,9 @@ def train_patch_classifier():
 
     # print('model', dir(model))
 
-    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_accuracy",
+    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_patch_model.hdf5', monitor="val_accuracy",
                                        save_best_only=True, save_weights_only=False)
-    confusion_callback = ConfusionCallback()
-    segvis_callback = SegVisCallback()
-    tensorboard = TensorBoard(scratch_dir)
+
 
     # train without augmentation (easier)
     hist = model.fit_generator(
@@ -708,9 +723,8 @@ def train_patch_classifier():
         len(training_indices)*10,
         epochs=10,
         verbose=1,
-        callbacks=[model_checkpoint, confusion_callback, segvis_callback, tensorboard],
-        validation_data=batch(validation_indices),
-        validation_steps=len(validation_indices))
+        validation_data=patch_generator((32, 32, 32), validation_indices, 400, augmentMode='flip'),
+        validation_steps=len(validation_indices)*10)
 
     model.load_weights(scratch_dir + 'best_seg_model.hdf5')
     model.save(scratch_dir + 'unet-3d-iseg2017.hdf5')

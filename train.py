@@ -28,6 +28,7 @@ import itertools
 import imageio
 
 from numpy.lib.stride_tricks import as_strided
+from skimage.util import view_as_windows
 
 import os
 import nibabel as nib
@@ -510,6 +511,7 @@ def patch_label_categorical(y):
     for i, cat in enumerate(category_mapping):
         categorical[..., i] = np.equal(y[..., 0], np.ones(np.shape(y[..., 0]))*cat)
 
+    return categorical
 
 def from_categorical(categorical, category_mapping):
     """Combines several binary masks for tissue classes into a single segmentation image
@@ -613,13 +615,26 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
     images = f['images']
     labels = f['labels']
 
+    stride_size = (3, 3, 3)
+
     while True:
         np.random.shuffle(indices)
         for i in indices:
-            t1_image = np.asarray(images[i, ..., 0], dtype='float32')
-            t2_image = np.asarray(images[i, ..., 1], dtype='float32')
+            t1_image = np.pad(np.asarray(images[i, ..., 0], dtype='float32'), ((patch_shape[0]//2 - 1, patch_shape[0]//2 - 1), (patch_shape[1]//2 - 1, patch_shape[1]//2 - 1), (patch_shape[2]//2 - 1, patch_shape[2]//2 - 1)), 'constant')
+            t2_image = np.pad(np.asarray(images[i, ..., 1], dtype='float32'), ((patch_shape[0]//2 - 1, patch_shape[0]//2 - 1), (patch_shape[1]//2 - 1, patch_shape[1]//2 - 1), (patch_shape[2]//2 - 1, patch_shape[2]//2 - 1)), 'constant')
 
-            true_labels = labels[i, ..., 0]
+            t1_strided = view_as_windows(t1_image, patch_shape, step=stride_size)
+            t2_strided = view_as_windows(t2_image, patch_shape, step=stride_size)
+
+            # print('t1 shape', t1_image.shape)
+            # print('t1 strided shape', t1_strided.shape)
+
+            true_labels = labels[i, ::stride_size[0], ::stride_size[1], ::stride_size[2], 0]
+
+            print(true_labels.shape)
+
+            # patches_x = np.zeros((t1_strided.shape[0]*t1_strided.shape[1]*t1_strided.shape[2],) + t1_image.shape + (2,), dtype='float32')
+            # patches_y = np.zeros((n_tissues) + patch_shape + )
 
             patches_x = np.zeros(((n,) + patch_shape + (2,)), dtype='float32')
             patches_y_ints = np.zeros((n, 1), dtype='uint8')
@@ -630,7 +645,7 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
 
             for j, t in enumerate(category_mapping):
                 points_x, points_y, points_z = np.where(true_labels == t)
-                points = list(zip(np.add(list(points_x), patch_shape[0]), np.add(list(points_y), patch_shape[1]), np.add(list(points_z), patch_shape[2])))
+                points = list(zip(list(points_x), list(points_y), list(points_z)))
 
                 np.random.shuffle(points)
 
@@ -638,33 +653,49 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
 
                     # print('point', p)
 
-                    patches_x[patch_num, ..., 0] = crop_safe(np.pad(t1_image, patch_shape[0], 'constant'), p, patch_shape)
-                    patches_x[patch_num, ..., 1] = crop_safe(np.pad(t2_image, patch_shape[0], 'constant'), p, patch_shape)
+                    patches_x[patch_num, ..., 0] = t1_strided[p[0], p[1], p[2], ...]
+                    patches_x[patch_num, ..., 1] = t2_strided[p[0], p[1], p[2], ...]
 
                     patches_y_ints[patch_num] = t
                     # print(patches_y_ints.shape)
 
-
                     patch_num += 1
 
             # print(patches_y_ints)
-            patches_y = to_categorical(patches_y_ints)
-            # print(patches_y.shape)
+            patches_y = patch_label_categorical(patches_y_ints)
+
+            # print('x', patches_x.shape)
+            # print('y', patches_y.shape)
+            print(patches_y_ints)
 
             yield (patches_x, patches_y)
 
 
-#crop safe is not actually safe yet, but that's the plan
-def crop_safe(img, point, size):
-    cropped = np.zeros(size)
+#UNTESTED
+def predict_whole_image(index):
+    f = h5py.File(input_file)
+    images = f['images']
 
-    x, y, z = point[0], point[1], point[2]
-    # print(x, y, z)
-    # print(img.shape)
+    patch_shape = (32, 32, 32)
 
-    cropped = img[x-size[0]//2:x+size[0]//2, y-size[1]//2:y+size[1]//2, z-size[2]//2:z+size[2]//2]
+    model = convnet()
+    model.load_weights(scratch_dir + 'patch-3d-iseg2017.hdf5')
 
-    return cropped
+    t1_image = np.pad(np.asarray(images[index, ..., 0], dtype='float32'), ((patch_shape[0] // 2 - 1, patch_shape[0] // 2 - 1), (patch_shape[1] // 2 - 1, patch_shape[1] // 2 - 1), (patch_shape[2] // 2 - 1, patch_shape[2] // 2 - 1)), 'constant')
+    t2_image = np.pad(np.asarray(images[index, ..., 1], dtype='float32'), ((patch_shape[0] // 2 - 1, patch_shape[0] // 2 - 1), (patch_shape[1] // 2 - 1, patch_shape[1] // 2 - 1), (patch_shape[2] // 2 - 1, patch_shape[2] // 2 - 1)), 'constant')
+
+    t1_strided = view_as_windows(t1_image, patch_shape)
+    t2_strided = view_as_windows(t2_image, patch_shape)
+
+    segmentation = np.zeros(t1_image.shape)
+
+    for x in range(t1_strided[0]):
+        for y in range(t1_strided[1]):
+            for z in range(t1_strided[2]):
+                predictions = model.predict(t1_strided[x,y,z, ...])
+                segmentation[x, y, z] = category_mapping[np.argmax(predictions)]
+
+    return segmentation
 
 
 def visualize_training_dice(hist):
@@ -705,7 +736,7 @@ def train_patch_classifier():
     # model = segmentation_model()
     model = convnet()
 
-    adam = Adam(lr=1e-4, decay=1e-7)
+    adam = Adam()
 
     model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy'])
 
@@ -713,7 +744,7 @@ def train_patch_classifier():
 
     # print('model', dir(model))
 
-    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_patch_model.hdf5', monitor="val_accuracy",
+    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_patch_model.hdf5', monitor="val_acc",
                                        save_best_only=True, save_weights_only=False)
 
 
@@ -721,13 +752,13 @@ def train_patch_classifier():
     hist = model.fit_generator(
         patch_generator((32, 32, 32), training_indices, 400, augmentMode='flip'),
         len(training_indices)*10,
-        epochs=10,
+        epochs=50,
         verbose=1,
         validation_data=patch_generator((32, 32, 32), validation_indices, 400, augmentMode='flip'),
         validation_steps=len(validation_indices)*10)
 
-    model.load_weights(scratch_dir + 'best_seg_model.hdf5')
-    model.save(scratch_dir + 'unet-3d-iseg2017.hdf5')
+    model.load_weights(scratch_dir + 'best_patch_model.hdf5')
+    model.save(scratch_dir + 'patch-3d-iseg2017.hdf5')
     #
     # for i in training_indices + validation_indices + testing_indices:
     #     predicted = model.predict(images[i, ...][np.newaxis, ...], batch_size=1)

@@ -54,6 +54,8 @@ img_shape = (144, 192, 128)
 
 n_tissues = 4
 
+patch_shape = (48, 48, 48)
+
 class SegVisCallback(Callback):
 
     def on_train_begin(self, logs={}):
@@ -176,17 +178,27 @@ def save_confusion_matrix(cm, classes, filename,
     plt.savefig(filename, bbox_inches='tight')
 
 def convnet():
-    inputs = Input(shape=(32, 32, 32, 2))
+    inputs = Input(shape=(patch_shape + (2,)))
 
     conv_size = (3, 3, 3)
 
     conv1 = Conv3D(64, conv_size, activation='relu', strides=(2, 2, 2), padding='valid')(inputs)
-    conv2 = Conv3D(64, conv_size, activation='relu', strides=(2, 2, 2), padding='valid')(conv1)
-    conv3 = Conv3D(64, conv_size, activation='relu', padding='valid')(conv2)
-    conv4 = Conv3D(64, conv_size, activation='relu', padding='valid')(conv3)
-    conv5 = Conv3D(64, conv_size, activation='relu', padding='valid')(conv4)
+    drop1 = Dropout(0.5)(conv1)
+    norm1 = BatchNormalization()(drop1)
+    conv2 = Conv3D(64, conv_size, activation='relu', strides=(2, 2, 2), padding='valid')(norm1)
+    drop2 = Dropout(0.5)(conv2)
+    norm2 = BatchNormalization()(drop2)
+    conv3 = Conv3D(64, conv_size, activation='relu', padding='valid')(norm2)
+    drop3 = Dropout(0.5)(conv3)
+    norm3 = BatchNormalization()(drop3)
+    conv4 = Conv3D(64, conv_size, activation='relu', padding='valid')(norm3)
+    drop4 = Dropout(0.5)(conv4)
+    norm4 = BatchNormalization()(drop4)
+    conv5 = Conv3D(64, conv_size, activation='relu', padding='valid')(norm4)
+    drop5 = Dropout(0.5)(conv5)
+    norm5 = BatchNormalization()(drop5)
 
-    flat = Flatten()(conv5)
+    flat = Flatten()(norm5)
 
     fc1 = Dense(10)(flat)
     fc2 = Dense(10)(fc1)
@@ -460,7 +472,9 @@ def dice_coef(y_true, y_pred):
 
     score = 0
 
-    category_weight = [1.35, 17.85, 8.27*10, 11.98*10]
+    # category_weight = [1.35, 17.85, 8.27*10, 11.98*10]
+
+    category_weight = [1, 1, 1, 1]
 
     for i, (c, w) in enumerate(zip(category_mapping, category_weight)):
         score += w*(2.0 * K.sum(y_true[..., i] * y_pred[..., i]) / (K.sum(y_true[..., i]) + K.sum(y_pred[..., i])))
@@ -631,7 +645,7 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
 
             true_labels = labels[i, ::stride_size[0], ::stride_size[1], ::stride_size[2], 0]
 
-            print(true_labels.shape)
+            # print(true_labels.shape)
 
             # patches_x = np.zeros((t1_strided.shape[0]*t1_strided.shape[1]*t1_strided.shape[2],) + t1_image.shape + (2,), dtype='float32')
             # patches_y = np.zeros((n_tissues) + patch_shape + )
@@ -666,17 +680,14 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
 
             # print('x', patches_x.shape)
             # print('y', patches_y.shape)
-            print(patches_y_ints)
+            # print(patches_y_ints)
 
             yield (patches_x, patches_y)
 
-
-#UNTESTED
 def predict_whole_image(index):
     f = h5py.File(input_file)
     images = f['images']
 
-    patch_shape = (32, 32, 32)
 
     model = convnet()
     model.load_weights(scratch_dir + 'patch-3d-iseg2017.hdf5')
@@ -689,10 +700,18 @@ def predict_whole_image(index):
 
     segmentation = np.zeros(t1_image.shape)
 
-    for x in range(t1_strided[0]):
-        for y in range(t1_strided[1]):
-            for z in range(t1_strided[2]):
-                predictions = model.predict(t1_strided[x,y,z, ...])
+
+    # samples, input shape, channels
+    inputs = np.zeros((1,) + patch_shape + (2,))
+
+
+    for x in range(t1_strided.shape[0]):
+        for y in range(t1_strided.shape[1]):
+            for z in range(t1_strided.shape[2]):
+                inputs[..., 0] = t1_strided[x, y, z, ...]
+                inputs[..., 1] = t2_strided[x, y, z, ...]
+
+                predictions = model.predict(inputs)
                 segmentation[x, y, z] = category_mapping[np.argmax(predictions)]
 
     return segmentation
@@ -738,40 +757,38 @@ def train_patch_classifier():
 
     adam = Adam()
 
-    model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy'])
-
+    model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy', dice_coef])
     model.summary()
 
-    # print('model', dir(model))
-
-    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_patch_model.hdf5', monitor="val_acc",
-                                       save_best_only=True, save_weights_only=False)
+    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_patch_model.hdf5', monitor="val_dice_coef",
+                                       save_best_only=True, save_weights_only=False, mode='max')
 
 
     # train without augmentation (easier)
     hist = model.fit_generator(
-        patch_generator((32, 32, 32), training_indices, 400, augmentMode='flip'),
+        patch_generator(patch_shape, training_indices, 256, augmentMode='flip'),
         len(training_indices)*10,
-        epochs=50,
+        epochs=1,
         verbose=1,
-        validation_data=patch_generator((32, 32, 32), validation_indices, 400, augmentMode='flip'),
+        callbacks=[model_checkpoint],
+        validation_data=patch_generator(patch_shape, validation_indices, 256, augmentMode='flip'),
         validation_steps=len(validation_indices)*10)
 
     model.load_weights(scratch_dir + 'best_patch_model.hdf5')
     model.save(scratch_dir + 'patch-3d-iseg2017.hdf5')
-    #
-    # for i in training_indices + validation_indices + testing_indices:
-    #     predicted = model.predict(images[i, ...][np.newaxis, ...], batch_size=1)
-    #     segmentation = from_categorical(predicted, category_mapping)
-    #     segmentation_padded = np.pad(segmentation, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=10)
-    #     image = nib.Nifti1Image(segmentation_padded, affine)
-    #     nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
-    #
-    #     if i in training_indices or i in testing_indices:
-    #         # print(final_dice_score(labels[i, ..., 0], segmentation))
-    #         print(confusion_matrix(labels[i, ..., 0].flatten(), segmentation.flatten()))
-    #
-    # visualize_training_dice(hist)
+
+    for i in training_indices + validation_indices + testing_indices:
+        predicted = predict_whole_image(i)
+        segmentation = from_categorical(predicted, category_mapping)
+        segmentation_padded = np.pad(segmentation, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=10)
+        image = nib.Nifti1Image(segmentation_padded, affine)
+        nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
+
+        if i in training_indices or i in validation_indices:
+            # print(final_dice_score(labels[i, ..., 0], segmentation))
+            print(confusion_matrix(labels[i, ..., 0].flatten(), segmentation.flatten()))
+
+    visualize_training_dice(hist)
 
 def train_unet():
     f = h5py.File(input_file)

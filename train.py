@@ -883,4 +883,4 @@ if __name__ == "__main__":
     images = f['images']
     labels = f['labels']
 
-    train_patch_classifier()
+    train_unet()

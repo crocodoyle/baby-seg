@@ -714,11 +714,12 @@ def predict_patch_gen(index):
     while True:
         # samples, input shape, channels
         inputs = np.zeros((patch_batch_size,) + patch_shape + (2,))
+        print(inputs.shape)
 
         for x in range(mri_strided.shape[0]):
             print(x, 'of', mri_strided.shape[0])
             for y in range(mri_strided.shape[1]):
-                inputs[...] = mri_strided[x, y, ...]
+                inputs = np.squeeze(mri_strided[x, y, ...])
 
                 yield inputs
 

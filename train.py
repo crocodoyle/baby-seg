@@ -705,6 +705,8 @@ def predict_patch_gen(index):
         (patch_shape[0] // 2 - 1, patch_shape[0] // 2 - 1), (patch_shape[1] // 2 - 1, patch_shape[1] // 2 - 1),
         (patch_shape[2] // 2 - 1, patch_shape[2] // 2 - 1), (0, 0)), 'constant')
 
+    print(mri_images.shape)
+
     mri_strided = view_as_windows(mri_images, patch_shape + (2,))
 
     print(mri_strided.shape)

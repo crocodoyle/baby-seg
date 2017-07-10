@@ -543,6 +543,17 @@ def from_categorical(categorical, category_mapping):
 
     return segmentation
 
+def from_categorical_patches(categorical, category_mapping):
+    n_patches = categorical.shape[0]
+
+    categories = np.zeros(n_patches, dtype='uint8')
+
+    for i, cat in enumerate(category_mapping):
+        pass
+
+    return categories
+
+
 
 def batch(indices, augmentMode=None):
     """
@@ -689,8 +700,11 @@ def predict_whole_image(index):
     images = f['images']
 
 
+    patch_batch_size = 127
+
     model = convnet()
     model.load_weights(scratch_dir + 'patch-3d-iseg2017.hdf5')
+
 
     t1_image = np.pad(np.asarray(images[index, ..., 0], dtype='float32'), ((patch_shape[0] // 2 - 1, patch_shape[0] // 2 - 1), (patch_shape[1] // 2 - 1, patch_shape[1] // 2 - 1), (patch_shape[2] // 2 - 1, patch_shape[2] // 2 - 1)), 'constant')
     t2_image = np.pad(np.asarray(images[index, ..., 1], dtype='float32'), ((patch_shape[0] // 2 - 1, patch_shape[0] // 2 - 1), (patch_shape[1] // 2 - 1, patch_shape[1] // 2 - 1), (patch_shape[2] // 2 - 1, patch_shape[2] // 2 - 1)), 'constant')
@@ -698,21 +712,29 @@ def predict_whole_image(index):
     t1_strided = view_as_windows(t1_image, patch_shape)
     t2_strided = view_as_windows(t2_image, patch_shape)
 
-    segmentation = np.zeros(t1_image.shape)
+    segmentation = np.zeros(img_shape)
+    print('seg shape', segmentation.shape)
 
+    print(t1_strided.shape)
 
     # samples, input shape, channels
-    inputs = np.zeros((1,) + patch_shape + (2,))
-
+    inputs = np.zeros((patch_batch_size,) + patch_shape + (2,))
 
     for x in range(t1_strided.shape[0]):
         for y in range(t1_strided.shape[1]):
-            for z in range(t1_strided.shape[2]):
-                inputs[..., 0] = t1_strided[x, y, z, ...]
-                inputs[..., 1] = t2_strided[x, y, z, ...]
+            inputs[..., 0] = t1_strided[x, y, ...]
+            inputs[..., 1] = t2_strided[x, y, ...]
+            # print(x, y)
+            # print(inputs.shape)
 
-                predictions = model.predict(inputs)
-                segmentation[x, y, z] = category_mapping[np.argmax(predictions)]
+            # print(inputs.shape, [1, 0, 0, 0].shape)
+            predictions = model.predict(inputs)
+            # print(predictions.shape)
+
+            int_predictions = np.argmax(predictions, axis=-1)
+            # print(int_predictions.shape)
+
+            segmentation[x, y, :-1] = int_predictions
 
     return segmentation
 

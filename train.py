@@ -695,46 +695,46 @@ def patch_generator(patch_shape, indices, n, augmentMode=None):
 
             yield (patches_x, patches_y)
 
-def predict_whole_image(index):
+def predict_patch_gen(index):
     f = h5py.File(input_file)
     images = f['images']
 
-
     patch_batch_size = 127
 
-    model = convnet()
-    model.load_weights(scratch_dir + 'patch-3d-iseg2017.hdf5')
-
-
-    t1_image = np.pad(np.asarray(images[index, ..., 0], dtype='float32'), ((patch_shape[0] // 2 - 1, patch_shape[0] // 2 - 1), (patch_shape[1] // 2 - 1, patch_shape[1] // 2 - 1), (patch_shape[2] // 2 - 1, patch_shape[2] // 2 - 1)), 'constant')
-    t2_image = np.pad(np.asarray(images[index, ..., 1], dtype='float32'), ((patch_shape[0] // 2 - 1, patch_shape[0] // 2 - 1), (patch_shape[1] // 2 - 1, patch_shape[1] // 2 - 1), (patch_shape[2] // 2 - 1, patch_shape[2] // 2 - 1)), 'constant')
+    t1_image = np.pad(np.asarray(images[index, ..., 0], dtype='float32'), (
+        (patch_shape[0] // 2 - 1, patch_shape[0] // 2 - 1), (patch_shape[1] // 2 - 1, patch_shape[1] // 2 - 1),
+        (patch_shape[2] // 2 - 1, patch_shape[2] // 2 - 1)), 'constant')
+    t2_image = np.pad(np.asarray(images[index, ..., 1], dtype='float32'), (
+        (patch_shape[0] // 2 - 1, patch_shape[0] // 2 - 1), (patch_shape[1] // 2 - 1, patch_shape[1] // 2 - 1),
+        (patch_shape[2] // 2 - 1, patch_shape[2] // 2 - 1)), 'constant')
 
     t1_strided = view_as_windows(t1_image, patch_shape)
     t2_strided = view_as_windows(t2_image, patch_shape)
 
-    segmentation = np.zeros(img_shape)
-    print('seg shape', segmentation.shape)
+    while True:
+        # samples, input shape, channels
+        inputs = np.zeros((patch_batch_size,) + patch_shape + (2,))
 
-    print(t1_strided.shape)
+        for x in range(t1_strided.shape[0]):
+            for y in range(t1_strided.shape[1]):
+                inputs[..., 0] = t1_strided[x, y, ...]
+                inputs[..., 1] = t2_strided[x, y, ...]
 
-    # samples, input shape, channels
-    inputs = np.zeros((patch_batch_size,) + patch_shape + (2,))
+                print(x, y)
+                yield inputs
 
-    for x in range(t1_strided.shape[0]):
-        for y in range(t1_strided.shape[1]):
-            inputs[..., 0] = t1_strided[x, y, ...]
-            inputs[..., 1] = t2_strided[x, y, ...]
-            # print(x, y)
-            # print(inputs.shape)
+        break
 
-            # print(inputs.shape, [1, 0, 0, 0].shape)
-            predictions = model.predict(inputs)
-            # print(predictions.shape)
+def predict_whole_image(index):
+    model = convnet()
+    model.load_weights(scratch_dir + 'patch-3d-iseg2017.hdf5')
 
-            int_predictions = np.argmax(predictions, axis=-1)
-            # print(int_predictions.shape)
+    predictions = model.predict_generator(predict_patch_gen(index), (img_shape[0]-1)*(img_shape[1]-1), 16)
 
-            segmentation[x, y, :-1] = int_predictions
+    int_predictions = np.argmax(predictions, axis=-1)
+
+    segmentation = np.reshape(int_predictions, img_shape)
+
 
     return segmentation
 
@@ -794,7 +794,8 @@ def train_patch_classifier():
         verbose=1,
         callbacks=[model_checkpoint],
         validation_data=patch_generator(patch_shape, validation_indices, 256, augmentMode='flip'),
-        validation_steps=len(validation_indices)*10)
+        validation_steps=len(validation_indices)*10
+    )
 
     model.load_weights(scratch_dir + 'best_patch_model.hdf5')
     model.save(scratch_dir + 'patch-3d-iseg2017.hdf5')

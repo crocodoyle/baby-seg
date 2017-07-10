@@ -701,29 +701,25 @@ def predict_patch_gen(index):
 
     patch_batch_size = 127
 
-    t1_image = np.pad(np.asarray(images[index, ..., 0], dtype='float32'), (
+    mri_images = np.pad(np.asarray(images[index, ...], dtype='float32'), (
         (patch_shape[0] // 2 - 1, patch_shape[0] // 2 - 1), (patch_shape[1] // 2 - 1, patch_shape[1] // 2 - 1),
-        (patch_shape[2] // 2 - 1, patch_shape[2] // 2 - 1)), 'constant')
-    t2_image = np.pad(np.asarray(images[index, ..., 1], dtype='float32'), (
-        (patch_shape[0] // 2 - 1, patch_shape[0] // 2 - 1), (patch_shape[1] // 2 - 1, patch_shape[1] // 2 - 1),
-        (patch_shape[2] // 2 - 1, patch_shape[2] // 2 - 1)), 'constant')
+        (patch_shape[2] // 2 - 1, patch_shape[2] // 2 - 1), (0, 0)), 'constant')
 
-    t1_strided = view_as_windows(t1_image, patch_shape)
-    t2_strided = view_as_windows(t2_image, patch_shape)
+    mri_strided = view_as_windows(mri_images, patch_shape + (0,))
+
+    print(mri_strided.shape)
 
     while True:
         # samples, input shape, channels
         inputs = np.zeros((patch_batch_size,) + patch_shape + (2,))
 
-        for x in range(t1_strided.shape[0]):
-            for y in range(t1_strided.shape[1]):
-                inputs[..., 0] = t1_strided[x, y, ...]
-                inputs[..., 1] = t2_strided[x, y, ...]
+        for x in range(mri_strided.shape[0]):
+            print(x, 'of', mri_strided.shape[0])
+            for y in range(mri_strided.shape[1]):
+                inputs[...] = mri_strided[x, y, ...]
 
-                print(x, y)
                 yield inputs
 
-        break
 
 def predict_whole_image(index):
     model = convnet()

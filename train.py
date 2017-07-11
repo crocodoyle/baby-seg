@@ -209,7 +209,7 @@ def convnet():
 
     return model
 
-def segmentation_model():
+def unet():
     """3D U-net model, using very small convolutional kernels"""
     tissue_classes = 4
 
@@ -220,82 +220,44 @@ def segmentation_model():
     inputs = Input(shape=img_shape + (2,))
 
     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(inputs)
-    drop1 = Dropout(0.1)(conv1)
-    conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(drop1)
-    drop1 = Dropout(0.1)(conv1)
-    bn1 = BatchNormalization()(drop1)
-    pool1 = MaxPooling3D(pool_size=pool_size)(bn1)
+    pool1 = MaxPooling3D(pool_size=pool_size)(conv1)
 
     conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(pool1)
-    drop2 = Dropout(0.2)(conv2)
-    conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(drop2)
-    drop2 = Dropout(0.2)(conv2)
-    bn2 = BatchNormalization()(drop2)
-    pool2 = MaxPooling3D(pool_size=pool_size)(bn2)
+    pool2 = MaxPooling3D(pool_size=pool_size)(conv2)
 
     conv3 = Conv3D(64, conv_size, activation='relu', padding='same')(pool2)
-    drop3 = Dropout(0.3)(conv3)
-    conv3 = Conv3D(64, conv_size, activation='relu', padding='same')(drop3)
-    drop3 = Dropout(0.3)(conv3)
-    bn3 = BatchNormalization()(drop3)
-    pool3 = MaxPooling3D(pool_size=pool_size)(bn3)
+    pool3 = MaxPooling3D(pool_size=pool_size)(conv3)
 
     conv4 = Conv3D(128, conv_size, activation='relu', padding='same')(pool3)
-    drop4 = Dropout(0.4)(conv4)
-    conv4 = Conv3D(128, conv_size, activation='relu', padding='same')(drop4)
-    drop4 = Dropout(0.4)(conv4)
-    bn4 = BatchNormalization()(drop4)
-    # pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
+    pool4 = MaxPooling3D(pool_size=pool_size)(conv4)
 
-    # conv5 = Conv3D(256, conv_size, activation='relu', padding='same')(pool4)
-    # drop5 = Dropout(0.5)(conv5)
-    # conv5 = Conv3D(128, conv_size, activation='relu', padding='same')(drop5)
-    # drop5 = Dropout(0.5)(conv5)
-    # bn5 = BatchNormalization()(drop5)
-    # pool5 = MaxPooling3D(pool_size=pool_size)(conv5)
-    #
-    # conv6 = Conv3D(128, conv_size, activation='relu', padding='same')(pool5)
-    # conv6 = Conv3D(128, conv_size, activation='relu', padding='same')(conv6)
-    #
-    # up7 = UpSampling3D(size=pool_size)(conv6)
-    # concat7 = concatenate([up7, conv5])
-    # conv7 = Conv3D(64, conv_size, activation='relu', padding='same')(concat7)
-    # conv7 = Conv3D(64, conv_size, activation='relu', padding='same')(conv6)
+    conv5 = Conv3D(256, conv_size, activation='relu', padding='same')(pool4)
+    pool5 = MaxPooling3D(pool_size=pool_size)(conv5)
 
-    # up8 = UpSampling3D(size=pool_size)(bn4)
-    # concat8 = concatenate([up8, bn4])
-    # conv8 = Conv3D(128, conv_size, activation='relu', padding='same')(concat8)
-    # drop8 = Dropout(0.5)(conv8)
-    # # conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(drop8)
-    # # drop8 = Dropout(0.4)(conv8)
-    # bn8 = BatchNormalization()(drop8)
+    conv6 = Conv3D(128, conv_size, activation='relu', padding='same')(pool5)
 
-    up9 = UpSampling3D(size=pool_size)(bn4)
-    concat9 = concatenate([up9, bn3])
+    up7 = UpSampling3D(size=pool_size)(conv6)
+    concat7 = concatenate([up7, conv5])
+    conv7 = Conv3D(64, conv_size, activation='relu', padding='same')(concat7)
+
+    up8 = UpSampling3D(size=pool_size)(conv7)
+    concat8 = concatenate([up8, conv4])
+    conv8 = Conv3D(128, conv_size, activation='relu', padding='same')(concat8)
+
+    up9 = UpSampling3D(size=pool_size)(conv8)
+    concat9 = concatenate([up9, conv3])
     conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(concat9)
-    drop9 = Dropout(0.3)(conv9)
-    conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(drop9)
-    drop9 = Dropout(0.3)(conv9)
-    bn9 = BatchNormalization()(drop9)
 
-    up10 = UpSampling3D(size=pool_size)(bn9)
-    concat10 = concatenate([up10, bn2])
+    up10 = UpSampling3D(size=pool_size)(conv9)
+    concat10 = concatenate([up10, conv2])
     conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(concat10)
-    drop10 = Dropout(0.2)(conv10)
-    conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(drop10)
-    drop10 = Dropout(0.2)(conv10)
-    bn10 = BatchNormalization()(drop10)
 
-    up11 = UpSampling3D(size=pool_size)(bn10)
-    concat11 = concatenate([up11, bn1])
+    up11 = UpSampling3D(size=pool_size)(conv10)
+    concat11 = concatenate([up11, conv1])
     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(concat11)
-    drop11 = Dropout(0.1)(conv11)
-    conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(drop11)
-    drop11 = Dropout(0.1)(conv11)
-    bn11 = BatchNormalization()(drop11)
 
     # need as many output channel as tissue classes
-    conv12 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='valid')(bn11)
+    conv12 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='valid')(conv11)
 
     model = Model(inputs=[inputs], outputs=[conv12])
 

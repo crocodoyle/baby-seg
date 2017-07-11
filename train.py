@@ -699,11 +699,11 @@ def predict_patch_gen(index):
     f = h5py.File(input_file)
     images = f['images']
 
-    patch_batch_size = 127
+    patch_batch_size = 128
 
     mri_images = np.pad(np.asarray(images[index, ...], dtype='float32'), (
-        (patch_shape[0] // 2 - 1, patch_shape[0] // 2 - 1), (patch_shape[1] // 2 - 1, patch_shape[1] // 2 - 1),
-        (patch_shape[2] // 2 - 1, patch_shape[2] // 2 - 1), (0, 0)), 'constant')
+        (patch_shape[0] // 2, (patch_shape[0] // 2) - 1), (patch_shape[1] // 2, (patch_shape[1] // 2) - 1),
+        (patch_shape[2] // 2, (patch_shape[2] // 2) - 1), (0, 0)), 'constant')
 
     print(mri_images.shape)
 
@@ -728,7 +728,7 @@ def predict_whole_image(index):
     model = convnet()
     model.load_weights(scratch_dir + 'patch-3d-iseg2017.hdf5')
 
-    predictions = model.predict_generator(predict_patch_gen(index), (img_shape[0]-1)*(img_shape[1]-1), 16)
+    predictions = model.predict_generator(predict_patch_gen(index), (img_shape[0])*(img_shape[1]), 16)
 
     int_predictions = np.argmax(predictions, axis=-1)
 

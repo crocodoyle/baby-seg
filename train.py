@@ -139,11 +139,11 @@ def model_checkpoint(filename):
 
 
 def lr_scheduler(model):
-    # reduce learning rate by factor of 10 every 100 epochs
+    # reduce learning rate by factor of 2 every 50 epochs
     def schedule(epoch):
         new_lr = K.get_value(model.optimizer.lr)
 
-        if epoch % 200 == 0:
+        if epoch % 50 == 0:
             new_lr = new_lr / 2
 
         return new_lr
@@ -736,6 +736,7 @@ def train_unet():
     confusion_callback = ConfusionCallback()
     segvis_callback = SegVisCallback()
     tensorboard = TensorBoard(scratch_dir)
+    lr_sched = lr_scheduler(model)
 
     # train without augmentation (easier)
     hist = model.fit_generator(
@@ -743,7 +744,7 @@ def train_unet():
         len(training_indices),
         epochs=1000,
         verbose=1,
-        callbacks=[model_checkpoint, confusion_callback, segvis_callback, tensorboard],
+        callbacks=[model_checkpoint, confusion_callback, segvis_callback, tensorboard, lr_sched],
         validation_data=batch(validation_indices),
         validation_steps=len(validation_indices))
 

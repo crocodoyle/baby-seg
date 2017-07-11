@@ -232,34 +232,27 @@ def unet():
     pool4 = MaxPooling3D(pool_size=pool_size)(conv4)
 
     conv5 = Conv3D(256, conv_size, activation='relu', padding='same')(pool4)
-    pool5 = MaxPooling3D(pool_size=pool_size)(conv5)
 
-    conv6 = Conv3D(128, conv_size, activation='relu', padding='same')(pool5)
+    up6 = UpSampling3D(size=pool_size)(conv5)
+    concat6 = concatenate([up6, conv4])
+    conv6 = Conv3D(64, conv_size, activation='relu', padding='same')(concat6)
 
     up7 = UpSampling3D(size=pool_size)(conv6)
-    concat7 = concatenate([up7, conv5])
+    concat7 = concatenate([up7, conv3])
     conv7 = Conv3D(64, conv_size, activation='relu', padding='same')(concat7)
 
     up8 = UpSampling3D(size=pool_size)(conv7)
-    concat8 = concatenate([up8, conv4])
-    conv8 = Conv3D(128, conv_size, activation='relu', padding='same')(concat8)
+    concat8 = concatenate([up8, conv2])
+    conv8 = Conv3D(32, conv_size, activation='relu', padding='same')(concat8)
 
     up9 = UpSampling3D(size=pool_size)(conv8)
-    concat9 = concatenate([up9, conv3])
-    conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(concat9)
-
-    up10 = UpSampling3D(size=pool_size)(conv9)
-    concat10 = concatenate([up10, conv2])
-    conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(concat10)
-
-    up11 = UpSampling3D(size=pool_size)(conv10)
-    concat11 = concatenate([up11, conv1])
-    conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(concat11)
+    concat9 = concatenate([up9, conv1])
+    conv9 = Conv3D(16, conv_size, activation='relu', padding='same')(concat9)
 
     # need as many output channel as tissue classes
-    conv12 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='valid')(conv11)
+    outputs = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='valid')(conv9)
 
-    model = Model(inputs=[inputs], outputs=[conv12])
+    model = Model(inputs=[inputs], outputs=[outputs])
 
     return model
 

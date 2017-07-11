@@ -668,7 +668,6 @@ def train_patch_classifier():
 
     affine = np.eye(4)
 
-    # model = segmentation_model()
     model = convnet()
 
     adam = Adam()
@@ -728,7 +727,7 @@ def train_unet():
     affine[1, 1] = -1
 
     # model = segmentation_model()
-    model = segmentation_model()
+    model = unet()
 
     sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
     adam = Adam()

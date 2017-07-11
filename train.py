@@ -235,7 +235,7 @@ def unet():
 
     up6 = UpSampling3D(size=pool_size)(conv5)
     concat6 = concatenate([up6, conv4])
-    conv6 = Conv3D(64, conv_size, activation='relu', padding='same')(concat6)
+    conv6 = Conv3D(128, conv_size, activation='relu', padding='same')(concat6)
 
     up7 = UpSampling3D(size=pool_size)(conv6)
     concat7 = concatenate([up7, conv3])

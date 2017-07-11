@@ -865,8 +865,8 @@ def train_unet():
     model.save(scratch_dir + 'unet-3d-iseg2017.hdf5')
 
     for i in training_indices + validation_indices + testing_indices:
-        predicted = model.predict(images[i, ...][np.newaxis, ...], batch_size=1)
-        segmentation = from_categorical(predicted, category_mapping)
+        segmentation = model.predict(images[i, ...][np.newaxis, ...], batch_size=1)
+        print(segmentation.shape)
         segmentation_padded = np.pad(segmentation, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=10)
         image = nib.Nifti1Image(segmentation_padded, affine)
         nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')

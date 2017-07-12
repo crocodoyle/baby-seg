@@ -728,11 +728,13 @@ def predict_whole_image(index):
     model = convnet()
     model.load_weights(scratch_dir + 'patch-3d-iseg2017.hdf5')
 
-    predictions = model.predict_generator(predict_patch_gen(index), (img_shape[0])*(img_shape[1]), 16)
+    predictions = model.predict_generator(predict_patch_gen(index), (img_shape[0])*(img_shape[1]))
 
     int_predictions = np.argmax(predictions, axis=-1)
 
-    segmentation = np.reshape(int_predictions, img_shape)
+    category_predictions = [category_mapping[i] for i in int_predictions]
+
+    segmentation = np.reshape(category_predictions, img_shape)
 
 
     return segmentation
@@ -803,12 +805,13 @@ def train_patch_classifier():
         predicted = predict_whole_image(i)
 
         segmentation_padded = np.pad(predicted, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=10)
+        print(predicted.shape)
         image = nib.Nifti1Image(segmentation_padded, affine)
         nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
 
         if i in training_indices or i in validation_indices:
             # print(final_dice_score(labels[i, ..., 0], segmentation))
-            print(confusion_matrix(labels[i, ..., 0].flatten(), segmentation.flatten()))
+            print(confusion_matrix(labels[i, ..., 0].flatten(), predicted.flatten()))
 
     visualize_training_dice(hist)
 

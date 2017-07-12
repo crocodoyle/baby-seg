@@ -791,9 +791,9 @@ def train_patch_classifier():
     hist = model.fit_generator(
         patch_generator(patch_shape, training_indices, 256, augmentMode='flip'),
         len(training_indices)*10,
-        epochs=1,
+        epochs=200,
         verbose=1,
-        callbacks=[model_checkpoint],
+        callbacks=[model_checkpoint, lr_scheduler(model)],
         validation_data=patch_generator(patch_shape, validation_indices, 256, augmentMode='flip'),
         validation_steps=len(validation_indices)*10
     )

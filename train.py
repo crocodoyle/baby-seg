@@ -734,7 +734,7 @@ def predict_whole_image(index):
 
     category_predictions = [category_mapping[i] for i in int_predictions]
 
-    segmentation = np.reshape(category_predictions, img_shape)
+    segmentation = np.asarray(np.reshape(category_predictions, img_shape), dtype='uint8')
 
 
     return segmentation
@@ -791,7 +791,7 @@ def train_patch_classifier():
     hist = model.fit_generator(
         patch_generator(patch_shape, training_indices, 256, augmentMode='flip'),
         len(training_indices)*10,
-        epochs=200,
+        epochs=300,
         verbose=1,
         callbacks=[model_checkpoint, lr_scheduler(model)],
         validation_data=patch_generator(patch_shape, validation_indices, 256, augmentMode='flip'),
@@ -804,9 +804,9 @@ def train_patch_classifier():
     for i in training_indices + validation_indices + testing_indices:
         predicted = predict_whole_image(i)
 
-        segmentation_padded = np.pad(predicted, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=10)
+        segmentation_padded = np.pad(predicted, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=0)
         print(predicted.shape)
-        image = nib.Nifti1Image(segmentation_padded, affine)
+        image = nib.Nifti1Image(segmentation_padded[..., np.newaxis], affine)
         nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
 
         if i in training_indices or i in validation_indices:
@@ -870,7 +870,7 @@ def train_unet():
     for i in training_indices + validation_indices + testing_indices:
         predicted = model.predict(images[i, ...][np.newaxis, ...], batch_size=1)
         segmentation = from_categorical(predicted, category_mapping)
-        segmentation_padded = np.pad(segmentation, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=10)
+        segmentation_padded = np.pad(segmentation, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=0)
         image = nib.Nifti1Image(segmentation_padded, affine)
         nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
 

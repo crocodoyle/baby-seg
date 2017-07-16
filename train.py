@@ -197,13 +197,18 @@ def convnet():
     conv5 = Conv3D(64, conv_size, activation='relu', padding='valid')(norm4)
     drop5 = Dropout(0.5)(conv5)
     norm5 = BatchNormalization()(drop5)
+    conv6 = Conv3D(64, conv_size, activation='relu', padding='valid')(norm5)
+    drop6 = Dropout(0.5)(conv6)
+    norm6 = BatchNormalization()(drop6)
 
-    flat = Flatten()(norm5)
+    flat = Flatten()(norm6)
 
     fc1 = Dense(10)(flat)
-    fc2 = Dense(10)(fc1)
+    drop_fc1 = Dropout(0.5)(fc1)
+    fc2 = Dense(10)(drop_fc1)
+    drop_fc2 = Dropout(0.5)(fc2)
 
-    outputs = Dense(n_tissues, activation='softmax')(fc2)
+    outputs = Dense(n_tissues, activation='softmax')(drop_fc2)
 
     model = Model(inputs=[inputs], outputs=[outputs])
 
@@ -761,12 +766,12 @@ def train_patch_classifier():
     images = f['images']
     labels = f['labels']
 
-    training_indices = list(range(9))
-    validation_indices = [9]
+    training_indices = list(range(8))
+    validation_indices = [8, 9, 24]
     testing_indices = list(range(10, 23))
-    ibis_indices = list(range(24, 72))
+    ibis_indices = list(range(25, 72))
 
-    # training_indices = training_indices + ibis_indices
+    training_indices = training_indices + ibis_indices
 
     print('training images:', training_indices)
     print('validation images:', validation_indices)
@@ -791,7 +796,7 @@ def train_patch_classifier():
     hist = model.fit_generator(
         patch_generator(patch_shape, training_indices, 256, augmentMode='flip'),
         len(training_indices)*10,
-        epochs=300,
+        epochs=200,
         verbose=1,
         callbacks=[model_checkpoint, lr_scheduler(model)],
         validation_data=patch_generator(patch_shape, validation_indices, 256, augmentMode='flip'),
@@ -801,7 +806,7 @@ def train_patch_classifier():
     model.load_weights(scratch_dir + 'best_patch_model.hdf5')
     model.save(scratch_dir + 'patch-3d-iseg2017.hdf5')
 
-    for i in training_indices + validation_indices + testing_indices:
+    for i in validation_indices + testing_indices:
         predicted = predict_whole_image(i)
 
         segmentation_padded = np.pad(predicted, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=0)

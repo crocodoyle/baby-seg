@@ -1,4 +1,4 @@
-from keras.models import Model
+from keras.models import Model, load_model
 from keras.layers import Input, Dense, Dropout, Activation, Convolution2D, MaxPooling2D, Flatten, BatchNormalization, \
     SpatialDropout2D, merge, Reshape
 from keras.layers import Conv3D, MaxPooling3D, UpSampling3D, ZeroPadding3D
@@ -745,6 +745,23 @@ def predict_whole_image(index):
     return segmentation
 
 
+def predict_images_with_patches(validation_indices, testing_indices):
+    affine = np.eye(4)
+    affine[0, 0] = -1
+    affine[1, 1] = -1
+
+    for i in validation_indices + testing_indices:
+        predicted = predict_whole_image(i)
+
+        segmentation_padded = np.pad(predicted, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=0)
+        print(predicted.shape)
+        image = nib.Nifti1Image(segmentation_padded[..., np.newaxis], affine)
+        nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
+
+        if i in validation_indices:
+            # print(final_dice_score(labels[i, ..., 0], segmentation))
+            print(confusion_matrix(labels[i, ..., 0].flatten(), predicted.flatten()))
+
 def visualize_training_dice(hist):
     epoch_num = range(len(hist.history['dice_coef']))
     dice_train = np.array(hist.history['dice_coef'])
@@ -778,7 +795,7 @@ def train_patch_classifier():
     print('testing images:', testing_indices)
     print('ibis images:', ibis_indices)
 
-    affine = np.eye(4)
+
 
     # model = segmentation_model()
     model = convnet()
@@ -806,19 +823,10 @@ def train_patch_classifier():
     model.load_weights(scratch_dir + 'best_patch_model.hdf5')
     model.save(scratch_dir + 'patch-3d-iseg2017.hdf5')
 
-    for i in validation_indices + testing_indices:
-        predicted = predict_whole_image(i)
-
-        segmentation_padded = np.pad(predicted, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=0)
-        print(predicted.shape)
-        image = nib.Nifti1Image(segmentation_padded[..., np.newaxis], affine)
-        nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
-
-        if i in training_indices or i in validation_indices:
-            # print(final_dice_score(labels[i, ..., 0], segmentation))
-            print(confusion_matrix(labels[i, ..., 0].flatten(), predicted.flatten()))
-
     visualize_training_dice(hist)
+
+    predict_images_with_patches(validation_indices, testing_indices)
+
 
 def train_unet():
     f = h5py.File(input_file)

@@ -177,6 +177,24 @@ def save_confusion_matrix(cm, classes, filename,
     plt.xlabel('Predicted label')
     plt.savefig(filename, bbox_inches='tight')
 
+
+def fractal_conv():
+    inputs = Input(shape=(patch_shape + (2,)))
+
+    frac = fractal_block(16, 3, 2, 0.2)(inputs)
+
+    flat = Flatten()(frac)
+
+    fc1 = Dense(4, activation='relu')(flat)
+    bn1 = BatchNormalization()(fc1)
+    drop1 = Dropout(0.4)(bn1)
+
+    outputs = Dense(n_tissues, activation='softmax')(drop1)
+
+    model = Model(inputs=[inputs], outputs=[outputs])
+
+    return model
+
 def convnet():
     inputs = Input(shape=(patch_shape + (2,)))
 
@@ -203,9 +221,9 @@ def convnet():
 
     flat = Flatten()(norm6)
 
-    fc1 = Dense(10)(flat)
+    fc1 = Dense(10, activation='relu')(flat)
     drop_fc1 = Dropout(0.5)(fc1)
-    fc2 = Dense(10)(drop_fc1)
+    fc2 = Dense(10, activation='relu')(drop_fc1)
     drop_fc2 = Dropout(0.5)(fc2)
 
     outputs = Dense(n_tissues, activation='softmax')(drop_fc2)
@@ -798,7 +816,7 @@ def train_patch_classifier():
 
 
     # model = segmentation_model()
-    model = convnet()
+    model = fractal_conv()
 
     adam = Adam()
 

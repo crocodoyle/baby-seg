@@ -285,7 +285,7 @@ def unet2d():
 
     conv3 = Conv2D(64, conv_size, activation='relu', padding='same')(pool2)
     conv3 = Conv2D(64, conv_size, activation='relu', padding='same')(conv3)
-    pool3 = MaxPooling3D(pool_size=pool_size)(conv3)
+    pool3 = MaxPooling2D(pool_size=pool_size)(conv3)
 
     conv4 = Conv2D(128, conv_size, activation='relu', padding='same')(pool3)
     conv4 = Conv2D(128, conv_size, activation='relu', padding='same')(conv4)

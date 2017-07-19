@@ -902,12 +902,12 @@ def train_unet2d():
 
     # train without augmentation (easier)
     hist = model.fit_generator(
-        batch(training_indices, augmentMode='flip'),
+        batch2d(training_indices, augmentMode='flip'),
         len(training_indices),
         epochs=1000,
         verbose=1,
         callbacks=[model_checkpoint, lr_sched],
-        validation_data=batch(validation_indices),
+        validation_data=batch2d(validation_indices),
         validation_steps=len(validation_indices))
 
     model.load_weights(scratch_dir + 'best_unet_2D.hdf5')

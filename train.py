@@ -882,7 +882,7 @@ def train_unet2d():
     affine[1, 1] = -1
 
     # model = segmentation_model()
-    model = unet()
+    model = unet2d()
 
     sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
     adam = Adam()

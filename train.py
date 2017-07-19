@@ -265,7 +265,7 @@ def unet():
 
     return model
 
-def unet2D():
+def unet2d():
     """2D U-net model, using very small convolutional kernels"""
     tissue_classes = 4
 

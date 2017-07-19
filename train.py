@@ -315,7 +315,7 @@ def unet2d():
     conv9 = Conv2D(16, conv_size, activation='relu', padding='same')(conv9)
 
     # need as many output channel as tissue classes
-    outputs = Conv2D(tissue_classes, (1, 1, 1), activation='softmax', padding='valid')(conv9)
+    outputs = Conv2D(tissue_classes, (1, 1), activation='softmax', padding='valid')(conv9)
 
     model = Model(inputs=[inputs], outputs=[outputs])
 

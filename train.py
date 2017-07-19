@@ -1,5 +1,5 @@
 from keras.models import Model
-from keras.layers import Input, Dense, Dropout, Activation, Convolution2D, MaxPooling2D, Flatten, BatchNormalization, \
+from keras.layers import Input, Dense, Dropout, Activation, Conv2D, MaxPooling2D, UpSampling2D, Flatten, BatchNormalization, \
     SpatialDropout2D, merge, Reshape
 from keras.layers import Conv3D, MaxPooling3D, UpSampling3D, ZeroPadding3D
 from keras.layers import concatenate, add, multiply
@@ -265,6 +265,62 @@ def unet():
 
     return model
 
+def unet2D():
+    """2D U-net model, using very small convolutional kernels"""
+    tissue_classes = 4
+
+    conv_size = (3, 3)
+    pool_size = (2, 2)
+
+    # inputs = Input(shape=(144, 192, 256, 2))
+    inputs = Input(shape=(img_shape[1], img_shape[2], 2))
+
+    conv1 = Conv2D(16, conv_size, activation='relu', padding='same')(inputs)
+    conv1 = Conv2D(16, conv_size, activation='relu', padding='same')(conv1)
+    pool1 = MaxPooling2D(pool_size=pool_size)(conv1)
+
+    conv2 = Conv2D(32, conv_size, activation='relu', padding='same')(pool1)
+    conv2 = Conv2D(32, conv_size, activation='relu', padding='same')(conv2)
+    pool2 = MaxPooling3D(pool_size=pool_size)(conv2)
+
+    conv3 = Conv2D(64, conv_size, activation='relu', padding='same')(pool2)
+    conv3 = Conv2D(64, conv_size, activation='relu', padding='same')(conv3)
+    pool3 = MaxPooling3D(pool_size=pool_size)(conv3)
+
+    conv4 = Conv2D(128, conv_size, activation='relu', padding='same')(pool3)
+    conv4 = Conv2D(128, conv_size, activation='relu', padding='same')(conv4)
+    pool4 = MaxPooling2D(pool_size=pool_size)(conv4)
+
+    conv5 = Conv2D(256, conv_size, activation='relu', padding='same')(pool4)
+    conv5 = Conv2D(256, conv_size, activation='relu', padding='same')(conv5)
+
+    up6 = UpSampling2D(size=pool_size)(conv5)
+    concat6 = concatenate([up6, conv4])
+    conv6 = Conv2D(128, conv_size, activation='relu', padding='same')(concat6)
+    conv6 = Conv2D(128, conv_size, activation='relu', padding='same')(conv6)
+
+    up7 = UpSampling2D(size=pool_size)(conv6)
+    concat7 = concatenate([up7, conv3])
+    conv7 = Conv2D(64, conv_size, activation='relu', padding='same')(concat7)
+    conv7 = Conv2D(64, conv_size, activation='relu', padding='same')(conv7)
+
+    up8 = UpSampling2D(size=pool_size)(conv7)
+    concat8 = concatenate([up8, conv2])
+    conv8 = Conv2D(32, conv_size, activation='relu', padding='same')(concat8)
+    conv8 = Conv2D(32, conv_size, activation='relu', padding='same')(conv8)
+
+    up9 = UpSampling2D(size=pool_size)(conv8)
+    concat9 = concatenate([up9, conv1])
+    conv9 = Conv2D(16, conv_size, activation='relu', padding='same')(concat9)
+    conv9 = Conv2D(16, conv_size, activation='relu', padding='same')(conv9)
+
+    # need as many output channel as tissue classes
+    outputs = Conv2D(tissue_classes, (1, 1, 1), activation='softmax', padding='valid')(conv9)
+
+    model = Model(inputs=[inputs], outputs=[outputs])
+
+    return model
+
 
 def fractal_block(nb_filter, b, c, drop_path, dropout=0):
     from fractalnet import fractal_net
@@ -449,6 +505,37 @@ def from_categorical_patches(categorical, category_mapping):
 
     return categories
 
+def batch2d(indices, augmentMode=None):
+    """
+    :param indices: List of indices into the HDF5 dataset to draw samples from
+    :return: (image, label)
+    """
+    f = h5py.File(input_file)
+    images = f['images']
+    labels = f['labels']
+
+    return_imgs = np.zeros(img_shape + (2,))
+
+    while True:
+        np.random.shuffle(indices)
+        for i in indices:
+            t1_image = np.asarray(images[i, ..., 0], dtype='float32')
+            t2_image = np.asarray(images[i, ..., 1], dtype='float32')
+
+            try:
+                true_labels = labels[i, ..., 0]
+
+                return_imgs[..., 0] = t1_image
+                return_imgs[..., 1] = t2_image
+
+                label = to_categorical(np.reshape(true_labels, true_labels.shape + (1,)))
+
+                yield (return_imgs, label)
+
+            except ValueError:
+                print('some sort of value error occurred')
+                # print(images[i, :, :, 80:-48][np.newaxis, ...].shape)
+                yield (return_imgs)
 
 
 def batch(indices, augmentMode=None):
@@ -732,7 +819,7 @@ def train_unet():
     model = unet()
 
     sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
-    adam = Adam()
+    adam = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-07, decay=0.0)
 
     model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=[dice_coef])
 
@@ -773,10 +860,76 @@ def train_unet():
 
     visualize_training_dice(hist)
 
+def train_unet2d():
+    f = h5py.File(input_file)
+    images = f['images']
+    labels = f['labels']
+
+    training_indices = list(range(8))
+    validation_indices = [8, 9, 24]
+    testing_indices = list(range(10, 23))
+    ibis_indices = list(range(25, 72))
+
+    training_indices = training_indices + ibis_indices
+
+    print('training images:', training_indices)
+    print('validation images:', validation_indices)
+    print('testing images:', testing_indices)
+    print('ibis images:', ibis_indices)
+
+    affine = np.eye(4)
+    affine[0, 0] = -1
+    affine[1, 1] = -1
+
+    # model = segmentation_model()
+    model = unet()
+
+    sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
+    adam = Adam()
+
+    model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=[dice_coef])
+
+    model.summary()
+
+    # print('model', dir(model))
+
+    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_unet_2D.hdf5', monitor="val_dice_coef",
+                                       save_best_only=True, save_weights_only=False, mode='max')
+    confusion_callback = ConfusionCallback()
+    segvis_callback = SegVisCallback()
+    tensorboard = TensorBoard(scratch_dir)
+    lr_sched = lr_scheduler(model)
+
+    # train without augmentation (easier)
+    hist = model.fit_generator(
+        batch(training_indices, augmentMode='flip'),
+        len(training_indices),
+        epochs=1000,
+        verbose=1,
+        callbacks=[model_checkpoint, lr_sched],
+        validation_data=batch(validation_indices),
+        validation_steps=len(validation_indices))
+
+    model.load_weights(scratch_dir + 'best_unet_2D.hdf5')
+    model.save(scratch_dir + 'best_unet_2D_model.hdf5')
+
+    for i in training_indices + validation_indices + testing_indices:
+        predicted = model.predict(images[i, ...][np.newaxis, ...], batch_size=1)
+        segmentation = from_categorical(predicted, category_mapping)
+        segmentation_padded = np.pad(segmentation, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=10)
+        image = nib.Nifti1Image(segmentation_padded, affine)
+        nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
+
+        if i in training_indices or i in testing_indices:
+            # print(final_dice_score(labels[i, ..., 0], segmentation))
+            print(confusion_matrix(labels[i, ..., 0].flatten(), segmentation.flatten()))
+
+    visualize_training_dice(hist)
+
 
 if __name__ == "__main__":
     f = h5py.File(input_file)
     images = f['images']
     labels = f['labels']
 
-    train_unet()
+    train_unet2d()

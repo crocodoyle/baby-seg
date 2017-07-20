@@ -489,7 +489,7 @@ def from_categorical_patches(categorical, category_mapping):
 
     return categories
 
-def batch2d(indices, augmentMode=None):
+def batch2d(indices, batch_size, augmentMode=None):
     """
     :param indices: List of indices into the HDF5 dataset to draw samples from
     :return: (image, label)
@@ -498,7 +498,7 @@ def batch2d(indices, augmentMode=None):
     images = f['images']
     labels = f['labels']
 
-    return_imgs = np.zeros(img_shape + (2,))
+    return_imgs = np.zeros((batch_size, img_shape[1], img_shape[2], 2))
 
     while True:
         np.random.shuffle(indices)
@@ -509,18 +509,37 @@ def batch2d(indices, augmentMode=None):
             try:
                 true_labels = labels[i, ..., 0]
 
-                return_imgs[..., 0] = t1_image
-                return_imgs[..., 1] = t2_image
+                moreSlices = True
+                current_slice = 0
 
-                label = to_categorical(np.reshape(true_labels, true_labels.shape + (1,)))
+                while moreSlices:
 
-                yield (return_imgs, label)
+                    return_imgs[current_slice:current_slice + batch_size, ..., 0] = t1_image
+                    return_imgs[current_slice:current_slice + batch_size, ..., 1] = t2_image
+
+                    label_slices = true_labels[current_slice:current_slice + batch_size, ...]
+
+                    label = to_categorical(np.reshape(label_slices, label_slices.shape + (1,)))
+
+                    yield (return_imgs, label)
+
+                    current_slice += batch_size
+                    if current_slice == img_shape[0]:
+                        moreSlices = False
 
             except ValueError:
-                print('some sort of value error occurred')
-                # print(images[i, :, :, 80:-48][np.newaxis, ...].shape)
-                yield (return_imgs)
+                moreSlices = True
 
+                while moreSlices:
+
+                    return_imgs[current_slice:current_slice + batch_size, ..., 0] = t1_image
+                    return_imgs[current_slice:current_slice + batch_size, ..., 1] = t2_image
+
+                    yield (return_imgs)
+
+                    current_slice += batch_size
+                    if current_slice == img_shape[0]:
+                        moreSlices = False
 
 def batch(indices, augmentMode=None):
     """
@@ -884,15 +903,17 @@ def train_unet2d():
     tensorboard = TensorBoard(scratch_dir)
     lr_sched = lr_scheduler(model)
 
+    batch_size = 2
+
     # train without augmentation (easier)
     hist = model.fit_generator(
-        batch2d(training_indices, augmentMode='flip'),
-        len(training_indices),
+        batch2d(training_indices, batch_size, augmentMode='flip'),
+        len(training_indices)*(img_shape[0] // batch_size),
         epochs=1000,
         verbose=1,
         callbacks=[model_checkpoint, lr_sched],
-        validation_data=batch2d(validation_indices),
-        validation_steps=len(validation_indices))
+        validation_data=batch2d(validation_indices, batch_size),
+        validation_steps=len(validation_indices)*(img_shape[0] // batch_size))
 
     model.load_weights(scratch_dir + 'best_unet_2D.hdf5')
     model.save(scratch_dir + 'best_unet_2D_model.hdf5')

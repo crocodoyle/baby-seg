@@ -451,6 +451,7 @@ def to_categorical(y):
         categorical[..., i] = np.equal(y[..., 0], np.ones(np.shape(y[..., 0]))*cat)
         # categorical[y == cat] = 1
 
+    print('cat shape', categorical.shape)
     return categorical
 
 def patch_label_categorical(y):
@@ -521,6 +522,7 @@ def batch2d(indices, batch_size, augmentMode=None):
 
                     label = to_categorical(np.reshape(label_slices, label_slices.shape + (1,)))
 
+                    print(label.shape)
                     yield (return_imgs, label)
 
                     current_slice += batch_size

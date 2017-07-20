@@ -441,7 +441,7 @@ def to_categorical(y):
         A binary matrix representation of the input.
     """
     categories = sorted(set(np.array(y, dtype="uint8").flatten()))
-    num_classes = len(categories)
+    num_classes = len(category_mapping)
     # print(categories)
 
     cat_shape = np.shape(y)[:-1] + (num_classes,)

@@ -278,7 +278,7 @@ def unet2d():
     conv1 = Conv2D(128, conv_size, activation='relu', padding='same')(inputs)
     pool1 = MaxPooling2D(pool_size=pool_size)(conv1)
 
-    conv2 = Conv2D(64, conv_size, activation='relu', padding='same')(pool1)
+    conv2 = Conv2D(96, conv_size, activation='relu', padding='same')(pool1)
     pool2 = MaxPooling2D(pool_size=pool_size)(conv2)
 
     conv3 = Conv2D(64, conv_size, activation='relu', padding='same')(pool2)
@@ -287,16 +287,16 @@ def unet2d():
     conv5 = Conv2D(64, conv_size, activation='relu', padding='same')(pool3)
 
     up7 = UpSampling2D(size=pool_size)(conv5)
-    concat7 = concatenate([up7, conv3])
-    conv7 = Conv2D(64, conv_size, activation='relu', padding='same')(concat7)
+    concat7 = add([up7, conv3])
+    conv7 = Conv2D(96, conv_size, activation='relu', padding='same')(concat7)
 
     up8 = UpSampling2D(size=pool_size)(conv7)
-    concat8 = concatenate([up8, conv2])
-    conv8 = Conv2D(64, conv_size, activation='relu', padding='same')(concat8)
+    concat8 = add([up8, conv2])
+    conv8 = Conv2D(128, conv_size, activation='relu', padding='same')(concat8)
 
     up9 = UpSampling2D(size=pool_size)(conv8)
-    concat9 = concatenate([up9, conv1])
-    conv9 = Conv2D(96, conv_size, activation='relu', padding='same')(concat9)
+    concat9 = add([up9, conv1])
+    conv9 = Conv2D(128, conv_size, activation='relu', padding='same')(concat9)
 
     # need as many output channel as tissue classes
     outputs = Conv2D(tissue_classes, (1, 1), activation='softmax', padding='valid')(conv9)

@@ -275,7 +275,7 @@ def unet2d():
     # inputs = Input(shape=(144, 192, 256, 2))
     inputs = Input(shape=(img_shape[1], img_shape[2], 2))
 
-    conv1 = Conv2D(96, conv_size, activation='relu', padding='same')(inputs)
+    conv1 = Conv2D(128, conv_size, activation='relu', padding='same')(inputs)
     pool1 = MaxPooling2D(pool_size=pool_size)(conv1)
 
     conv2 = Conv2D(64, conv_size, activation='relu', padding='same')(pool1)
@@ -890,7 +890,7 @@ def train_unet2d():
     sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
     adam = Adam()
 
-    model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=[dice_coef])
+    model.compile(optimizer=adam, loss=dice_coef, metrics=[dice_coef])
 
     model.summary()
 
@@ -903,7 +903,7 @@ def train_unet2d():
     tensorboard = TensorBoard(scratch_dir)
     lr_sched = lr_scheduler(model)
 
-    batch_size = 2
+    batch_size = 72
 
     # train without augmentation (easier)
     hist = model.fit_generator(

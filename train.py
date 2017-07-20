@@ -269,7 +269,7 @@ def unet2d():
     """2D U-net model, using very small convolutional kernels"""
     tissue_classes = 4
 
-    conv_size = (3, 3)
+    conv_size = (5, 5)
     pool_size = (2, 2)
 
     # inputs = Input(shape=(144, 192, 256, 2))

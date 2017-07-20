@@ -873,7 +873,7 @@ def train_unet2d():
     testing_indices = list(range(10, 23))
     ibis_indices = list(range(25, 72))
 
-    training_indices = training_indices + ibis_indices
+    # training_indices = training_indices + ibis_indices
 
     print('training images:', training_indices)
     print('validation images:', validation_indices)
@@ -890,7 +890,7 @@ def train_unet2d():
     sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
     adam = Adam()
 
-    model.compile(optimizer=adam, loss=dice_coef, metrics=[dice_coef])
+    model.compile(optimizer=adam, loss=dice_coef_loss, metrics=[dice_coef, 'accuracy'])
 
     model.summary()
 

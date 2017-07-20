@@ -514,8 +514,8 @@ def batch2d(indices, batch_size, augmentMode=None):
 
                 while moreSlices:
 
-                    return_imgs[current_slice:current_slice + batch_size, ..., 0] = t1_image
-                    return_imgs[current_slice:current_slice + batch_size, ..., 1] = t2_image
+                    return_imgs[..., 0] = t1_image[current_slice:current_slice + batch_size, ...]
+                    return_imgs[..., 1] = t2_image[current_slice:current_slice + batch_size, ...]
 
                     label_slices = true_labels[current_slice:current_slice + batch_size, ...]
 

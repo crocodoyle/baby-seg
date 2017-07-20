@@ -1,7 +1,7 @@
 from keras.models import Model, load_model
 from keras.layers import Input, Dense, Dropout, Activation, Convolution2D, MaxPooling2D, Flatten, BatchNormalization, \
     SpatialDropout2D, merge, Reshape
-from keras.layers import Conv3D, MaxPooling3D, UpSampling3D, ZeroPadding3D
+from keras.layers import Conv3D, MaxPooling3D, AveragePooling3D, UpSampling3D, ZeroPadding3D
 from keras.layers import concatenate, add, multiply
 from keras.optimizers import SGD, Adam
 from keras.callbacks import ModelCheckpoint, TensorBoard, LearningRateScheduler
@@ -182,14 +182,11 @@ def convnet():
 
     conv_size = (3, 3, 3)
 
-    conv1 = Conv3D(64, conv_size, activation='relu', padding='valid')(inputs)
+    conv1 = Conv3D(64, conv_size, activation='relu', strides=(2, 2, 2), padding='valid')(inputs)
     conv1 = Conv3D(64, conv_size, activation='relu', padding='valid')(conv1)
-    pool1 = MaxPooling3D()(conv1)
-    drop1 = Dropout(0.1)(pool1)
+    drop1 = Dropout(0.1)(conv1)
     norm1 = BatchNormalization()(drop1)
     conv2 = Conv3D(64, conv_size, activation='relu', padding='valid')(norm1)
-    conv2 = Conv3D(64, conv_size, activation='relu', padding='valid')(conv2)
-    pool2 = MaxPooling3D()(conv2)
     drop2 = Dropout(0.2)(conv2)
     norm2 = BatchNormalization()(drop2)
     conv3 = Conv3D(64, conv_size, activation='relu', padding='valid')(norm2)
@@ -815,13 +812,13 @@ def train_patch_classifier():
 
     # train without augmentation (easier)
     hist = model.fit_generator(
-        patch_generator(patch_shape, training_indices, 256, augmentMode='flip'),
-        len(training_indices)*10,
-        epochs=200,
+        patch_generator(patch_shape, training_indices, 128, augmentMode='flip'),
+        len(training_indices)*5,
+        epochs=300,
         verbose=1,
         callbacks=[model_checkpoint, lr_scheduler(model)],
-        validation_data=patch_generator(patch_shape, validation_indices, 256, augmentMode='flip'),
-        validation_steps=len(validation_indices)*10
+        validation_data=patch_generator(patch_shape, validation_indices, 128, augmentMode='flip'),
+        validation_steps=len(validation_indices)*5
     )
 
     model.load_weights(scratch_dir + 'best_patch_model.hdf5')

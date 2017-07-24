@@ -499,7 +499,7 @@ def unet_patch_gen(indices, n):
             # patches_y = np.zeros((n_tissues) + patch_shape + )
 
             patches_x = np.zeros(((n,) + patch_shape + (2,)), dtype='float32')
-            patches_y_ints = np.zeros((n, 1), dtype='uint8')
+            patches_y_ints = np.zeros((n,) + patch_shape, dtype='uint8')
 
 
             for j in range(n):
@@ -512,7 +512,7 @@ def unet_patch_gen(indices, n):
 
                 patches_y_ints[j, ...] = true_labels[x:x+80, y:y+80, z:z+80]
 
-            patches_y = patch_label_categorical(patches_y_ints)
+            patches_y = to_categorical(patches_y_ints)
 
             yield (patches_x, patches_y)
 

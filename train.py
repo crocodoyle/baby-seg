@@ -480,7 +480,7 @@ def from_categorical_patches(categorical, category_mapping):
 
     return categories
 
-def unet_patch_gen(indices, n):
+def unet_patch_gen(indices, n, test_mode=False):
     f = h5py.File(input_file)
     images = f['images']
     labels = f['labels']
@@ -510,11 +510,18 @@ def unet_patch_gen(indices, n):
                 patches_x[j, ..., 0] = t1_image[x:x+80, y:y+80, z:z+80]
                 patches_x[j, ..., 1] = t2_image[x:x+80, y:y+80, z:z+80]
 
-                patches_y_ints[j, ..., 0] = true_labels[x-8:x-8+64, y-8:y-8+64, z-8:z-8+64]
+                if not test_mode:
+                    patches_y_ints[j, ..., 0] = true_labels[x-8:x-8+64, y-8:y-8+64, z-8:z-8+64]
 
-            patches_y = to_categorical(patches_y_ints)
+            if not test_mode:
+                patches_y = to_categorical(patches_y_ints)
 
-            yield (patches_x, patches_y)
+                yield(patches_x)
+
+            else:
+                yield (patches_x, patches_y)
+
+
 
 
 def batch(indices, augmentMode=None):
@@ -597,102 +604,33 @@ def label_batch(indices):
 
             yield (label[np.newaxis, ...], label[np.newaxis, ...])
 
-def patch_generator(patch_shape, indices, n, augmentMode=None):
-    f = h5py.File(input_file)
-    images = f['images']
-    labels = f['labels']
-
-    stride_size = (3, 3, 3)
-
-    while True:
-        np.random.shuffle(indices)
-        for i in indices:
-            t1_image = np.pad(np.asarray(images[i, ..., 0], dtype='float32'), ((patch_shape[0]//2 - 1, patch_shape[0]//2 - 1), (patch_shape[1]//2 - 1, patch_shape[1]//2 - 1), (patch_shape[2]//2 - 1, patch_shape[2]//2 - 1)), 'constant')
-            t2_image = np.pad(np.asarray(images[i, ..., 1], dtype='float32'), ((patch_shape[0]//2 - 1, patch_shape[0]//2 - 1), (patch_shape[1]//2 - 1, patch_shape[1]//2 - 1), (patch_shape[2]//2 - 1, patch_shape[2]//2 - 1)), 'constant')
-
-            t1_strided = view_as_windows(t1_image, patch_shape, step=stride_size)
-            t2_strided = view_as_windows(t2_image, patch_shape, step=stride_size)
-
-            # print('t1 shape', t1_image.shape)
-            # print('t1 strided shape', t1_strided.shape)
-
-            true_labels = labels[i, ::stride_size[0], ::stride_size[1], ::stride_size[2], 0]
-
-            # print(true_labels.shape)
-
-            # patches_x = np.zeros((t1_strided.shape[0]*t1_strided.shape[1]*t1_strided.shape[2],) + t1_image.shape + (2,), dtype='float32')
-            # patches_y = np.zeros((n_tissues) + patch_shape + )
-
-            patches_x = np.zeros(((n,) + patch_shape + (2,)), dtype='float32')
-            patches_y_ints = np.zeros((n, 1), dtype='uint8')
-
-            # print(patches_x.shape)
-
-            patch_num = 0
-
-            for j, t in enumerate(category_mapping):
-                points_x, points_y, points_z = np.where(true_labels == t)
-                points = list(zip(list(points_x), list(points_y), list(points_z)))
-
-                np.random.shuffle(points)
-
-                for p in points[0:n//n_tissues]:
-
-                    # print('point', p)
-
-                    patches_x[patch_num, ..., 0] = t1_strided[p[0], p[1], p[2], ...]
-                    patches_x[patch_num, ..., 1] = t2_strided[p[0], p[1], p[2], ...]
-
-                    patches_y_ints[patch_num] = t
-                    # print(patches_y_ints.shape)
-
-                    patch_num += 1
-
-            # print(patches_y_ints)
-            patches_y = patch_label_categorical(patches_y_ints)
-
-            # print('x', patches_x.shape)
-            # print('y', patches_y.shape)
-            # print(patches_y_ints)
-
-            yield (patches_x, patches_y)
-
-def predict_patch_gen(index):
-    f = h5py.File(input_file)
-    images = f['images']
-
-    patch_batch_size = 128
-
-    mri_images = np.pad(np.asarray(images[index, ...], dtype='float32'), (
-        (patch_shape[0] // 2, (patch_shape[0] // 2) - 1), (patch_shape[1] // 2, (patch_shape[1] // 2) - 1),
-        (patch_shape[2] // 2, (patch_shape[2] // 2) - 1), (0, 0)), 'constant')
-
-    print(mri_images.shape)
-
-    mri_strided = view_as_windows(mri_images, patch_shape + (2,))
-
-    print(mri_strided.shape)
-
-    while True:
-        # samples, input shape, channels
-        inputs = np.zeros((patch_batch_size,) + patch_shape + (2,))
-        print(inputs.shape)
-
-        for x in range(mri_strided.shape[0]):
-            print(x, 'of', mri_strided.shape[0])
-            for y in range(mri_strided.shape[1]):
-                inputs = np.squeeze(mri_strided[x, y, ...])
-
-                yield inputs
-
 
 def predict_whole_image(index):
-    model = convnet()
-    model.load_weights(scratch_dir + 'patch-3d-iseg2017.hdf5')
+    model = unet_patch()
+    model.load_weights(scratch_dir + 'unet-3d-patch-iseg2017.hdf5')
 
-    predictions = model.predict_generator(predict_patch_gen(index), (img_shape[0])*(img_shape[1]))
+    prediction = np.zeros((192, 192, 128), dtype='uint8')
 
-    int_predictions = np.argmax(predictions, axis=-1)
+    f = h5py.File(input_file)
+    images = f['images']
+
+    test_image = images[index, ...]
+
+    test_image = np.pad(test_image, ((8, 56), (8, 8), (8, 8)))
+
+    input_images = view_as_windows(test_image, (80, 80, 80), step=64)
+
+    print('images to predict:', input_images.shape)
+
+    for i in range(test_image.shape[0] // 64):
+        for j in range(test_image.shape[1] // 64):
+            for k in range(test_image.shape[2] // 64):
+                input_image = input_images[i, j, k, ...]
+                prediction[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = model.predict(input_image)
+
+
+
+    int_predictions = np.argmax(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48)), axis=-1))
 
     category_predictions = [category_mapping[i] for i in int_predictions]
 
@@ -776,27 +714,22 @@ def train_unet():
 
     # train without augmentation (easier)
     hist = model.fit_generator(
-        unet_patch_gen(training_indices, 1),
-        len(training_indices),
+        unet_patch_gen(training_indices, 3),
+        len(training_indices)*3,
         epochs=10,
         verbose=1,
         callbacks=[model_checkpoint, tensorboard],
-        validation_data=unet_patch_gen(validation_indices, 1),
-        validation_steps=len(validation_indices))
+        validation_data=unet_patch_gen(validation_indices, 3),
+        validation_steps=len(validation_indices)*3)
 
     model.load_weights(scratch_dir + 'best_patch_unet_model.hdf5')
     model.save(scratch_dir + 'unet-3d-patch-iseg2017.hdf5')
 
     for i in training_indices + validation_indices + testing_indices:
-        predicted = model.predict(images[i, ...][np.newaxis, ...], batch_size=1)
-        segmentation = from_categorical(predicted, category_mapping)
-        segmentation_padded = np.pad(segmentation, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=0)
-        image = nib.Nifti1Image(segmentation_padded, affine)
+        predicted = predict_whole_image(i)
+        image = nib.Nifti1Image(predicted, affine)
         nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
 
-        if i in training_indices or i in testing_indices:
-            # print(final_dice_score(labels[i, ..., 0], segmentation))
-            print(confusion_matrix(labels[i, ..., 0].flatten(), segmentation.flatten()))
 
     visualize_training_dice(hist)
 

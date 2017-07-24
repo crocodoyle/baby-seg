@@ -499,7 +499,7 @@ def unet_patch_gen(indices, n):
             # patches_y = np.zeros((n_tissues) + patch_shape + )
 
             patches_x = np.zeros(((n,) + patch_shape + (2,)), dtype='float32')
-            patches_y_ints = np.zeros((n,) + patch_shape + (1,), dtype='uint8')
+            patches_y_ints = np.zeros((n,) + (64, 64, 64) + (1,), dtype='uint8')
 
 
             for j in range(n):

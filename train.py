@@ -510,7 +510,7 @@ def unet_patch_gen(indices, n):
                 patches_x[j, ..., 0] = t1_image[x:x+80, y:y+80, z:z+80]
                 patches_x[j, ..., 1] = t2_image[x:x+80, y:y+80, z:z+80]
 
-                patches_y_ints[j, ...] = true_labels[x:x+80, y:y+80, z:z+80]
+                patches_y_ints[j, ..., 0] = true_labels[x:x+80, y:y+80, z:z+80]
 
             patches_y = to_categorical(patches_y_ints)
 

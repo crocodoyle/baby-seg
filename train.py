@@ -710,12 +710,12 @@ def train_unet():
 
     # train without augmentation (easier)
     hist = model.fit_generator(
-        unet_patch_gen(training_indices, 3),
+        unet_patch_gen(training_indices, 1),
         len(training_indices),
         epochs=10,
         verbose=1,
         callbacks=[model_checkpoint, tensorboard],
-        validation_data=unet_patch_gen(validation_indices, 3),
+        validation_data=unet_patch_gen(validation_indices, 1),
         validation_steps=len(validation_indices))
 
     model.load_weights(scratch_dir + 'best_patch_unet_model.hdf5')

@@ -501,7 +501,6 @@ def unet_patch_gen(indices, n, test_mode=False):
             patches_x = np.zeros(((n,) + patch_shape + (2,)), dtype='float32')
             patches_y_ints = np.zeros((n,) + (64, 64, 64) + (1,), dtype='uint8')
 
-
             for j in range(n):
                 x = np.random.randint(0, img_shape[0] - 80) + 8
                 y = np.random.randint(0, img_shape[1] - 80) + 8
@@ -514,13 +513,11 @@ def unet_patch_gen(indices, n, test_mode=False):
                     patches_y_ints[j, ..., 0] = true_labels[x-8:x-8+64, y-8:y-8+64, z-8:z-8+64]
 
             if not test_mode:
-                yield(patches_x)
+                yield (patches_x)
 
             else:
                 patches_y = to_categorical(patches_y_ints)
                 yield (patches_x, patches_y)
-
-
 
 
 def batch(indices, augmentMode=None):
@@ -714,12 +711,12 @@ def train_unet():
     # train without augmentation (easier)
     hist = model.fit_generator(
         unet_patch_gen(training_indices, 3),
-        len(training_indices)*3,
+        len(training_indices),
         epochs=10,
         verbose=1,
         callbacks=[model_checkpoint, tensorboard],
         validation_data=unet_patch_gen(validation_indices, 3),
-        validation_steps=len(validation_indices)*3)
+        validation_steps=len(validation_indices))
 
     model.load_weights(scratch_dir + 'best_patch_unet_model.hdf5')
     model.save(scratch_dir + 'unet-3d-patch-iseg2017.hdf5')

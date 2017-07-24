@@ -1,6 +1,6 @@
 from keras.models import Model, load_model
 from keras.layers import Input, Dense, Dropout, Activation, Convolution2D, MaxPooling2D, Flatten, BatchNormalization, \
-    SpatialDropout2D, merge, Reshape
+    SpatialDropout2D, merge, Reshape, Cropping3D
 from keras.layers import Conv3D, MaxPooling3D, AveragePooling3D, UpSampling3D, ZeroPadding3D
 from keras.layers import concatenate, add, multiply
 from keras.optimizers import SGD, Adam
@@ -215,165 +215,88 @@ def convnet():
 
     return model
 
-def segmentation_model():
+def unet_patch():
     """
     3D U-net model, using very small convolutional kernels
     """
 
-    conv_size = (3, 3, 3)
+
+    big_conv_size = (5, 5, 5)
+    small_conv_size = (3, 3, 3)
+    mini_conv_size = (1, 1, 1)
+
     pool_size = (2, 2, 2)
 
-    inputs = Input(shape=(144, 192, 128, 2))
+    inputs = Input(shape=(80, 80, 80, 2))
 
-    conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(inputs)
-    conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(conv1)
+    conv1 = Conv3D(4, big_conv_size, activation='relu', padding='same')(inputs)
     bn1 = BatchNormalization()(conv1)
     pool1 = MaxPooling3D(pool_size=pool_size)(bn1)
 
-    conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(pool1)
-    conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(conv2)
+    conv2 = Conv3D(16, big_conv_size, activation='relu', padding='same')(pool1)
     bn2 = BatchNormalization()(conv2)
     pool2 = MaxPooling3D(pool_size=pool_size)(bn2)
 
-    conv3 = Conv3D(64, conv_size, activation='relu', padding='same')(pool2)
-    conv3 = Conv3D(64, conv_size, activation='relu', padding='same')(conv3)
+    conv3 = Conv3D(16, big_conv_size, activation='relu', padding='same')(pool2)
     bn3 = BatchNormalization()(conv3)
     pool3 = MaxPooling3D(pool_size=pool_size)(bn3)
 
-    conv4 = Conv3D(128, conv_size, activation='relu', padding='same')(pool3)
-    drop4 = Dropout(0.5)(conv4)
-    conv4 = Conv3D(128, conv_size, activation='relu', padding='same')(drop4)
-    drop4 = Dropout(0.5)(conv4)
-    bn4 = BatchNormalization()(drop4)
+    conv4 = Conv3D(16, big_conv_size, activation='relu', padding='same')(pool3)
+    bn4 = BatchNormalization()(conv4)
     pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
 
-    conv5 = Conv3D(128, conv_size, activation='relu', padding='same')(pool4)
-    drop5 = Dropout(0.5)(conv5)
-    conv5 = Conv3D(128, conv_size, activation='relu', padding='same')(drop5)
-    drop5 = Dropout(0.5)(conv5)
-    bn5 = BatchNormalization()(drop5)
+    conv5 = Conv3D(32, big_conv_size, activation='relu', padding='same')(pool4)
+    bn5 = BatchNormalization()(conv5)
+    pool5 = MaxPooling3D(pool_size=pool_size)(bn5)
 
-    up8 = UpSampling3D(size=pool_size)(bn5)
-    concat8 = concatenate([up8, bn4])
-    conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(concat8)
-    conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(conv8)
-    bn8 = BatchNormalization()(conv8)
+    conv6 = Conv3D(32, big_conv_size, activation='relu', padding='same')(pool5)
+    conv7 = Conv3D(32, small_conv_size, activation='relu', padding='same')(pool5)
+    conv8 = Conv3D(32, mini_conv_size, activation='relu', padding='same')(pool5)
 
-    up9 = UpSampling3D(size=pool_size)(bn4)
-    concat9 = concatenate([up9, bn3])
-    conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(concat9)
-    conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(conv9)
+    nadir = add([conv6, conv7, conv8])
+    bn8 = BatchNormalization()(nadir)
+
+    skip9 = concatenate([pool5, bn8])
+    up9 = UpSampling3D(size=pool_size)(skip9)
+    conv9 = Conv3D(64, big_conv_size, activation='relu', padding='same')(up9)
     bn9 = BatchNormalization()(conv9)
 
-    up10 = UpSampling3D(size=pool_size)(bn9)
-    concat10 = concatenate([up10, bn2])
-    conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(concat10)
-    conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(conv10)
+    skip10 = concatenate([pool4, bn9])
+    up10 = UpSampling3D(size=pool_size)(skip10)
+    conv10 = Conv3D(64, big_conv_size, activation='relu', padding='same')(up10)
     bn10 = BatchNormalization()(conv10)
 
-    up11 = UpSampling3D(size=pool_size)(bn10)
-    concat11 = concatenate([up11, bn1])
-    conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(concat11)
+    skip11 = concatenate([pool3, bn10])
+    up11 = UpSampling3D(size=pool_size)(skip11)
+    conv11 = Conv3D(64, big_conv_size, activation='relu', padding='same')(up11)
     bn11 = BatchNormalization()(conv11)
 
-    # need as many output channel as tissue classes
-    conv14 = Conv3D(n_tissues, (1, 1, 1), activation='softmax', padding='valid')(bn11)
+    skip12 = concatenate([pool2, bn11])
+    up12 = UpSampling3D(size=pool_size)(skip12)
+    conv12 = Conv3D(128, big_conv_size, activation='relu', padding='same')(up12)
+    bn12 = BatchNormalization()(conv12)
 
-    model = Model(input=[inputs], output=[conv14])
+    skip13 = concatenate([pool1, bn12])
+    up13 = UpSampling3D(size=pool_size)(skip13)
+    conv13 = Conv3D(256, big_conv_size, activation='relu', padding='same')(up13)
+    bn13 = BatchNormalization()(conv13)
+
+    conv14 = Conv3D(256, big_conv_size, activation='relu', padding='same')(bn13)
+    bn14 = BatchNormalization()(conv14)
+    conv15 = Conv3D(128, small_conv_size, activation='relu', padding='same')(bn14)
+    bn15 = BatchNormalization()(conv15)
+    conv16 = Conv3D(128, mini_conv_size, activation='relu', padding='same')(bn15)
+    drop16 = Dropout(0.5)(conv16)
+    bn17 = BatchNormalization()(drop16)
+
+    # need as many output channel as tissue classes
+    conv17 = Conv3D(n_tissues, (1, 1, 1), activation='softmax', padding='valid')(bn17)
+
+    crop = Cropping3D(((8, 8), (8, 8), (8, 8)))(conv17)
+
+    model = Model(input=[inputs], output=[crop])
 
     return model
-
-# def segmentation_model():
-#     """3D U-net model, using very small convolutional kernels"""
-#     tissue_classes = 4
-#
-#     conv_size = (3, 3, 3)
-#     pool_size = (2, 2, 2)
-#
-#     # inputs = Input(shape=(144, 192, 256, 2))
-#     inputs = Input(shape=img_shape + (2,))
-#
-#     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(inputs)
-#     drop1 = Dropout(0.1)(conv1)
-#     conv1 = Conv3D(16, conv_size, activation='relu', padding='same')(drop1)
-#     drop1 = Dropout(0.1)(conv1)
-#     bn1 = BatchNormalization()(drop1)
-#     pool1 = MaxPooling3D(pool_size=pool_size)(bn1)
-#
-#     conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(pool1)
-#     drop2 = Dropout(0.2)(conv2)
-#     conv2 = Conv3D(32, conv_size, activation='relu', padding='same')(drop2)
-#     drop2 = Dropout(0.2)(conv2)
-#     bn2 = BatchNormalization()(drop2)
-#     pool2 = MaxPooling3D(pool_size=pool_size)(bn2)
-#
-#     conv3 = Conv3D(64, conv_size, activation='relu', padding='same')(pool2)
-#     drop3 = Dropout(0.3)(conv3)
-#     conv3 = Conv3D(64, conv_size, activation='relu', padding='same')(drop3)
-#     drop3 = Dropout(0.3)(conv3)
-#     bn3 = BatchNormalization()(drop3)
-#     pool3 = MaxPooling3D(pool_size=pool_size)(bn3)
-#
-#     conv4 = Conv3D(128, conv_size, activation='relu', padding='same')(pool3)
-#     drop4 = Dropout(0.4)(conv4)
-#     conv4 = Conv3D(128, conv_size, activation='relu', padding='same')(drop4)
-#     drop4 = Dropout(0.4)(conv4)
-#     bn4 = BatchNormalization()(drop4)
-#     # pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
-#
-#     # conv5 = Conv3D(256, conv_size, activation='relu', padding='same')(pool4)
-#     # drop5 = Dropout(0.5)(conv5)
-#     # conv5 = Conv3D(128, conv_size, activation='relu', padding='same')(drop5)
-#     # drop5 = Dropout(0.5)(conv5)
-#     # bn5 = BatchNormalization()(drop5)
-#     # pool5 = MaxPooling3D(pool_size=pool_size)(conv5)
-#     #
-#     # conv6 = Conv3D(128, conv_size, activation='relu', padding='same')(pool5)
-#     # conv6 = Conv3D(128, conv_size, activation='relu', padding='same')(conv6)
-#     #
-#     # up7 = UpSampling3D(size=pool_size)(conv6)
-#     # concat7 = concatenate([up7, conv5])
-#     # conv7 = Conv3D(64, conv_size, activation='relu', padding='same')(concat7)
-#     # conv7 = Conv3D(64, conv_size, activation='relu', padding='same')(conv6)
-#
-#     # up8 = UpSampling3D(size=pool_size)(bn4)
-#     # concat8 = concatenate([up8, bn4])
-#     # conv8 = Conv3D(128, conv_size, activation='relu', padding='same')(concat8)
-#     # drop8 = Dropout(0.5)(conv8)
-#     # # conv8 = Conv3D(64, conv_size, activation='relu', padding='same')(drop8)
-#     # # drop8 = Dropout(0.4)(conv8)
-#     # bn8 = BatchNormalization()(drop8)
-#
-#     up9 = UpSampling3D(size=pool_size)(bn4)
-#     concat9 = concatenate([up9, bn3])
-#     conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(concat9)
-#     drop9 = Dropout(0.3)(conv9)
-#     conv9 = Conv3D(64, conv_size, activation='relu', padding='same')(drop9)
-#     drop9 = Dropout(0.3)(conv9)
-#     bn9 = BatchNormalization()(drop9)
-#
-#     up10 = UpSampling3D(size=pool_size)(bn9)
-#     concat10 = concatenate([up10, bn2])
-#     conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(concat10)
-#     drop10 = Dropout(0.2)(conv10)
-#     conv10 = Conv3D(32, conv_size, activation='relu', padding='same')(drop10)
-#     drop10 = Dropout(0.2)(conv10)
-#     bn10 = BatchNormalization()(drop10)
-#
-#     up11 = UpSampling3D(size=pool_size)(bn10)
-#     concat11 = concatenate([up11, bn1])
-#     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(concat11)
-#     drop11 = Dropout(0.1)(conv11)
-#     conv11 = Conv3D(16, conv_size, activation='relu', padding='same')(drop11)
-#     drop11 = Dropout(0.1)(conv11)
-#     bn11 = BatchNormalization()(drop11)
-#
-#     # need as many output channel as tissue classes
-#     conv12 = Conv3D(tissue_classes, (1, 1, 1), activation='softmax', padding='valid')(bn11)
-#
-#     model = Model(inputs=[inputs], outputs=[conv12])
-#
-#     return model
 
 
 def fractal_block(nb_filter, b, c, drop_path, dropout=0):
@@ -522,6 +445,70 @@ def to_categorical(y):
         # categorical[y == cat] = 1
 
     return categorical
+
+def unet_patch_gen(indices):
+    f = h5py.File(input_file)
+    images = f['images']
+    labels = f['labels']
+
+    stride_size = (3, 3, 3)
+
+    while True:
+        np.random.shuffle(indices)
+        for i in indices:
+            t1_image = np.pad(np.asarray(images[i, ..., 0], dtype='float32'), (
+            (patch_shape[0] // 2 - 1, patch_shape[0] // 2 - 1), (patch_shape[1] // 2 - 1, patch_shape[1] // 2 - 1),
+            (patch_shape[2] // 2 - 1, patch_shape[2] // 2 - 1)), 'constant')
+            t2_image = np.pad(np.asarray(images[i, ..., 1], dtype='float32'), (
+            (patch_shape[0] // 2 - 1, patch_shape[0] // 2 - 1), (patch_shape[1] // 2 - 1, patch_shape[1] // 2 - 1),
+            (patch_shape[2] // 2 - 1, patch_shape[2] // 2 - 1)), 'constant')
+
+            t1_strided = view_as_windows(t1_image, patch_shape, step=stride_size)
+            t2_strided = view_as_windows(t2_image, patch_shape, step=stride_size)
+
+            # print('t1 shape', t1_image.shape)
+            # print('t1 strided shape', t1_strided.shape)
+
+            true_labels = labels[i, ::stride_size[0], ::stride_size[1], ::stride_size[2], 0]
+
+            # print(true_labels.shape)
+
+            # patches_x = np.zeros((t1_strided.shape[0]*t1_strided.shape[1]*t1_strided.shape[2],) + t1_image.shape + (2,), dtype='float32')
+            # patches_y = np.zeros((n_tissues) + patch_shape + )
+
+            patches_x = np.zeros(((n,) + patch_shape + (2,)), dtype='float32')
+            patches_y_ints = np.zeros((n, 1), dtype='uint8')
+
+            # print(patches_x.shape)
+
+            patch_num = 0
+
+            for j, t in enumerate(category_mapping):
+                points_x, points_y, points_z = np.where(true_labels == t)
+                points = list(zip(list(points_x), list(points_y), list(points_z)))
+
+                np.random.shuffle(points)
+
+                for p in points[0:n // n_tissues]:
+                    # print('point', p)
+
+                    patches_x[patch_num, ..., 0] = t1_strided[p[0], p[1], p[2], ...]
+                    patches_x[patch_num, ..., 1] = t2_strided[p[0], p[1], p[2], ...]
+
+                    patches_y_ints[patch_num] = t
+                    # print(patches_y_ints.shape)
+
+                    patch_num += 1
+
+            # print(patches_y_ints)
+            patches_y = patch_label_categorical(patches_y_ints)
+
+            # print('x', patches_x.shape)
+            # print('y', patches_y.shape)
+            # print(patches_y_ints)
+
+            yield (patches_x, patches_y)
+
 
 def patch_label_categorical(y):
     n_samples = y.shape[0]

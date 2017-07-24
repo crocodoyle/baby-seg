@@ -54,7 +54,7 @@ img_shape = (144, 192, 128)
 
 n_tissues = 4
 
-patch_shape = (48, 48, 48)
+patch_shape = (80, 80, 80)
 
 class SegVisCallback(Callback):
 
@@ -219,7 +219,6 @@ def unet_patch():
     """
     3D U-net model, using very small convolutional kernels
     """
-
 
     big_conv_size = (5, 5, 5)
     small_conv_size = (3, 3, 3)
@@ -446,70 +445,6 @@ def to_categorical(y):
 
     return categorical
 
-def unet_patch_gen(indices):
-    f = h5py.File(input_file)
-    images = f['images']
-    labels = f['labels']
-
-    stride_size = (3, 3, 3)
-
-    while True:
-        np.random.shuffle(indices)
-        for i in indices:
-            t1_image = np.pad(np.asarray(images[i, ..., 0], dtype='float32'), (
-            (patch_shape[0] // 2 - 1, patch_shape[0] // 2 - 1), (patch_shape[1] // 2 - 1, patch_shape[1] // 2 - 1),
-            (patch_shape[2] // 2 - 1, patch_shape[2] // 2 - 1)), 'constant')
-            t2_image = np.pad(np.asarray(images[i, ..., 1], dtype='float32'), (
-            (patch_shape[0] // 2 - 1, patch_shape[0] // 2 - 1), (patch_shape[1] // 2 - 1, patch_shape[1] // 2 - 1),
-            (patch_shape[2] // 2 - 1, patch_shape[2] // 2 - 1)), 'constant')
-
-            t1_strided = view_as_windows(t1_image, patch_shape, step=stride_size)
-            t2_strided = view_as_windows(t2_image, patch_shape, step=stride_size)
-
-            # print('t1 shape', t1_image.shape)
-            # print('t1 strided shape', t1_strided.shape)
-
-            true_labels = labels[i, ::stride_size[0], ::stride_size[1], ::stride_size[2], 0]
-
-            # print(true_labels.shape)
-
-            # patches_x = np.zeros((t1_strided.shape[0]*t1_strided.shape[1]*t1_strided.shape[2],) + t1_image.shape + (2,), dtype='float32')
-            # patches_y = np.zeros((n_tissues) + patch_shape + )
-
-            patches_x = np.zeros(((n,) + patch_shape + (2,)), dtype='float32')
-            patches_y_ints = np.zeros((n, 1), dtype='uint8')
-
-            # print(patches_x.shape)
-
-            patch_num = 0
-
-            for j, t in enumerate(category_mapping):
-                points_x, points_y, points_z = np.where(true_labels == t)
-                points = list(zip(list(points_x), list(points_y), list(points_z)))
-
-                np.random.shuffle(points)
-
-                for p in points[0:n // n_tissues]:
-                    # print('point', p)
-
-                    patches_x[patch_num, ..., 0] = t1_strided[p[0], p[1], p[2], ...]
-                    patches_x[patch_num, ..., 1] = t2_strided[p[0], p[1], p[2], ...]
-
-                    patches_y_ints[patch_num] = t
-                    # print(patches_y_ints.shape)
-
-                    patch_num += 1
-
-            # print(patches_y_ints)
-            patches_y = patch_label_categorical(patches_y_ints)
-
-            # print('x', patches_x.shape)
-            # print('y', patches_y.shape)
-            # print(patches_y_ints)
-
-            yield (patches_x, patches_y)
-
-
 def patch_label_categorical(y):
     n_samples = y.shape[0]
     cat_shape = (n_samples,) + (n_tissues,)
@@ -546,6 +481,41 @@ def from_categorical_patches(categorical, category_mapping):
 
     return categories
 
+def unet_patch_gen(indices, n):
+    f = h5py.File(input_file)
+    images = f['images']
+    labels = f['labels']
+
+    while True:
+        np.random.shuffle(indices)
+        for i in indices:
+            t1_image = np.pad(np.asarray(images[i, ..., 0], dtype='float32'), ((8, 8), (8, 8), (8, 8)), 'constant')
+            t2_image = np.pad(np.asarray(images[i, ..., 1], dtype='float32'), ((8, 8), (8, 8), (8, 8)), 'constant')
+
+            true_labels = np.pad(labels[i, ..., 0], ((8, 8), (8, 8), (8, 8)), 'constant')
+
+            # print(true_labels.shape)
+
+            # patches_x = np.zeros((t1_strided.shape[0]*t1_strided.shape[1]*t1_strided.shape[2],) + t1_image.shape + (2,), dtype='float32')
+            # patches_y = np.zeros((n_tissues) + patch_shape + )
+
+            patches_x = np.zeros(((n,) + patch_shape + (2,)), dtype='float32')
+            patches_y_ints = np.zeros((n, 1), dtype='uint8')
+
+
+            for j in range(n):
+                x = np.random.randint(0, img_shape[0] - 80) + 8
+                y = np.random.randint(0, img_shape[1] - 80) + 8
+                z = np.random.randint(0, img_shape[2] - 80) + 8
+
+                patches_x[j, ..., 0] = t1_image[x:x+80, y:y+80, z:z+80]
+                patches_x[j, ..., 1] = t2_image[x:x+80, y:y+80, z:z+80]
+
+                patches_y_ints[j, ...] = true_labels[x:x+80, y:y+80, z:z+80]
+
+            patches_y = patch_label_categorical(patches_y_ints)
+
+            yield (patches_x, patches_y)
 
 
 def batch(indices, augmentMode=None):
@@ -766,56 +736,6 @@ def visualize_training_dice(hist):
     plt.close()
 
 
-def train_patch_classifier():
-    f = h5py.File(input_file)
-    images = f['images']
-    labels = f['labels']
-
-    training_indices = list(range(8))
-    validation_indices = [8, 9, 24]
-    testing_indices = list(range(10, 23))
-    ibis_indices = list(range(25, 72))
-
-    training_indices = training_indices + ibis_indices
-
-    print('training images:', training_indices)
-    print('validation images:', validation_indices)
-    print('testing images:', testing_indices)
-    print('ibis images:', ibis_indices)
-
-
-
-    # model = segmentation_model()
-    model = convnet()
-
-    adam = Adam()
-
-    model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy', dice_coef])
-    model.summary()
-
-    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_patch_model.hdf5', monitor="val_dice_coef",
-                                       save_best_only=True, save_weights_only=False, mode='max')
-
-
-    # train without augmentation (easier)
-    hist = model.fit_generator(
-        patch_generator(patch_shape, training_indices, 128, augmentMode='flip'),
-        len(training_indices)*5,
-        epochs=300,
-        verbose=1,
-        callbacks=[model_checkpoint, lr_scheduler(model)],
-        validation_data=patch_generator(patch_shape, validation_indices, 128, augmentMode='flip'),
-        validation_steps=len(validation_indices)*5
-    )
-
-    model.load_weights(scratch_dir + 'best_patch_model.hdf5')
-    model.save(scratch_dir + 'patch-3d-iseg2017.hdf5')
-
-    visualize_training_dice(hist)
-
-    predict_images_with_patches(validation_indices, testing_indices)
-
-
 def train_unet():
     f = h5py.File(input_file)
     images = f['images']
@@ -838,10 +758,10 @@ def train_unet():
     affine[1, 1] = -1
 
     # model = segmentation_model()
-    model = segmentation_model()
+    model = unet_patch()
 
     sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
-    adam = Adam(lr=1e-4, decay=1e-7)
+    adam = Adam()
 
     model.compile(optimizer=adam, loss=dice_coef_loss, metrics=[dice_coef])
 
@@ -849,7 +769,7 @@ def train_unet():
 
     # print('model', dir(model))
 
-    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_seg_model.hdf5', monitor="val_dice_coef",
+    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_patch_unet_model.hdf5', monitor="val_dice_coef",
                                        save_best_only=True, save_weights_only=False, mode='max')
     confusion_callback = ConfusionCallback()
     segvis_callback = SegVisCallback()
@@ -857,16 +777,16 @@ def train_unet():
 
     # train without augmentation (easier)
     hist = model.fit_generator(
-        batch(training_indices, augmentMode='flip'),
+        unet_patch_gen(training_indices, 3, augmentMode='flip'),
         len(training_indices),
         epochs=1000,
         verbose=1,
-        callbacks=[model_checkpoint, confusion_callback, segvis_callback, tensorboard],
-        validation_data=batch(validation_indices),
+        callbacks=[model_checkpoint, tensorboard],
+        validation_data=unet_patch_gen(validation_indices),
         validation_steps=len(validation_indices))
 
-    model.load_weights(scratch_dir + 'best_seg_model.hdf5')
-    model.save(scratch_dir + 'unet-3d-iseg2017.hdf5')
+    model.load_weights(scratch_dir + 'best_patch_unet_model.hdf5')
+    model.save(scratch_dir + 'unet-3d-patch-iseg2017.hdf5')
 
     for i in training_indices + validation_indices + testing_indices:
         predicted = model.predict(images[i, ...][np.newaxis, ...], batch_size=1)
@@ -887,4 +807,4 @@ if __name__ == "__main__":
     images = f['images']
     labels = f['labels']
 
-    train_patch_classifier()
+    train_unet()

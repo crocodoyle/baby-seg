@@ -624,7 +624,7 @@ def predict_whole_image(index):
                 input_image = input_images[i, j, k, ...]
                 prediction[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = model.predict(input_image)
 
-    int_predictions = np.argmax(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48)), mode='constant') axis=-1)
+    int_predictions = np.argmax(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48)), mode='constant'), axis=-1)
 
     category_predictions = [category_mapping[i] for i in int_predictions]
 

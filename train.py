@@ -514,11 +514,10 @@ def unet_patch_gen(indices, n, test_mode=False):
                     patches_y_ints[j, ..., 0] = true_labels[x-8:x-8+64, y-8:y-8+64, z-8:z-8+64]
 
             if not test_mode:
-                patches_y = to_categorical(patches_y_ints)
-
                 yield(patches_x)
 
             else:
+                patches_y = to_categorical(patches_y_ints)
                 yield (patches_x, patches_y)
 
 

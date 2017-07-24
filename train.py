@@ -491,7 +491,7 @@ def unet_patch_gen(indices, n):
             t1_image = np.pad(np.asarray(images[i, ..., 0], dtype='float32'), ((8, 8), (8, 8), (8, 8)), 'constant')
             t2_image = np.pad(np.asarray(images[i, ..., 1], dtype='float32'), ((8, 8), (8, 8), (8, 8)), 'constant')
 
-            true_labels = np.pad(labels[i, ..., 0], ((8, 8), (8, 8), (8, 8)), 'constant')
+            true_labels = labels[i, ..., 0]
 
             # print(true_labels.shape)
 
@@ -510,7 +510,7 @@ def unet_patch_gen(indices, n):
                 patches_x[j, ..., 0] = t1_image[x:x+80, y:y+80, z:z+80]
                 patches_x[j, ..., 1] = t2_image[x:x+80, y:y+80, z:z+80]
 
-                patches_y_ints[j, ..., 0] = true_labels[x:x+80, y:y+80, z:z+80]
+                patches_y_ints[j, ..., 0] = true_labels[x-8:x-8+64, y-8:y-8+64, z-8:z-8+64]
 
             patches_y = to_categorical(patches_y_ints)
 

@@ -605,7 +605,7 @@ def predict_whole_image(index):
     model = unet_patch()
     model.load_weights(scratch_dir + 'unet-3d-patch-iseg2017.hdf5')
 
-    prediction = np.zeros((192, 192, 128), dtype='uint8')
+    prediction = np.zeros((192, 192, 128, 4), dtype='uint8')
 
     f = h5py.File(input_file)
     images = f['images']
@@ -613,6 +613,7 @@ def predict_whole_image(index):
     test_image = images[index, ...]
 
     test_image = np.pad(test_image, ((8, 56), (8, 8), (8, 8), (0, 0)), mode='constant')
+    print('test img shape:', test_image.shape)
 
     input_images = view_as_windows(test_image, (80, 80, 80, 2), step=64)
 
@@ -622,14 +623,14 @@ def predict_whole_image(index):
         for j in range(test_image.shape[1] // 64):
             for k in range(test_image.shape[2] // 64):
                 input_image = input_images[i, j, k, ...]
+
                 prediction[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = model.predict(input_image)
 
-    int_predictions = np.argmax(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48)), mode='constant'), axis=-1)
+    int_predictions = np.argmax(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48), (0, 0)), mode='constant'), axis=-1)
 
     category_predictions = [category_mapping[i] for i in int_predictions]
 
     segmentation = np.asarray(np.reshape(category_predictions, img_shape), dtype='uint8')
-
 
     return segmentation
 
@@ -710,7 +711,7 @@ def train_unet():
     hist = model.fit_generator(
         unet_patch_gen(training_indices, 1),
         len(training_indices),
-        epochs=10,
+        epochs=1,
         verbose=1,
         callbacks=[model_checkpoint, tensorboard],
         validation_data=unet_patch_gen(validation_indices, 1),

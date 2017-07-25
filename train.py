@@ -612,9 +612,9 @@ def predict_whole_image(index):
 
     test_image = images[index, ...]
 
-    test_image = np.pad(test_image, ((8, 56), (8, 8), (8, 8)), mode='constant')
+    test_image = np.pad(test_image, ((8, 56), (8, 8), (8, 8), (0, 0)), mode='constant')
 
-    input_images = view_as_windows(test_image, (80, 80, 80), step=64)
+    input_images = view_as_windows(test_image, (80, 80, 80, 2), step=64)
 
     print('images to predict:', input_images.shape)
 

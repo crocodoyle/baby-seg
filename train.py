@@ -626,11 +626,13 @@ def predict_whole_image(index):
 
                 prediction[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = model.predict(input_image)
 
-    int_predictions = np.argmax(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48), (0, 0)), mode='constant'), axis=-1)
 
-    category_predictions = [category_mapping[i] for i in int_predictions]
+    segmentation = from_categorical(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48), (0, 0)), mode='constant'), category_mapping)
 
-    segmentation = np.asarray(np.reshape(category_predictions, img_shape), dtype='uint8')
+    # int_predictions = np.argmax(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48), (0, 0)), mode='constant'), axis=-1)
+    # category_predictions = [category_mapping[i] for i in int_predictions]
+
+    # segmentation = np.asarray(np.reshape(category_predictions, img_shape), dtype='uint8')
 
     return segmentation
 

@@ -615,14 +615,13 @@ def predict_whole_image(index):
     test_image = np.pad(test_image, ((8, 56), (8, 8), (8, 8), (0, 0)), mode='constant')
     print('test img shape:', test_image.shape)
 
-    input_images = view_as_windows(test_image, (80, 80, 80, 2), step=(64+8, 64+8, 64+8, test_image.shape[-1]))
 
     print('images to predict:', input_images.shape)
 
     for i in range(test_image.shape[0] // 64):
         for j in range(test_image.shape[1] // 64):
             for k in range(test_image.shape[2] // 64):
-                input_image = input_images[i, j, k, ...]
+                input_image = test_image[(i*64) - 8*i : (i+1)*64 + 8*(i+2), (j*64) - 8*j : (j+1)*64 + 8*(j+2), (k*64) - 8*k : (k+1)*64 + 8*(k+2)]
 
                 prediction[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = model.predict(input_image)
 

@@ -617,10 +617,10 @@ def predict_whole_image(index):
 
                     orig[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = test_image[(i*56):(i*56)+80, (j*56):(j*56)+80, (k*56):(k*56)+80][8:-8, 8:-8, 8:-8, 0]
 
-                    print('x range', i*56, 'y range', j*56, 'z range', k*56)
+                    print('x range', i*56, i*56+80, 'y range', j*56, j*56+80, 'z range', k*56, k*56+80)
                     print('x dest', i*64, (i+1)*64, 'y dest', j*64, (j+1)*64, 'z dest', k*64, (k+1)*64)
 
-                    prediction[k*64:(k+1)*64, j*64:(j+1)*64, i*64:(i+1)*64] = model.predict(input_image)
+                    prediction[j*64:(j+1)*64, i*64:(i+1)*64, k*64:(k+1)*64] = model.predict(input_image)
                 except IndexError as e:
                     print('bad index', e)
 

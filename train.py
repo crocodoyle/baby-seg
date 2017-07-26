@@ -616,12 +616,12 @@ def predict_whole_image(index):
     print('test img shape:', test_image.shape)
 
 
-    print('images to predict:', input_images.shape)
+    # print('images to predict:', input_images.shape)
 
     for i in range(test_image.shape[0] // 64):
         for j in range(test_image.shape[1] // 64):
             for k in range(test_image.shape[2] // 64):
-                input_image = test_image[(i*64) - 8*i : (i+1)*64 + 8*(i+2), (j*64) - 8*j : (j+1)*64 + 8*(j+2), (k*64) - 8*k : (k+1)*64 + 8*(k+2)]
+                input_image = test_image[(i*56):(i+1)*80, (j*56):(j+1)*80, (k*56):(k+1)*80]
 
                 prediction[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = model.predict(input_image)
 

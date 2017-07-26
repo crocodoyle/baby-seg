@@ -621,7 +621,7 @@ def predict_whole_image(index):
     for i in range(test_image.shape[0] // 64):
         for j in range(test_image.shape[1] // 64):
             for k in range(test_image.shape[2] // 64):
-                input_image = test_image[(i*56):(i+1)*80, (j*56):(j+1)*80, (k*56):(k+1)*80]
+                input_image = test_image[(i*56):(i+1)*80, (j*56):(j+1)*80, (k*56):(k+1)*80][np.newaxis, ...]
 
                 prediction[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = model.predict(input_image)
 

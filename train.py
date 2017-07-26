@@ -710,7 +710,7 @@ def train_unet():
     hist = model.fit_generator(
         unet_patch_gen(training_indices, 1),
         len(training_indices),
-        epochs=1,
+        epochs=100,
         verbose=1,
         callbacks=[model_checkpoint, tensorboard],
         validation_data=unet_patch_gen(validation_indices, 1),

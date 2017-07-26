@@ -470,16 +470,6 @@ def from_categorical(categorical, category_mapping):
 
     return segmentation
 
-def from_categorical_patches(categorical, category_mapping):
-    n_patches = categorical.shape[0]
-
-    categories = np.zeros(n_patches, dtype='uint8')
-
-    for i, cat in enumerate(category_mapping):
-        pass
-
-    return categories
-
 def unet_patch_gen(indices, n, test_mode=False):
     f = h5py.File(input_file)
     images = f['images']
@@ -605,7 +595,7 @@ def predict_whole_image(index):
     model = unet_patch()
     model.load_weights(scratch_dir + 'unet-3d-patch-iseg2017.hdf5')
 
-    prediction = np.zeros((192, 192, 128, 4), dtype='uint8')
+    prediction = np.zeros((192, 192, 192, 4), dtype='uint8')
 
     f = h5py.File(input_file)
     images = f['images']
@@ -621,12 +611,14 @@ def predict_whole_image(index):
     for i in range(test_image.shape[0] // 64):
         for j in range(test_image.shape[1] // 64):
             for k in range(test_image.shape[2] // 64):
-                input_image = test_image[(i*56):(i*56)+80, (j*56):(j*56)+80, (k*56):(k*56)+80][np.newaxis, ...]
-                print('x', i*56)
-                print('y', j*56)
-                print('z', k*56)
+                try:
+                    input_image = test_image[(i*56):(i*56)+80, (j*56):(j*56)+80, (k*56):(k*56)+80][np.newaxis, ...]
+                    print('x range', i*56, 'y range', j*56, 'z range', k*56)
+                    print('x dest', i*64, (i+1)*64, 'y dest', j*64, (j+1)*64, 'z dest', k*64, (k+1)*64)
 
-                prediction[j*64:(j+1)*64, i*64:(i+1)*64, k*64:(k+1)*64] = model.predict(input_image)
+                    prediction[i*64:(i+1)*64, k*64:(k+1)*64, j*64:(j+1)*64] = model.predict(input_image)
+                except IndexError as e:
+                    print('bad index', e)
 
     segmentation = from_categorical(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48), (0, 0)), mode='constant'), category_mapping)
 

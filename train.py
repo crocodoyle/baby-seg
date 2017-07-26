@@ -616,17 +616,17 @@ def predict_whole_image(index):
     test_image = np.pad(test_image, ((8, 56), (8, 8), (8, 8), (0, 0)), mode='constant')
     print('test img shape:', test_image.shape)
 
-
     # print('images to predict:', input_images.shape)
 
     for i in range(test_image.shape[0] // 64):
         for j in range(test_image.shape[1] // 64):
             for k in range(test_image.shape[2] // 64):
                 input_image = test_image[(i*56):(i*56)+80, (j*56):(j*56)+80, (k*56):(k*56)+80][np.newaxis, ...]
-                print('input image', input_image.shape)
+                print('x', i*56)
+                print('y', j*56)
+                print('z', k*56)
 
-                prediction[k*64:(k+1)*64, j*64:(j+1)*64, i*64:(i+1)*64] = model.predict(input_image)
-
+                prediction[j*64:(j+1)*64, i*64:(i+1)*64, k*64:(k+1)*64] = model.predict(input_image)
 
     segmentation = from_categorical(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48), (0, 0)), mode='constant'), category_mapping)
 
@@ -636,7 +636,6 @@ def predict_whole_image(index):
     # segmentation = np.asarray(np.reshape(category_predictions, img_shape), dtype='uint8')
 
     return segmentation
-
 
 def predict_images_with_patches(validation_indices, testing_indices):
     affine = np.eye(4)

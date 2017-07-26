@@ -615,19 +615,19 @@ def predict_whole_image(index):
                 try:
                     input_image = test_image[(i*64):(i*64)+80, (j*64):(j*64)+80, (k*64):(k*64)+80][np.newaxis, ...]
 
-                    orig[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = test_image[(i*64):(i*64)+80, (j*64):(j*64)+80, (k*64):(k*64)+80][8:-8, 8:-8, 8:-8, 0]
+                    # orig[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = test_image[(i*64):(i*64)+80, (j*64):(j*64)+80, (k*64):(k*64)+80][8:-8, 8:-8, 8:-8, 0]
 
-                    print('x range', i*64, i*64+80, 'y range', j*64, j*64+80, 'z range', k*64, k*64+80)
-                    print('x dest', i*64, (i+1)*64, 'y dest', j*64, (j+1)*64, 'z dest', k*64, (k+1)*64)
+                    # print('x range', i*64, i*64+80, 'y range', j*64, j*64+80, 'z range', k*64, k*64+80)
+                    # print('x dest', i*64, (i+1)*64, 'y dest', j*64, (j+1)*64, 'z dest', k*64, (k+1)*64)
 
                     prediction[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = model.predict(input_image)
                 except IndexError as e:
                     print('bad index', e)
 
-    img = nib.Nifti1Image(orig, np.eye(4))
+    img = nib.Nifti1Image(prediction[..., 2], np.eye(4))
     nib.save(img, scratch_dir + 'test.nii.gz')
 
-    segmentation = from_categorical(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48), (0, 0)), mode='constant'), category_mapping)
+    segmentation = from_categorical(prediction, category_mapping)
 
     # int_predictions = np.argmax(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48), (0, 0)), mode='constant'), axis=-1)
     # category_predictions = [category_mapping[i] for i in int_predictions]

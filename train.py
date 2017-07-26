@@ -625,7 +625,7 @@ def predict_whole_image(index):
                     print('bad index', e)
 
     img = nib.Nifti1Image(orig, np.eye(4))
-    img.save(img, scratch_dir + 'test.nii.gz')
+    nib.save(img, scratch_dir + 'test.nii.gz')
 
     segmentation = from_categorical(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48), (0, 0)), mode='constant'), category_mapping)
 

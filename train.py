@@ -596,6 +596,7 @@ def predict_whole_image(index):
     model.load_weights(scratch_dir + 'unet-3d-patch-iseg2017.hdf5')
 
     prediction = np.zeros((192, 192, 192, 4), dtype='uint8')
+    orig = np.zeros((192, 192, 192), dtype='float32')
 
     f = h5py.File(input_file)
     images = f['images']
@@ -613,12 +614,18 @@ def predict_whole_image(index):
             for k in range(test_image.shape[2] // 64):
                 try:
                     input_image = test_image[(i*56):(i*56)+80, (j*56):(j*56)+80, (k*56):(k*56)+80][np.newaxis, ...]
+
+                    orig[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = test_image[(i*56):(i*56)+80, (j*56):(j*56)+80, (k*56):(k*56)+80][8:-8, 8:-8, 8:-8, 0]
+
                     print('x range', i*56, 'y range', j*56, 'z range', k*56)
                     print('x dest', i*64, (i+1)*64, 'y dest', j*64, (j+1)*64, 'z dest', k*64, (k+1)*64)
 
                     prediction[k*64:(k+1)*64, j*64:(j+1)*64, i*64:(i+1)*64] = model.predict(input_image)
                 except IndexError as e:
                     print('bad index', e)
+
+    img = nib.Nifti1Image(orig, np.eye(4))
+    img.save(img, scratch_dir + 'test.nii.gz')
 
     segmentation = from_categorical(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48), (0, 0)), mode='constant'), category_mapping)
 

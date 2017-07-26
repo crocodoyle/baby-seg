@@ -624,7 +624,7 @@ def predict_whole_image(index):
                 except IndexError as e:
                     print('bad index', e)
 
-    img = nib.Nifti1Image(prediction[..., 2], np.eye(4))
+    img = nib.Nifti1Image(np.add(prediction[..., 2], prediction[..., 3]), np.eye(4))
     nib.save(img, scratch_dir + 'test.nii.gz')
 
     segmentation = from_categorical(prediction, category_mapping)

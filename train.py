@@ -612,6 +612,7 @@ def predict_whole_image(index):
                 try:
                     input_image = np.pad(test_image[(i*64):(i+1)*64, (j*64):(j+1)*64, (k*64):(k+1)*64], ((8, 8), (8, 8), (8,8), (0, 0)), mode='constant')[np.newaxis, ...]
 
+                    print(i, j, k)
                     # orig[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = test_image[(i*64):(i*64)+80, (j*64):(j*64)+80, (k*64):(k*64)+80][8:-8, 8:-8, 8:-8, 0]
 
                     # print('x range', i*64, i*64+80, 'y range', j*64, j*64+80, 'z range', k*64, k*64+80)

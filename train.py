@@ -610,7 +610,7 @@ def predict_whole_image(index):
         for j in range(test_image.shape[1] // 64):
             for k in range(test_image.shape[2] // 64):
                 try:
-                    input_image = np.pad(test_image[(i*64):(i+1)*64, (j*64):(j+1)*64, (k*64):(k+1)*64], ((8, 8), (8, 8), (8,8), (8, 8)), mode='constant')[np.newaxis, ...]
+                    input_image = np.pad(test_image[(i*64):(i+1)*64, (j*64):(j+1)*64, (k*64):(k+1)*64], ((8, 8), (8, 8), (8,8), (0, 0)), mode='constant')[np.newaxis, ...]
 
                     # orig[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = test_image[(i*64):(i*64)+80, (j*64):(j*64)+80, (k*64):(k*64)+80][8:-8, 8:-8, 8:-8, 0]
 

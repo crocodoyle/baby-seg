@@ -625,7 +625,7 @@ def predict_whole_image(index):
                 input_image = test_image[(i*56):(i*56)+80, (j*56):(j*56)+80, (k*56):(k*56)+80][np.newaxis, ...]
                 print('input image', input_image.shape)
 
-                prediction[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = model.predict(input_image)
+                prediction[j*64:(j+1)*64, i*64:(i+1)*64, k*64:(k+1)*64] = model.predict(input_image)
 
 
     segmentation = from_categorical(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48), (0, 0)), mode='constant'), category_mapping)

@@ -460,8 +460,8 @@ def from_categorical(categorical, category_mapping):
     :param category_mapping:
     :return:
     """
-    img_shape = np.shape(categorical)[1:-1]
-    cat_img = np.argmax(np.squeeze(categorical), axis=-1)
+    img_shape = np.shape(categorical)[:-1]
+    cat_img = np.argmax(categorical, axis=-1)
 
     segmentation = np.zeros(img_shape, dtype='uint8')
 
@@ -470,15 +470,34 @@ def from_categorical(categorical, category_mapping):
 
     return segmentation
 
-def from_categorical_patches(categorical, category_mapping):
-    n_patches = categorical.shape[0]
+def unet_patch_gen(indices, n, test_mode=False):
+    f = h5py.File(input_file)
+    images = f['images']
+    labels = f['labels']
 
-    categories = np.zeros(n_patches, dtype='uint8')
+    while True:
+        np.random.shuffle(indices)
+        for i in indices:
+            t1_image = np.pad(np.asarray(images[i, ..., 0], dtype='float32'), ((8, 8), (8, 8), (8, 8)), 'constant')
+            t2_image = np.pad(np.asarray(images[i, ..., 1], dtype='float32'), ((8, 8), (8, 8), (8, 8)), 'constant')
 
-    for i, cat in enumerate(category_mapping):
-        pass
+            true_labels = labels[i, ..., 0]
 
-    return categories
+            # print(true_labels.shape)
+
+            # patches_x = np.zeros((t1_strided.shape[0]*t1_strided.shape[1]*t1_strided.shape[2],) + t1_image.shape + (2,), dtype='float32')
+            # patches_y = np.zeros((n_tissues) + patch_shape + )
+
+            patches_x = np.zeros(((n,) + patch_shape + (2,)), dtype='float32')
+            patches_y_ints = np.zeros((n,) + (64, 64, 64) + (1,), dtype='uint8')
+
+            for j in range(n):
+                x = np.random.randint(0, img_shape[0] - 80) + 8
+                y = np.random.randint(0, img_shape[1] - 80) + 8
+                z = np.random.randint(0, img_shape[2] - 80) + 8
+
+                patches_x[j, ..., 0] = t1_image[x:x+80, y:y+80, z:z+80]
+                patches_x[j, ..., 1] = t2_image[x:x+80, y:y+80, z:z+80]
 
 def unet_patch_gen(indices, n, test_mode=False):
     f = h5py.File(input_file)
@@ -605,36 +624,44 @@ def predict_whole_image(index):
     model = unet_patch()
     model.load_weights(scratch_dir + 'unet-3d-patch-iseg2017.hdf5')
 
-    prediction = np.zeros((192, 192, 128), dtype='uint8')
+    prediction = np.zeros((192, 192, 128, 4), dtype='uint8')
 
     f = h5py.File(input_file)
     images = f['images']
 
     test_image = images[index, ...]
 
-    test_image = np.pad(test_image, ((8, 56), (8, 8), (8, 8)), mode='constant', constant_values=0)
+    test_image = np.pad(images[index, ...], ((0, 48), (0, 0), (0, 0), (0, 0)), mode='constant')
+    print('test img shape:', test_image.shape)
 
-    input_images = view_as_windows(test_image, (80, 80, 80), step=64)
-
-    print('images to predict:', input_images.shape)
+    # print('images to predict:', input_images.shape)
 
     for i in range(test_image.shape[0] // 64):
         for j in range(test_image.shape[1] // 64):
             for k in range(test_image.shape[2] // 64):
-                input_image = input_images[i, j, k, ...]
-                prediction[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = model.predict(input_image)
+                try:
+                    input_image = np.pad(test_image[(i*64):(i+1)*64, (j*64):(j+1)*64, (k*64):(k+1)*64], ((8, 8), (8, 8), (8, 8), (0, 0)), mode='constant')[np.newaxis, ...]
 
+                    # orig[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = test_image[(i*64):(i*64)+80, (j*64):(j*64)+80, (k*64):(k*64)+80][8:-8, 8:-8, 8:-8, 0]
 
+                    # print('x range', i*64, i*64+80, 'y range', j*64, j*64+80, 'z range', k*64, k*64+80)
+                    # print('x dest', i*64, (i+1)*64, 'y dest', j*64, (j+1)*64, 'z dest', k*64, (k+1)*64)
 
-    int_predictions = np.argmax(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48)), mode='constant'), axis=-1)
+                    prediction[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = model.predict(input_image)
+                except IndexError as e:
+                    print('bad index', e)
 
-    category_predictions = [category_mapping[i] for i in int_predictions]
+    # img = nib.Nifti1Image(np.add(prediction[..., 2], prediction[..., 3]), np.eye(4))
+    # nib.save(img, scratch_dir + 'test.nii.gz')
 
-    segmentation = np.asarray(np.reshape(category_predictions, img_shape), dtype='uint8')
+    segmentation = from_categorical(prediction, category_mapping)
 
+    # int_predictions = np.argmax(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48), (0, 0)), mode='constant'), axis=-1)
+    # category_predictions = [category_mapping[i] for i in int_predictions]
+
+    # segmentation = np.asarray(np.reshape(category_predictions, img_shape), dtype='uint8')
 
     return segmentation
-
 
 def predict_images_with_patches(validation_indices, testing_indices):
     affine = np.eye(4)

@@ -734,14 +734,15 @@ def train_unet():
     confusion_callback = ConfusionCallback()
     segvis_callback = SegVisCallback()
     tensorboard = TensorBoard(scratch_dir)
+    lr_sched = lr_scheduler(model)
 
     # train without augmentation (easier)
     hist = model.fit_generator(
         unet_patch_gen(training_indices, 1),
         len(training_indices),
-        epochs=25,
+        epochs=1000,
         verbose=1,
-        callbacks=[model_checkpoint, tensorboard],
+        callbacks=[model_checkpoint, tensorboard, lr_sched],
         validation_data=unet_patch_gen(validation_indices, 1),
         validation_steps=len(validation_indices))
 

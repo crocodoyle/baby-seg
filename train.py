@@ -399,9 +399,9 @@ def dice_coef(y_true, y_pred):
 
     score = 0
 
-    # category_weight = [1.35, 17.85, 8.27*10, 11.98*10]
+    category_weight = [1.35, 17.85, 8.27*10, 11.98*10]
 
-    category_weight = [1, 1, 1, 1]
+    # category_weight = [1, 1, 1, 1]
 
     for i, (c, w) in enumerate(zip(category_mapping, category_weight)):
         score += w*(2.0 * K.sum(y_true[..., i] * y_pred[..., i]) / (K.sum(y_true[..., i]) + K.sum(y_pred[..., i])))
@@ -654,7 +654,8 @@ def predict_whole_image(index):
     # img = nib.Nifti1Image(np.add(prediction[..., 2], prediction[..., 3]), np.eye(4))
     # nib.save(img, scratch_dir + 'test.nii.gz')
 
-    segmentation = from_categorical(prediction, category_mapping)
+    segmentation = from_categorical(prediction[:-48, :, :], category_mapping)
+    segmentation = np.pad(segmentation, ((0, 0), (0, 0), (80, 48)), mode='constant')
 
     # int_predictions = np.argmax(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48), (0, 0)), mode='constant'), axis=-1)
     # category_predictions = [category_mapping[i] for i in int_predictions]

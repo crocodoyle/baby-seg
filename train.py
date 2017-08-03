@@ -228,7 +228,7 @@ def unet_patch():
 
     inputs = Input(shape=(80, 80, 80, 2))
 
-    conv1 = Conv3D(4, big_conv_size, activation='relu', padding='same')(inputs)
+    conv1 = Conv3D(8, big_conv_size, activation='relu', padding='same')(inputs)
     bn1 = BatchNormalization()(conv1)
     pool1 = MaxPooling3D(pool_size=pool_size)(bn1)
 
@@ -244,22 +244,22 @@ def unet_patch():
     bn4 = BatchNormalization()(conv4)
     pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
 
-    # conv5 = Conv3D(32, big_conv_size, activation='relu', padding='same')(pool4)
-    # bn5 = BatchNormalization()(conv5)
-    # pool5 = MaxPooling3D(pool_size=pool_size)(bn5)
+    conv5 = Conv3D(32, big_conv_size, activation='relu', padding='same')(pool4)
+    bn5 = BatchNormalization()(conv5)
+    pool5 = MaxPooling3D(pool_size=pool_size)(bn5)
 
-    conv6 = Conv3D(32, big_conv_size, activation='relu', padding='same')(pool4)
-    conv7 = Conv3D(32, small_conv_size, activation='relu', padding='same')(pool4)
-    conv8 = Conv3D(32, mini_conv_size, activation='relu', padding='same')(pool4)
+    conv6 = Conv3D(32, big_conv_size, activation='relu', padding='same')(pool5)
+    conv7 = Conv3D(32, small_conv_size, activation='relu', padding='same')(pool5)
+    conv8 = Conv3D(32, mini_conv_size, activation='relu', padding='same')(pool5)
     nadir = add([conv6, conv7, conv8])
     bn8 = BatchNormalization()(nadir)
 
-    # skip9 = concatenate([pool5, bn8])
-    # up9 = UpSampling3D(size=pool_size)(skip9)
-    # conv9 = Conv3D(64, big_conv_size, activation='relu', padding='same')(up9)
-    # bn9 = BatchNormalization()(conv9)
+    skip9 = concatenate([pool5, bn8])
+    up9 = UpSampling3D(size=pool_size)(skip9)
+    conv9 = Conv3D(64, big_conv_size, activation='relu', padding='same')(up9)
+    bn9 = BatchNormalization()(conv9)
 
-    skip10 = concatenate([pool4, bn8])
+    skip10 = concatenate([pool4, bn9])
     up10 = UpSampling3D(size=pool_size)(skip10)
     conv10 = Conv3D(64, big_conv_size, activation='relu', padding='same')(up10)
     bn10 = BatchNormalization()(conv10)

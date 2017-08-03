@@ -249,10 +249,10 @@ def unet_patch():
     pool5 = MaxPooling3D(pool_size=pool_size)(bn5)
 
     # conv6 = Conv3D(32, big_conv_size, activation='relu', padding='same')(pool5)
-    conv7 = Conv3D(32, small_conv_size, activation='relu', padding='same')(pool5)
-    # conv8 = Conv3D(32, mini_conv_size, activation='relu', padding='same')(pool5)
+    # conv7 = Conv3D(32, small_conv_size, activation='relu', padding='same')(pool5)
+    conv8 = Conv3D(32, mini_conv_size, activation='relu', padding='same')(pool5)
     # nadir = add([conv6, conv7, conv8])
-    bn8 = BatchNormalization()(conv7)
+    bn8 = BatchNormalization()(conv8)
 
     skip9 = concatenate([pool5, bn8])
     up9 = UpSampling3D(size=pool_size)(skip9)

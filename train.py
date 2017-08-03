@@ -470,7 +470,7 @@ def from_categorical(categorical, category_mapping):
 
     return segmentation
 
-def unet_patch_gen(indices, n, test_mode=False):
+def unet_patch_gen(indices, n, test_mode=False, augmentMode=None):
     f = h5py.File(input_file)
     images = f['images']
     labels = f['labels']
@@ -491,34 +491,38 @@ def unet_patch_gen(indices, n, test_mode=False):
             patches_x = np.zeros(((n,) + patch_shape + (2,)), dtype='float32')
             patches_y_ints = np.zeros((n,) + (64, 64, 64) + (1,), dtype='uint8')
 
-            for j in range(n):
-                x = np.random.randint(0, img_shape[0] - 80) + 8
-                y = np.random.randint(0, img_shape[1] - 80) + 8
-                z = np.random.randint(0, img_shape[2] - 80) + 8
+            if augmentMode is not None:
+                if 'flip' in augmentMode:
+                    # flip images
+                    if np.random.rand() > 0.5:
+                        t1_image = np.flip(t1_image, axis=0)
+                        t2_image = np.flip(t2_image, axis=0)
+                        true_labels = np.flip(true_labels, axis=0)
 
-                patches_x[j, ..., 0] = t1_image[x:x+80, y:y+80, z:z+80]
-                patches_x[j, ..., 1] = t2_image[x:x+80, y:y+80, z:z+80]
+                if 'affine' in augmentMode:
 
-def unet_patch_gen(indices, n, test_mode=False):
-    f = h5py.File(input_file)
-    images = f['images']
-    labels = f['labels']
+                    if np.random.rand() > 0.5:
+                        scale = 1 + (np.random.rand(3) - 0.5) * 0.1  # up to 5% scale
+                    else:
+                        scale = None
 
-    while True:
-        np.random.shuffle(indices)
-        for i in indices:
-            t1_image = np.pad(np.asarray(images[i, ..., 0], dtype='float32'), ((8, 8), (8, 8), (8, 8)), 'constant')
-            t2_image = np.pad(np.asarray(images[i, ..., 1], dtype='float32'), ((8, 8), (8, 8), (8, 8)), 'constant')
+                    if np.random.rand() > 0.5:
+                        shear = (np.random.rand(3) - 0.5) * 0.2  # sheer of up to 10%
+                    else:
+                        shear = None
 
-            true_labels = labels[i, ..., 0]
+                    if np.random.rand() > 0.5:
+                        angles = (np.random.rand(3) - 0.5) * 0.1 * 2 * math.pi  # rotation up to 5 degrees
+                    else:
+                        angles = None
 
-            # print(true_labels.shape)
+                    trans_mat = t.compose_matrix(scale=scale, shear=shear, angles=angles)
+                    trans_mat = trans_mat[0:-1, 0:-1]
 
-            # patches_x = np.zeros((t1_strided.shape[0]*t1_strided.shape[1]*t1_strided.shape[2],) + t1_image.shape + (2,), dtype='float32')
-            # patches_y = np.zeros((n_tissues) + patch_shape + )
+                    t1_image = affine_transform(t1_image, trans_mat, cval=0)
+                    t2_image = affine_transform(t2_image, trans_mat, cval=0)
 
-            patches_x = np.zeros(((n,) + patch_shape + (2,)), dtype='float32')
-            patches_y_ints = np.zeros((n,) + (64, 64, 64) + (1,), dtype='uint8')
+                    true_labels = affine_transform(true_labels, trans_mat, order=0, cval=0)  # nearest neighbour for labels
 
             for j in range(n):
                 x = np.random.randint(0, img_shape[0] - 80) + 8
@@ -707,7 +711,7 @@ def train_unet():
     testing_indices = list(range(10, 23))
     ibis_indices = list(range(24, 72))
 
-    # training_indices = training_indices + ibis_indices
+    training_indices = training_indices + ibis_indices[0:5]
 
     print('training images:', training_indices)
     print('validation images:', validation_indices)
@@ -739,7 +743,7 @@ def train_unet():
 
     # train without augmentation (easier)
     hist = model.fit_generator(
-        unet_patch_gen(training_indices, 1),
+        unet_patch_gen(training_indices, 1, augmentMode='affine'),
         len(training_indices),
         epochs=1000,
         verbose=1,

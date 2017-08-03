@@ -712,7 +712,7 @@ def train_unet():
     ibis_indices = list(range(24, 72))
 
     training_indices = training_indices + ibis_indices[0:5]
-    validation_indices = validation_indices + ibis_indices[7]
+    validation_indices = validation_indices + list(ibis_indices[7])
 
     print('training images:', training_indices)
     print('validation images:', validation_indices)

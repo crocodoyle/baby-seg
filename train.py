@@ -535,6 +535,9 @@ def unet_patch_gen(indices, n, test_mode=False, augmentMode=None):
                 if not test_mode:
                     patches_y_ints[j, ..., 0] = true_labels[x-8:x-8+64, y-8:y-8+64, z-8:z-8+64]
 
+            print('return imgs:', patches_x.shape)
+            print('labels:', patches_y_ints.shape)
+
             if test_mode:
                 yield (patches_x)
 
@@ -596,13 +599,11 @@ def batch(indices, augmentMode=None):
 
                         true_labels = affine_transform(true_labels, trans_mat, order=0, cval=0) # nearest neighbour for labels
 
-                print('t1 shape:', t1_image.shape)
-                print('labels:', true_labels.shape)
-
                 return_imgs[..., 0] = t1_image
                 return_imgs[..., 1] = t2_image
 
                 label = to_categorical(np.reshape(true_labels, true_labels.shape + (1,)))
+
 
                 yield (return_imgs[np.newaxis, ...], label[np.newaxis, ...])
 

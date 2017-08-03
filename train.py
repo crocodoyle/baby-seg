@@ -279,11 +279,11 @@ def unet_patch():
     conv13 = Conv3D(256, big_conv_size, activation='relu', padding='same')(up13)
     bn13 = BatchNormalization()(conv13)
 
-    conv14 = Conv3D(256, big_conv_size, activation='relu', padding='same')(bn13)
+    conv14 = Conv3D(64, big_conv_size, activation='relu', padding='same')(bn13)
     bn14 = BatchNormalization()(conv14)
-    conv15 = Conv3D(128, small_conv_size, activation='relu', padding='same')(bn14)
+    conv15 = Conv3D(32, small_conv_size, activation='relu', padding='same')(bn14)
     bn15 = BatchNormalization()(conv15)
-    conv16 = Conv3D(128, mini_conv_size, activation='relu', padding='same')(bn15)
+    conv16 = Conv3D(16, mini_conv_size, activation='relu', padding='same')(bn15)
     drop16 = Dropout(0.5)(conv16)
     bn17 = BatchNormalization()(drop16)
 
@@ -292,7 +292,7 @@ def unet_patch():
 
     crop = Cropping3D(((8, 8), (8, 8), (8, 8)))(conv17)
 
-    model = Model(input=[inputs], output=[crop])
+    model = Model(inputs=[inputs], outputs=[crop])
 
     return model
 
@@ -502,17 +502,17 @@ def unet_patch_gen(indices, n, test_mode=False, augmentMode=None):
                 if 'affine' in augmentMode:
 
                     if np.random.rand() > 0.5:
-                        scale = 1 + (np.random.rand(3) - 0.5) * 0.1  # up to 5% scale
+                        scale = 1 + (np.random.rand(3) - 0.5) * 0.1  # up +/- 5% scale
                     else:
                         scale = None
 
                     if np.random.rand() > 0.5:
-                        shear = (np.random.rand(3) - 0.5) * 0.2  # sheer of up to 10%
+                        shear = (np.random.rand(3) - 0.5) * 0.1  # sheer of up to +/- 5%
                     else:
                         shear = None
 
                     if np.random.rand() > 0.5:
-                        angles = (np.random.rand(3) - 0.5) * 0.1 * 2 * math.pi  # rotation up to 5 degrees
+                        angles = (np.random.rand(3) - 0.5) * 0.1 * 2 * math.pi  # rotation up to +/- 5 degrees
                     else:
                         angles = None
 

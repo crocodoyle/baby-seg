@@ -591,11 +591,13 @@ def batch(indices, augmentMode=None):
                         trans_mat = t.compose_matrix(scale=scale, shear=shear, angles=angles)
                         trans_mat = trans_mat[0:-1, 0:-1]
 
-                        t1_image = affine_transform(t1_image, trans_mat, cval=10)
-                        t2_image = affine_transform(t2_image, trans_mat, cval=10)
-                        # ratio_img = affine_transform(ratio_img, trans_mat, cval=10)
+                        t1_image = affine_transform(t1_image, trans_mat, cval=0)
+                        t2_image = affine_transform(t2_image, trans_mat, cval=0)
 
-                        true_labels = affine_transform(true_labels, trans_mat, order=0, cval=10) # nearest neighbour for labels
+                        true_labels = affine_transform(true_labels, trans_mat, order=0, cval=0) # nearest neighbour for labels
+
+                print('t1 shape:', t1_image.shape)
+                print('labels:', true_labels.shape)
 
                 return_imgs[..., 0] = t1_image
                 return_imgs[..., 1] = t2_image

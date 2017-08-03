@@ -244,22 +244,25 @@ def unet_patch():
     bn4 = BatchNormalization()(conv4)
     pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
 
-    conv5 = Conv3D(32, big_conv_size, activation='relu', padding='same')(pool4)
-    bn5 = BatchNormalization()(conv5)
-    pool5 = MaxPooling3D(pool_size=pool_size)(bn5)
+    # conv5 = Conv3D(32, big_conv_size, activation='relu', padding='same')(pool4)
+    # bn5 = BatchNormalization()(conv5)
+    # pool5 = MaxPooling3D(pool_size=pool_size)(bn5)
 
-    # conv6 = Conv3D(32, big_conv_size, activation='relu', padding='same')(pool5)
-    # conv7 = Conv3D(32, small_conv_size, activation='relu', padding='same')(pool5)
-    conv8 = Conv3D(32, mini_conv_size, activation='relu', padding='same')(pool5)
-    # nadir = add([conv6, conv7, conv8])
-    bn8 = BatchNormalization()(conv8)
+    conv6 = Conv3D(32, big_conv_size, activation='relu', padding='same')(pool4)
+    drop6 = Dropout(0.3)(conv6)
+    conv7 = Conv3D(32, small_conv_size, activation='relu', padding='same')(pool4)
+    drop7 = Dropout(0.3)(conv7)
+    conv8 = Conv3D(32, mini_conv_size, activation='relu', padding='same')(pool4)
+    drop8 = Dropout(0.3)(conv8)
+    nadir = add([drop6, drop7, drop8])
+    bn8 = BatchNormalization()(nadir)
 
-    skip9 = concatenate([pool5, bn8])
-    up9 = UpSampling3D(size=pool_size)(skip9)
-    conv9 = Conv3D(64, big_conv_size, activation='relu', padding='same')(up9)
-    bn9 = BatchNormalization()(conv9)
+    # skip9 = concatenate([pool5, bn8])
+    # up9 = UpSampling3D(size=pool_size)(skip9)
+    # conv9 = Conv3D(64, big_conv_size, activation='relu', padding='same')(up9)
+    # bn9 = BatchNormalization()(conv9)
 
-    skip10 = concatenate([pool4, bn9])
+    skip10 = concatenate([pool4, bn8])
     up10 = UpSampling3D(size=pool_size)(skip10)
     conv10 = Conv3D(64, big_conv_size, activation='relu', padding='same')(up10)
     bn10 = BatchNormalization()(conv10)
@@ -753,7 +756,7 @@ def train_unet():
         verbose=1,
         callbacks=[model_checkpoint, tensorboard, lr_sched],
         validation_data=unet_patch_gen(validation_indices, 1),
-        validation_steps=len(validation_indices))
+        validation_steps=len(validation_indices)*3)
 
     model.load_weights(scratch_dir + 'best_patch_unet_model.hdf5')
     model.save(scratch_dir + 'unet-3d-patch-iseg2017.hdf5')

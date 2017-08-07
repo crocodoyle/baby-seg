@@ -540,8 +540,8 @@ def unet_patch_gen(indices, n, test_mode=False, augmentMode=None):
                 if not test_mode:
                     patches_y_ints[j, ..., 0] = true_labels[x-8:x-8+64, y-8:y-8+64, z-8:z-8+64]
 
-            print('return imgs:', patches_x.shape)
-            print('labels:', patches_y_ints.shape)
+            # print('return imgs:', patches_x.shape)
+            # print('labels:', patches_y_ints.shape)
 
             if test_mode:
                 yield (patches_x)
@@ -752,7 +752,7 @@ def train_unet():
 
     # train without augmentation (easier)
     hist = model.fit_generator(
-        unet_patch_gen(training_indices, 1, augmentMode='affine'),
+        unet_patch_gen(training_indices, 1, augmentMode='flip'),
         len(training_indices),
         epochs=1000,
         verbose=1,

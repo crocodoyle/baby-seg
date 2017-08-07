@@ -262,7 +262,7 @@ def unet_patch():
     conv9 = Conv3D(64, big_conv_size, activation='relu', padding='same')(up9)
     bn9 = BatchNormalization()(conv9)
 
-    skip10 = concatenate([pool4, bn8])
+    skip10 = concatenate([pool4, bn9])
     up10 = UpSampling3D(size=pool_size)(skip10)
     conv10 = Conv3D(64, big_conv_size, activation='relu', padding='same')(up10)
     bn10 = BatchNormalization()(conv10)

@@ -248,7 +248,7 @@ def unet_patch():
     bn5 = BatchNormalization()(conv5)
     pool5 = MaxPooling3D(pool_size=pool_size)(bn5)
 
-    conv6 = Conv3D(32, big_conv_size, activation='relu', padding='same')(pool5)
+    conv6 = Conv3D(32, small_conv_size, activation='relu', padding='same')(pool5)
     # drop6 = Dropout(0.5)(conv6)
     # conv7 = Conv3D(32, small_conv_size, activation='relu', padding='same')(pool5)
     # drop7 = Dropout(0.5)(conv7)

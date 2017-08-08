@@ -228,7 +228,7 @@ def unet_patch():
 
     inputs = Input(shape=(80, 80, 80, 2))
 
-    conv1 = Conv3D(8, big_conv_size, activation='relu', padding='same')(inputs)
+    conv1 = Conv3D(16, big_conv_size, activation='relu', padding='same')(inputs)
     bn1 = BatchNormalization()(conv1)
     pool1 = MaxPooling3D(pool_size=pool_size)(bn1)
 

@@ -233,14 +233,17 @@ def unet_patch():
     pool1 = MaxPooling3D(pool_size=pool_size)(bn1)
 
     conv2 = Conv3D(16, big_conv_size, activation='relu', padding='same')(pool1)
+    conv2 = Conv3D(16, big_conv_size, activation='relu', padding='same')(conv2)
     bn2 = BatchNormalization()(conv2)
     pool2 = MaxPooling3D(pool_size=pool_size)(bn2)
 
     conv3 = Conv3D(16, big_conv_size, activation='relu', padding='same')(pool2)
+    conv3 = Conv3D(16, big_conv_size, activation='relu', padding='same')(conv3)
     bn3 = BatchNormalization()(conv3)
     pool3 = MaxPooling3D(pool_size=pool_size)(bn3)
 
     conv4 = Conv3D(16, big_conv_size, activation='relu', padding='same')(pool3)
+    conv4 = Conv3D(16, big_conv_size, activation='relu', padding='same')(conv4)
     bn4 = BatchNormalization()(conv4)
     pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
 
@@ -264,25 +267,30 @@ def unet_patch():
 
     skip10 = concatenate([pool4, bn8])
     up10 = UpSampling3D(size=pool_size)(skip10)
-    conv10 = Conv3D(64, big_conv_size, activation='relu', padding='same')(up10)
+    conv10 = Conv3D(32, big_conv_size, activation='relu', padding='same')(up10)
+    conv10 = Conv3D(32, big_conv_size, activation='relu', padding='same')(conv10)
     bn10 = BatchNormalization()(conv10)
 
     skip11 = concatenate([pool3, bn10])
     up11 = UpSampling3D(size=pool_size)(skip11)
-    conv11 = Conv3D(64, big_conv_size, activation='relu', padding='same')(up11)
+    conv11 = Conv3D(32, big_conv_size, activation='relu', padding='same')(up11)
+    conv11 = Conv3D(32, big_conv_size, activation='relu', padding='same')(conv11)
     bn11 = BatchNormalization()(conv11)
 
     skip12 = concatenate([pool2, bn11])
     up12 = UpSampling3D(size=pool_size)(skip12)
-    conv12 = Conv3D(128, big_conv_size, activation='relu', padding='same')(up12)
+    conv12 = Conv3D(32, big_conv_size, activation='relu', padding='same')(up12)
+    conv12 = Conv3D(32, big_conv_size, activation='relu', padding='same')(conv12)
     bn12 = BatchNormalization()(conv12)
 
     skip13 = concatenate([pool1, bn12])
     up13 = UpSampling3D(size=pool_size)(skip13)
-    conv13 = Conv3D(256, big_conv_size, activation='relu', padding='same')(up13)
+    conv13 = Conv3D(64, big_conv_size, activation='relu', padding='same')(up13)
+    conv13 = Conv3D(64, big_conv_size, activation='relu', padding='same')(conv13)
     bn13 = BatchNormalization()(conv13)
 
     conv14 = Conv3D(64, small_conv_size, activation='relu', padding='same')(bn13)
+    conv14 = Conv3D(64, small_conv_size, activation='relu', padding='same')(conv14)
     drop14 = Dropout(0.1)(conv14)
     bn14 = BatchNormalization()(drop14)
     conv15 = Conv3D(32, small_conv_size, activation='relu', padding='same')(bn14)

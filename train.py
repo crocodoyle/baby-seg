@@ -228,22 +228,22 @@ def unet_patch():
 
     inputs = Input(shape=(80, 80, 80, 2))
 
-    conv1 = Conv3D(16, big_conv_size, activation='relu', padding='same')(inputs)
+    conv1 = Conv3D(32, big_conv_size, activation='relu', padding='same')(inputs)
     bn1 = BatchNormalization()(conv1)
     pool1 = MaxPooling3D(pool_size=pool_size)(bn1)
 
-    conv2 = Conv3D(16, big_conv_size, activation='relu', padding='same')(pool1)
-    conv2 = Conv3D(16, big_conv_size, activation='relu', padding='same')(conv2)
+    conv2 = Conv3D(32, big_conv_size, activation='relu', padding='same')(pool1)
+    conv2 = Conv3D(32, big_conv_size, activation='relu', padding='same')(conv2)
     bn2 = BatchNormalization()(conv2)
     pool2 = MaxPooling3D(pool_size=pool_size)(bn2)
 
-    conv3 = Conv3D(16, big_conv_size, activation='relu', padding='same')(pool2)
-    conv3 = Conv3D(16, big_conv_size, activation='relu', padding='same')(conv3)
+    conv3 = Conv3D(32, big_conv_size, activation='relu', padding='same')(pool2)
+    conv3 = Conv3D(32, big_conv_size, activation='relu', padding='same')(conv3)
     bn3 = BatchNormalization()(conv3)
     pool3 = MaxPooling3D(pool_size=pool_size)(bn3)
 
-    conv4 = Conv3D(16, big_conv_size, activation='relu', padding='same')(pool3)
-    conv4 = Conv3D(16, big_conv_size, activation='relu', padding='same')(conv4)
+    conv4 = Conv3D(32, big_conv_size, activation='relu', padding='same')(pool3)
+    conv4 = Conv3D(32, big_conv_size, activation='relu', padding='same')(conv4)
     bn4 = BatchNormalization()(conv4)
     pool4 = MaxPooling3D(pool_size=pool_size)(bn4)
 

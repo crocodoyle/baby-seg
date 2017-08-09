@@ -722,13 +722,13 @@ def train_unet():
     images = f['images']
     labels = f['labels']
 
-    training_indices = list(range(8))
-    validation_indices = [8, 9]
+    training_indices = list(range(10))
+    validation_indices = [9]
     testing_indices = list(range(10, 23))
     ibis_indices = list(range(24, 72))
 
-    training_indices = training_indices + ibis_indices[0:5]
-    validation_indices = validation_indices + ibis_indices[7:8]
+    # training_indices = training_indices + ibis_indices[0:5]
+    # validation_indices = validation_indices + ibis_indices[7:8]
 
     print('training images:', training_indices)
     print('validation images:', validation_indices)

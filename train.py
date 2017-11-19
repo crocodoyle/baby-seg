@@ -783,7 +783,7 @@ def train_unet():
     model_checkpoint = ModelCheckpoint(results_directory + 'best_patch_unet_model.hdf5', monitor="val_dice_coef",
                                        save_best_only=True, save_weights_only=False, mode='max')
     confusion_callback = ConfusionCallback()
-    segvis_callback = SegVisCallback(results_directory)
+    segvis_callback = SegVisCallback()
     tensorboard = TensorBoard(scratch_dir)
     lr_sched = lr_scheduler(model)
 

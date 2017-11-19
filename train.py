@@ -75,6 +75,7 @@ class SegVisCallback(Callback):
 
         # predicted = model.predict(self.images[0, ...][np.newaxis, ...], batch_size=1)
         segmentation = from_categorical(predicted, category_mapping)
+        print('segmentation shape:', segmentation.shape)
 
         slice = segmentation[:, :, 64].T
         self.segmentations.append(slice)

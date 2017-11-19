@@ -51,14 +51,14 @@ import math
 scratch_dir = '/data1/data/iSeg-2017/'
 input_file = scratch_dir + 'baby-seg.hdf5'
 
-results_directory = ''
-
 category_mapping = [0, 10, 150, 250]
 img_shape = (144, 192, 128)
 
 n_tissues = 4
 
 patch_shape = (80, 80, 80)
+
+results_directory = ''
 
 class SegVisCallback(Callback):
 
@@ -83,7 +83,8 @@ class SegVisCallback(Callback):
     def on_train_end(self, logs={}):
 
         for i, seg in enumerate(self.segmentations):
-            plt.imsave(os.path.join(results_directory, 'segmentations', 'example_segmentation_' + str(i).zfill(4) + '.png'), seg)
+            plt.axis('off')
+            plt.imsave(results_directory + '/segmentations/example_segmentation_' + str(i).zfill(4) + '.png', seg)
 
         images = []
         for filename in sorted(os.listdir(os.path.join(results_directory, 'segmentations'))):
@@ -752,6 +753,7 @@ def train_unet():
     ibis_indices = list(range(24, 72))
 
     results_dir, experiment_number = setup_experiment(scratch_dir)
+    global results_directory
     results_directory = results_dir
 
     # training_indices = training_indices + ibis_indices[0:5]
@@ -781,7 +783,7 @@ def train_unet():
     model_checkpoint = ModelCheckpoint(results_directory + 'best_patch_unet_model.hdf5', monitor="val_dice_coef",
                                        save_best_only=True, save_weights_only=False, mode='max')
     confusion_callback = ConfusionCallback()
-    segvis_callback = SegVisCallback()
+    segvis_callback = SegVisCallback(results_directory)
     tensorboard = TensorBoard(scratch_dir)
     lr_sched = lr_scheduler(model)
 

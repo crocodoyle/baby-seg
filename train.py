@@ -74,10 +74,10 @@ class SegVisCallback(Callback):
         predicted = predict_whole_image(0, model)
 
         # predicted = model.predict(self.images[0, ...][np.newaxis, ...], batch_size=1)
-        segmentation = from_categorical(predicted, category_mapping)
-        print('segmentation shape:', segmentation.shape)
+        # segmentation = from_categorical(predicted, category_mapping)
+        # print('segmentation shape:', segmentation.shape)
 
-        slice = segmentation[:, :, 64].T
+        slice = predicted[:, :, 64].T
         self.segmentations.append(slice)
 
     def on_train_end(self, logs={}):

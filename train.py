@@ -6,6 +6,8 @@ from keras.layers import concatenate, add, multiply
 from keras.optimizers import SGD, Adam
 from keras.callbacks import ModelCheckpoint, TensorBoard, LearningRateScheduler
 
+import pickle
+
 # from keras.utils.visualize_util import plot
 from keras.callbacks import Callback
 from keras import backend as K
@@ -49,6 +51,8 @@ import math
 scratch_dir = '/data1/data/iSeg-2017/'
 input_file = scratch_dir + 'baby-seg.hdf5'
 
+results_directory = ''
+
 category_mapping = [0, 10, 150, 250]
 img_shape = (144, 192, 128)
 
@@ -67,7 +71,9 @@ class SegVisCallback(Callback):
     def on_epoch_end(self, batch, logs={}):
         model = self.model
 
-        predicted = model.predict(self.images[9, ...][np.newaxis, ...], batch_size=1)
+        predicted = predict_whole_image(0, model)
+
+        # predicted = model.predict(self.images[0, ...][np.newaxis, ...], batch_size=1)
         segmentation = from_categorical(predicted, category_mapping)
 
         slice = segmentation[:, :, 64].T
@@ -76,14 +82,14 @@ class SegVisCallback(Callback):
     def on_train_end(self, logs={}):
 
         for i, seg in enumerate(self.segmentations):
-            plt.imsave(os.path.join(scratch_dir, 'segmentations', 'example_segmentation_' + str(i).zfill(4) + '.png'), seg)
+            plt.imsave(os.path.join(results_directory, 'segmentations', 'example_segmentation_' + str(i).zfill(4) + '.png'), seg)
 
         images = []
-        for filename in sorted(os.listdir(os.path.join(scratch_dir, 'segmentations'))):
+        for filename in sorted(os.listdir(os.path.join(results_directory, 'segmentations'))):
             if '.png' in filename:
-                images.append(plt.imread(os.path.join(scratch_dir, 'segmentations', filename)))
+                images.append(plt.imread(os.path.join(results_directory, 'segmentations', filename)))
 
-        imageio.mimsave(os.path.join(scratch_dir, 'segmentations', 'segmentation.gif'), images)
+        imageio.mimsave(os.path.join(results_directory, 'segmentations', 'segmentation.gif'), images)
 
 
 class ConfusionCallback(Callback):
@@ -640,10 +646,7 @@ def label_batch(indices):
             yield (label[np.newaxis, ...], label[np.newaxis, ...])
 
 
-def predict_whole_image(index):
-    model = unet_patch()
-    model.load_weights(scratch_dir + 'unet-3d-patch-iseg2017.hdf5')
-
+def predict_whole_image(index, model):
     prediction = np.zeros((192, 192, 128, 4), dtype='uint8')
 
     f = h5py.File(input_file)
@@ -690,7 +693,10 @@ def predict_images_with_patches(validation_indices, testing_indices):
     affine[1, 1] = -1
 
     for i in validation_indices + testing_indices:
-        predicted = predict_whole_image(i)
+        model = unet_patch()
+        model.load_weights(results_directory + 'unet-3d-patch-iseg2017.hdf5')
+
+        predicted = predict_whole_image(i, model)
 
         segmentation_padded = np.pad(predicted, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=0)
         print(predicted.shape)
@@ -713,9 +719,25 @@ def visualize_training_dice(hist):
     plt.xlabel("Training Epoch Number")
     plt.ylabel("Score")
     plt.tight_layout()
-    plt.savefig(scratch_dir + 'results.png')
+    plt.savefig(results_directory + 'results.png')
     plt.close()
 
+def setup_experiment(workdir):
+    try:
+        experiment_number = pickle.load(open(workdir + 'experiment_number.pkl', 'rb'))
+        experiment_number += 1
+    except:
+        print('Couldnt find the file to load experiment number')
+        experiment_number = 0
+
+    print('This is experiment number:', experiment_number)
+
+    results_dir = workdir + '/experiment-' + str(experiment_number) + '/'
+    os.makedirs(results_dir)
+
+    pickle.dump(experiment_number, open(workdir + 'experiment_number.pkl', 'wb'))
+
+    return results_dir, experiment_number
 
 def train_unet():
     f = h5py.File(input_file)
@@ -726,6 +748,9 @@ def train_unet():
     validation_indices = [9]
     testing_indices = list(range(10, 23))
     ibis_indices = list(range(24, 72))
+
+    results_dir, experiment_number = setup_experiment(scratch_dir)
+    results_directory = results_dir
 
     # training_indices = training_indices + ibis_indices[0:5]
     # validation_indices = validation_indices + ibis_indices[7:8]
@@ -743,7 +768,7 @@ def train_unet():
     model = unet_patch()
 
     sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
-    adam = Adam()
+    adam = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=1e-6)
 
     model.compile(optimizer=adam, loss=dice_coef_loss, metrics=[dice_coef])
 
@@ -751,7 +776,7 @@ def train_unet():
 
     # print('model', dir(model))
 
-    model_checkpoint = ModelCheckpoint(scratch_dir + 'best_patch_unet_model.hdf5', monitor="val_dice_coef",
+    model_checkpoint = ModelCheckpoint(results_directory + 'best_patch_unet_model.hdf5', monitor="val_dice_coef",
                                        save_best_only=True, save_weights_only=False, mode='max')
     confusion_callback = ConfusionCallback()
     segvis_callback = SegVisCallback()
@@ -762,20 +787,19 @@ def train_unet():
     hist = model.fit_generator(
         unet_patch_gen(training_indices, 1, augmentMode='flip'),
         len(training_indices),
-        epochs=1000,
+        epochs=200,
         verbose=1,
-        callbacks=[model_checkpoint, tensorboard, lr_sched],
+        callbacks=[model_checkpoint, segvis_callback],
         validation_data=unet_patch_gen(validation_indices, 1),
         validation_steps=len(validation_indices)*3)
 
-    model.load_weights(scratch_dir + 'best_patch_unet_model.hdf5')
-    model.save(scratch_dir + 'unet-3d-patch-iseg2017.hdf5')
+    model.load_weights(results_directory + 'best_patch_unet_model.hdf5')
+    model.save(results_directory + 'unet-3d-patch-iseg2017.hdf5')
 
     for i in training_indices + validation_indices + testing_indices:
-        predicted = predict_whole_image(i)
+        predicted = predict_whole_image(i, model)
         image = nib.Nifti1Image(predicted, affine)
-        nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
-
+        nib.save(image, results_directory + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
 
     visualize_training_dice(hist)
 

@@ -735,6 +735,7 @@ def setup_experiment(workdir):
 
     results_dir = workdir + '/experiment-' + str(experiment_number) + '/'
     os.makedirs(results_dir)
+    os.makedirs(results_dir + 'segmentations/')
 
     pickle.dump(experiment_number, open(workdir + 'experiment_number.pkl', 'wb'))
 

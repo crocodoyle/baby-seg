@@ -73,16 +73,14 @@ class SegVisCallback(Callback):
 
         predicted = predict_whole_image(0, model)
 
-        global results_directory
-
-        img = nib.Nifti2Image(predicted, np.eye(4))
+        img = nib.Nifti1Image(predicted, np.eye(4))
         nib.save(img, results_directory + 'example-' + str(len(self.segmentations)) + '.nii.gz')
 
         # predicted = model.predict(self.images[0, ...][np.newaxis, ...], batch_size=1)
         # segmentation = from_categorical(predicted, category_mapping)
         # print('segmentation shape:', segmentation.shape)
 
-        slice = predicted[:, :, 64].T
+        slice = np.uint8((predicted[:, :, 64].T)*255)
         self.segmentations.append(slice)
 
     def on_train_end(self, logs={}):

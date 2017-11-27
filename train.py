@@ -48,7 +48,7 @@ from scipy.ndimage.interpolation import affine_transform
 import transformations as t
 import math
 
-scratch_dir = '/data1/data/iSeg-2017/'
+scratch_dir = '/data1/users/adoyle/iSeg-2017/'
 input_file = scratch_dir + 'baby-seg.hdf5'
 
 category_mapping = [0, 10, 150, 250]
@@ -72,6 +72,11 @@ class SegVisCallback(Callback):
         model = self.model
 
         predicted = predict_whole_image(0, model)
+
+        global results_directory
+
+        img = nib.Nifti2Image(predicted, np.eye(4))
+        nib.save(img, results_directory + 'example-' + len(self.segmentations) + '.nii.gz')
 
         # predicted = model.predict(self.images[0, ...][np.newaxis, ...], batch_size=1)
         # segmentation = from_categorical(predicted, category_mapping)
@@ -676,16 +681,8 @@ def predict_whole_image(index, model):
                 except IndexError as e:
                     print('bad index', e)
 
-    # img = nib.Nifti1Image(np.add(prediction[..., 2], prediction[..., 3]), np.eye(4))
-    # nib.save(img, scratch_dir + 'test.nii.gz')
-
     segmentation = from_categorical(prediction[:-48, :, :], category_mapping)
     segmentation = np.pad(segmentation, ((0, 0), (0, 0), (80, 48)), mode='constant')
-
-    # int_predictions = np.argmax(np.pad(prediction[:-48, :, :], ((0, 0), (0, 0), (80, 48), (0, 0)), mode='constant'), axis=-1)
-    # category_predictions = [category_mapping[i] for i in int_predictions]
-
-    # segmentation = np.asarray(np.reshape(category_predictions, img_shape), dtype='uint8')
 
     return segmentation
 

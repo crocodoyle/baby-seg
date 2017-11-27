@@ -76,7 +76,7 @@ class SegVisCallback(Callback):
         global results_directory
 
         img = nib.Nifti2Image(predicted, np.eye(4))
-        nib.save(img, results_directory + 'example-' + len(self.segmentations) + '.nii.gz')
+        nib.save(img, results_directory + 'example-' + str(len(self.segmentations)) + '.nii.gz')
 
         # predicted = model.predict(self.images[0, ...][np.newaxis, ...], batch_size=1)
         # segmentation = from_categorical(predicted, category_mapping)

@@ -652,57 +652,61 @@ def label_batch(indices):
 
 
 def predict_whole_image(index, model):
-    prediction = np.zeros((192, 192, 128, 4), dtype='uint8')
+    prediction = np.zeros((192, 192, 128, 4), dtype='float32')
 
-    f = h5py.File(input_file)
-    images = f['images']
+    with h5py.File(input_file) as f:
+        images = f['images']
 
-    test_image = images[index, ...]
+        test_image = np.pad(images[index, ...], ((8, 56), (8, 8), (8, 8), (0, 0)), mode='constant')
+        print('test img shape:', test_image.shape)
 
-    test_image = np.pad(images[index, ...], ((8, 56), (8, 8), (8, 8), (0, 0)), mode='constant')
-    print('test img shape:', test_image.shape)
+        # print('images to predict:', input_images.shape)
 
-    # print('images to predict:', input_images.shape)
+        for i in range(test_image.shape[0] // 64):
+            for j in range(test_image.shape[1] // 64):
+                for k in range(test_image.shape[2] // 64):
+                    try:
+                        input_image = test_image[(i*64):(i+1)*64+16, (j*64):(j+1)*64+16, (k*64):(k+1)*64+16][np.newaxis, ...]
 
-    for i in range(test_image.shape[0] // 64):
-        for j in range(test_image.shape[1] // 64):
-            for k in range(test_image.shape[2] // 64):
-                try:
-                    input_image = test_image[(i*64):(i+1)*64+16, (j*64):(j+1)*64+16, (k*64):(k+1)*64+16][np.newaxis, ...]
+                        # orig[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = test_image[(i*64):(i*64)+80, (j*64):(j*64)+80, (k*64):(k*64)+80][8:-8, 8:-8, 8:-8, 0]
 
-                    # orig[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = test_image[(i*64):(i*64)+80, (j*64):(j*64)+80, (k*64):(k*64)+80][8:-8, 8:-8, 8:-8, 0]
+                        # print('x range', i*64, i*64+80, 'y range', j*64, j*64+80, 'z range', k*64, k*64+80)
+                        # print('x dest', i*64, (i+1)*64, 'y dest', j*64, (j+1)*64, 'z dest', k*64, (k+1)*64)
 
-                    # print('x range', i*64, i*64+80, 'y range', j*64, j*64+80, 'z range', k*64, k*64+80)
-                    # print('x dest', i*64, (i+1)*64, 'y dest', j*64, (j+1)*64, 'z dest', k*64, (k+1)*64)
+                        prediction[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = model.predict(input_image)
+                    except IndexError as e:
+                        print('bad index', e)
 
-                    prediction[i*64:(i+1)*64, j*64:(j+1)*64, k*64:(k+1)*64] = model.predict(input_image)
-                except IndexError as e:
-                    print('bad index', e)
+        segmentation = from_categorical(prediction[:-48, :, :], category_mapping)
+        segmentation = np.pad(segmentation, ((0, 0), (0, 0), (80, 48)), mode='constant')
 
-    segmentation = from_categorical(prediction[:-48, :, :], category_mapping)
-    segmentation = np.pad(segmentation, ((0, 0), (0, 0), (80, 48)), mode='constant')
+        return segmentation
 
-    return segmentation
 
 def predict_images_with_patches(validation_indices, testing_indices):
-    affine = np.eye(4)
-    affine[0, 0] = -1
-    affine[1, 1] = -1
+    with h5py.File(input_file) as f:
+        images = f['MRI']
+        labels = f['labels']
 
-    for i in validation_indices + testing_indices:
-        model = unet_patch()
-        model.load_weights(results_directory + 'unet-3d-patch-iseg2017.hdf5')
+        affine = np.eye(4)
+        affine[0, 0] = -1
+        affine[1, 1] = -1
 
-        predicted = predict_whole_image(i, model)
+        for i in validation_indices + testing_indices:
+            model = unet_patch()
+            model.load_weights(results_directory + 'unet-3d-patch-iseg2017.hdf5')
 
-        segmentation_padded = np.pad(predicted, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=0)
-        print(predicted.shape)
-        image = nib.Nifti1Image(segmentation_padded[..., np.newaxis], affine)
-        nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
+            predicted = predict_whole_image(i, model)
 
-        if i in validation_indices:
-            # print(final_dice_score(labels[i, ..., 0], segmentation))
-            print(confusion_matrix(labels[i, ..., 0].flatten(), predicted.flatten()))
+            segmentation_padded = np.pad(predicted, pad_width=((0, 0), (0, 0), (80, 48)), mode='constant', constant_values=0)
+            print(predicted.shape)
+            image = nib.Nifti1Image(segmentation_padded[..., np.newaxis], affine)
+            nib.save(image, scratch_dir + 'babylabels' + str(i+1).zfill(2) + '.nii.gz')
+
+            if i in validation_indices:
+                # print(final_dice_score(labels[i, ..., 0], segmentation))
+                print(confusion_matrix(labels[i, ..., 0].flatten(), predicted.flatten()))
+
 
 def visualize_training_dice(hist):
     epoch_num = range(len(hist.history['dice_coef']))
@@ -738,9 +742,6 @@ def setup_experiment(workdir):
     return results_dir, experiment_number
 
 def train_unet():
-    f = h5py.File(input_file)
-    images = f['images']
-    labels = f['labels']
 
     training_indices = list(range(10))
     validation_indices = [9]
@@ -804,8 +805,4 @@ def train_unet():
 
 
 if __name__ == "__main__":
-    f = h5py.File(input_file)
-    images = f['images']
-    labels = f['labels']
-
     train_unet()

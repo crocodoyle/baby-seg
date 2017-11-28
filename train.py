@@ -69,22 +69,29 @@ class SegVisCallback(Callback):
         self.images = self.f['images']
         self.labels = self.f['labels']
 
-        print(self.images[0, :, :, 64, 0].shape)
+        print(self.images[0, :, :, 64, 0].shape, self.images[0, :, :, 64, 0].dtype)
 
-        plt.imshow(self.images[0, :, :, 64, 0])
+        t1 = self.images[0, :, :, 64, 0]
+        t2 = self.images[0, :, :, 64, 1]
+        segment = self.labels[0, :, :, 64, 0]
+
+        plt.imshow(np.float32(t1), origin='lower')
         plt.axis('off')
         plt.tight_layout()
         plt.savefig(results_directory + 'example_t1.png')
+        plt.close()
 
-        plt.imshow(self.images[0, :, :, 64, 1])
+        plt.imshow(np.float32(t2), origin='lower')
         plt.axis('off')
         plt.tight_layout()
         plt.savefig(results_directory + 'example_t2.png')
+        plt.close()
 
-        plt.imshow(self.labels[0, :, :, 64, 0])
+        plt.imshow(np.uint8(segment), origin='lower')
         plt.axis('off')
         plt.tight_layout()
         plt.savefig(results_directory + 'example_labels.png')
+        plt.close()
 
 
     def on_epoch_end(self, batch, logs={}):

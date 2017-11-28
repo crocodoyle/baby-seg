@@ -90,7 +90,7 @@ class SegVisCallback(Callback):
             plt.imshow(seg, origin='lower')
             plt.axis('off')
             plt.tight_layout()
-            plt.savefig(results_directory + '/segmentations/example_segmentation_' + str(i).zfill(4) + '.png', seg)
+            plt.savefig(results_directory + '/segmentations/example_segmentation_' + str(i).zfill(4) + '.png')
 
         images = []
         for filename in sorted(os.listdir(os.path.join(results_directory, 'segmentations'))):

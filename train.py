@@ -71,17 +71,17 @@ class SegVisCallback(Callback):
 
         print(self.images[0, :, :, 64, 0].shape, self.images[0, :, :, 64, 0].dtype)
 
-        t1 = self.images[0, :, :, 64, 0]
-        t2 = self.images[0, :, :, 64, 1]
-        segment = self.labels[0, :, :, 64, 0]
+        t1 = self.images[0, :, :, 64, 0].T
+        t2 = self.images[0, :, :, 64, 1].T
+        segment = self.labels[0, :, :, 64, 0].T
 
-        plt.imshow(np.float32(t1), origin='lower')
+        plt.imshow(np.float32(t1), origin='lower', cmap='gray')
         plt.axis('off')
         plt.tight_layout()
         plt.savefig(results_directory + 'example_t1.png')
         plt.close()
 
-        plt.imshow(np.float32(t2), origin='lower')
+        plt.imshow(np.float32(t2), origin='lower', cmap='gray')
         plt.axis('off')
         plt.tight_layout()
         plt.savefig(results_directory + 'example_t2.png')
@@ -138,20 +138,21 @@ class ConfusionCallback(Callback):
     def on_epoch_end(self, batch, logs={}):
         model = self.model
 
-        conf = np.zeros((len(category_mapping),len(category_mapping)))
-
         predicted = predict_whole_image(0, model)
         segmentation = from_categorical(predicted, category_mapping)
 
         y_true = self.labels[0, ..., 0].flatten()
         y_pred = segmentation.flatten()
 
+
+        print(self.labels[0, ..., 0].shape, segmentation.shape)
+
         conf = confusion_matrix(y_true, y_pred)
 
-        print("------")
-        print('confusion matrix:', category_mapping)
-        print(conf)
-        print("------")
+        # print("------")
+        # print('confusion matrix:', category_mapping)
+        # print(conf)
+        # print("------")
 
         self.confusion.append(conf)
 

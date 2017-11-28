@@ -79,7 +79,7 @@ class SegVisCallback(Callback):
         plt.tight_layout()
         plt.savefig(results_directory + 'example_t2.png')
 
-        plt.imshow(self.labels[0, :, :, 64])
+        plt.imshow(self.labels[0, :, :, 64, 0])
         plt.axis('off')
         plt.tight_layout()
         plt.savefig(results_directory + 'example_labels.png')
@@ -133,17 +133,13 @@ class ConfusionCallback(Callback):
 
         conf = np.zeros((len(category_mapping),len(category_mapping)))
 
-        print('\n')
-        for i in range(1):
-            predicted = model.predict(self.images[i,...][np.newaxis, ...], batch_size=1)
-            segmentation = from_categorical(predicted, category_mapping)
+        predicted = predict_whole_image(0, model)
+        segmentation = from_categorical(predicted, category_mapping)
 
-            y_true = self.labels[i, ..., 0].flatten()
-            y_pred = segmentation.flatten()
+        y_true = self.labels[0, ..., 0].flatten()
+        y_pred = segmentation.flatten()
 
-            conf = confusion_matrix(y_true, y_pred)
-
-            # print(conf)
+        conf = confusion_matrix(y_true, y_pred)
 
         print("------")
         print('confusion matrix:', category_mapping)

@@ -66,7 +66,7 @@ class SegVisCallback(Callback):
         self.segmentations = []
 
         self.f = h5py.File(input_file)
-        self.images = f['images']
+        self.images = self.f['images']
 
     def on_epoch_end(self, batch, logs={}):
         model = self.model

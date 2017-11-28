@@ -72,6 +72,7 @@ class SegVisCallback(Callback):
         model = self.model
 
         predicted = predict_whole_image(0, model)
+        # print(predicted.shape, predicted.dtype)
 
         img = nib.Nifti1Image(predicted, np.eye(4))
         nib.save(img, results_directory + 'example-' + str(len(self.segmentations)) + '.nii.gz')
@@ -86,7 +87,7 @@ class SegVisCallback(Callback):
     def on_train_end(self, logs={}):
 
         for i, seg in enumerate(self.segmentations):
-            plt.imshow(slice, origin='lower')
+            plt.imshow(seg, origin='lower')
             plt.axis('off')
             plt.tight_layout()
             plt.savefig(results_directory + '/segmentations/example_segmentation_' + str(i).zfill(4) + '.png', seg)

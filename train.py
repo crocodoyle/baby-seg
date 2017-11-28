@@ -139,12 +139,12 @@ class ConfusionCallback(Callback):
         model = self.model
 
         predicted = predict_whole_image(0, model)
-        segmentation = from_categorical(predicted, category_mapping)
+        # segmentation = from_categorical(predicted, category_mapping)
 
         y_true = self.labels[0, ..., 0].flatten()
-        y_pred = segmentation.flatten()
+        y_pred = predicted.flatten()
 
-        print(self.labels[0, ..., 0].shape, segmentation.shape, predicted.shape)
+        # print(self.labels[0, ..., 0].shape, predicted.shape)
 
         conf = confusion_matrix(y_true, y_pred)
 

@@ -81,7 +81,7 @@ class SegVisCallback(Callback):
         # print('segmentation shape:', segmentation.shape)
 
         slice = predicted[:, :, 64]
-        self.segmentations.append(slice)
+        self.segmentations.append(slice[..., np.newaxis])
 
     def on_train_end(self, logs={}):
 

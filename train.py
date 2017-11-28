@@ -75,19 +75,19 @@ class SegVisCallback(Callback):
         t2 = self.images[0, :, :, 64, 1].T
         segment = self.labels[0, :, :, 64, 0].T
 
-        plt.imshow(np.float32(t1), origin='lower', cmap='gray')
+        plt.imshow(np.float32(t1), cmap='gray')
         plt.axis('off')
         plt.tight_layout()
         plt.savefig(results_directory + 'example_t1.png')
         plt.close()
 
-        plt.imshow(np.float32(t2), origin='lower', cmap='gray')
+        plt.imshow(np.float32(t2), cmap='gray')
         plt.axis('off')
         plt.tight_layout()
         plt.savefig(results_directory + 'example_t2.png')
         plt.close()
 
-        plt.imshow(np.uint8(segment), origin='lower')
+        plt.imshow(np.uint8(segment))
         plt.axis('off')
         plt.tight_layout()
         plt.savefig(results_directory + 'example_labels.png')

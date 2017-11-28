@@ -142,7 +142,7 @@ class ConfusionCallback(Callback):
         # segmentation = from_categorical(predicted, category_mapping)
 
         y_true = self.labels[0, ..., 0].flatten()
-        y_pred = predicted.flatten()
+        y_pred = predicted[:, :, 80:-48].flatten()
 
         # print(self.labels[0, ..., 0].shape, predicted.shape)
 

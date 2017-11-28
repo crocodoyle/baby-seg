@@ -80,14 +80,16 @@ class SegVisCallback(Callback):
         # segmentation = from_categorical(predicted, category_mapping)
         # print('segmentation shape:', segmentation.shape)
 
-        slice = predicted[:, :, 64].T
+        slice = predicted[:, :, 64]
         self.segmentations.append(slice)
 
     def on_train_end(self, logs={}):
 
         for i, seg in enumerate(self.segmentations):
+            plt.imshow(slice, origin='lower')
             plt.axis('off')
-            plt.imsave(results_directory + '/segmentations/example_segmentation_' + str(i).zfill(4) + '.png', seg)
+            plt.tight_layout()
+            plt.savefig(results_directory + '/segmentations/example_segmentation_' + str(i).zfill(4) + '.png', seg)
 
         images = []
         for filename in sorted(os.listdir(os.path.join(results_directory, 'segmentations'))):

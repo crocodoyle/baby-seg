@@ -144,8 +144,7 @@ class ConfusionCallback(Callback):
         y_true = self.labels[0, ..., 0].flatten()
         y_pred = segmentation.flatten()
 
-
-        print(self.labels[0, ..., 0].shape, segmentation.shape)
+        print(self.labels[0, ..., 0].shape, segmentation.shape, predicted.shape)
 
         conf = confusion_matrix(y_true, y_pred)
 

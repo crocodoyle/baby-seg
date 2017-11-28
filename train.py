@@ -137,15 +137,15 @@ class ConfusionCallback(Callback):
         tissue_classes = ["BG", "CSF", "GM", "WM"]
 
         for epoch, conf in enumerate(self.confusion):
-            filename = os.path.join(scratch_dir, 'confusion', 'confusion_' + str(epoch).zfill(4) + '.png')
+            filename = os.path.join(results_directory, 'confusion', 'confusion_' + str(epoch).zfill(4) + '.png')
             save_confusion_matrix(conf, tissue_classes, filename)
 
         images = []
         for filename in os.listdir(os.path.join(scratch_dir, 'confusion')):
             if '.png' in filename and not 'results' in filename:
-                images.append(plt.imread(os.path.join(scratch_dir, 'confusion', filename)))
+                images.append(plt.imread(os.path.join(results_directory, 'confusion', filename)))
 
-            # imageio.mimsave(os.path.join(scratch_dir, 'confusion', 'confusion.gif'), images)
+            imageio.mimsave(os.path.join(results_directory, 'confusion', 'confusion.gif'), images)
 
 
 def model_checkpoint(filename):
@@ -739,6 +739,7 @@ def setup_experiment(workdir):
     results_dir = workdir + '/experiment-' + str(experiment_number) + '/'
     os.makedirs(results_dir)
     os.makedirs(results_dir + 'segmentations/')
+    os.makedirs(results_dir + 'confusion/')
 
     pickle.dump(experiment_number, open(workdir + 'experiment_number.pkl', 'wb'))
 
@@ -792,7 +793,7 @@ def train_unet():
         len(training_indices),
         epochs=200,
         verbose=1,
-        callbacks=[model_checkpoint, segvis_callback],
+        callbacks=[model_checkpoint, segvis_callback, confusion_callback],
         validation_data=unet_patch_gen(validation_indices, 1),
         validation_steps=len(validation_indices)*3)
 

@@ -69,6 +69,8 @@ class SegVisCallback(Callback):
         self.images = self.f['images']
         self.labels = self.f['labels']
 
+        print(self.images[0, :, :, 64, 0].shape)
+
         plt.imshow(self.images[0, :, :, 64, 0])
         plt.axis('off')
         plt.tight_layout()
@@ -125,8 +127,6 @@ class ConfusionCallback(Callback):
         f = h5py.File(input_file)
         self.images = f['images']
         self.labels = f['labels']
-
-
 
     def on_epoch_end(self, batch, logs={}):
         model = self.model

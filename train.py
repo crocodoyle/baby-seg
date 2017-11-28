@@ -67,6 +67,23 @@ class SegVisCallback(Callback):
 
         self.f = h5py.File(input_file)
         self.images = self.f['images']
+        self.labels = self.f['labels']
+
+        plt.imshow(self.images[0, :, :, 64, 0])
+        plt.axis('off')
+        plt.tight_layout()
+        plt.savefig(results_directory + 'example_t1.png')
+
+        plt.imshow(self.images[0, :, :, 64, 1])
+        plt.axis('off')
+        plt.tight_layout()
+        plt.savefig(results_directory + 'example_t2.png')
+
+        plt.imshow(self.labels[0, :, :, 64])
+        plt.axis('off')
+        plt.tight_layout()
+        plt.savefig(results_directory + 'example_labels.png')
+
 
     def on_epoch_end(self, batch, logs={}):
         model = self.model
@@ -108,6 +125,8 @@ class ConfusionCallback(Callback):
         f = h5py.File(input_file)
         self.images = f['images']
         self.labels = f['labels']
+
+
 
     def on_epoch_end(self, batch, logs={}):
         model = self.model

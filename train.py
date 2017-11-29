@@ -107,7 +107,7 @@ class SegVisCallback(Callback):
         # segmentation = from_categorical(predicted, category_mapping)
         # print('segmentation shape:', segmentation.shape)
 
-        slice = predicted[:, :, 64]
+        slice = predicted[:, :, 64].T
         self.segmentations.append(slice)
 
     def on_train_end(self, logs={}):
@@ -163,7 +163,7 @@ class ConfusionCallback(Callback):
             save_confusion_matrix(conf, tissue_classes, filename)
 
         images = []
-        for filename in os.listdir(os.path.join(scratch_dir, 'confusion')):
+        for filename in os.listdir(os.path.join(results_directory, 'confusion')):
             if '.png' in filename and not 'results' in filename:
                 images.append(plt.imread(os.path.join(results_directory, 'confusion', filename)))
 

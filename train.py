@@ -107,7 +107,7 @@ class SegVisCallback(Callback):
         # segmentation = from_categorical(predicted, category_mapping)
         # print('segmentation shape:', segmentation.shape)
 
-        slice = predicted[:, :, 64].T
+        slice = np.uint8(predicted[:, :, 64].T)
         self.segmentations.append(slice)
 
     def on_train_end(self, logs={}):

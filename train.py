@@ -109,10 +109,11 @@ class SegVisCallback(Callback):
 
         slice = np.uint8(predicted[:, :, 64]*255).T
 
+        plt.figure()
         plt.imshow(slice)
         plt.xticks([])
         plt.yticks([])
-        plt.xlabel('Epoch:', str(self.epoch))
+        plt.xlabel('Epoch: ' + str(self.epoch))
         plt.tight_layout()
         plt.savefig(results_directory + '/segmentations/example_segmentation_' + str(self.epoch).zfill(4) + '.png')
         plt.close()

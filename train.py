@@ -63,7 +63,7 @@ results_directory = ''
 class SegVisCallback(Callback):
 
     def on_train_begin(self, logs={}):
-        self.segmentations = []
+        self.epoch = 1
 
         self.f = h5py.File(input_file)
         self.images = self.f['images']
@@ -101,27 +101,30 @@ class SegVisCallback(Callback):
         # print(predicted.shape, predicted.dtype)
 
         img = nib.Nifti1Image(predicted, np.eye(4))
-        nib.save(img, results_directory + 'example-' + str(len(self.segmentations)) + '.nii.gz')
+        nib.save(img, results_directory + 'example-' + str(self.epoch) + '.nii.gz')
 
         # predicted = model.predict(self.images[0, ...][np.newaxis, ...], batch_size=1)
         # segmentation = from_categorical(predicted, category_mapping)
         # print('segmentation shape:', segmentation.shape)
 
-        slice = predicted[:, :, 64].T
-        self.segmentations.append(slice)
+        slice = np.uint8(predicted[:, :, 64]*255).T
+
+        plt.imshow(slice)
+        plt.xticks([])
+        plt.yticks([])
+        plt.xlabel('Epoch:', str(self.epoch))
+        plt.tight_layout()
+        plt.savefig(results_directory + '/segmentations/example_segmentation_' + str(self.epoch).zfill(4) + '.png')
+        plt.close()
+
 
     def on_train_end(self, logs={}):
-
-        for i, seg in enumerate(self.segmentations):
-            plt.imshow(seg, origin='lower')
-            plt.axis('off')
-            plt.tight_layout()
-            plt.savefig(results_directory + '/segmentations/example_segmentation_' + str(i).zfill(4) + '.png')
 
         images = []
         for filename in sorted(os.listdir(os.path.join(results_directory, 'segmentations'))):
             if '.png' in filename:
                 images.append(plt.imread(os.path.join(results_directory, 'segmentations', filename)))
+                plt.close()
 
         imageio.mimsave(os.path.join(results_directory, 'segmentations', 'segmentation.gif'), images)
 

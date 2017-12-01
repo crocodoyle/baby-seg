@@ -107,7 +107,7 @@ class SegVisCallback(Callback):
         # segmentation = from_categorical(predicted, category_mapping)
         # print('segmentation shape:', segmentation.shape)
 
-        slice = np.uint8(predicted[:, :, 64]*255).T
+        slice = predicted[:, :, 80+64]
 
         plt.figure()
         plt.imshow(slice)
@@ -117,6 +117,8 @@ class SegVisCallback(Callback):
         plt.tight_layout()
         plt.savefig(results_directory + '/segmentations/example_segmentation_' + str(self.epoch).zfill(4) + '.png')
         plt.close()
+
+        self.epoch += 1
 
 
     def on_train_end(self, logs={}):

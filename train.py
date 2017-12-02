@@ -107,7 +107,7 @@ class SegVisCallback(Callback):
         # segmentation = from_categorical(predicted, category_mapping)
         # print('segmentation shape:', segmentation.shape)
 
-        slice = predicted[:, :, 80+64]
+        slice = predicted[:, :, 80+64].T
 
         plt.figure()
         plt.imshow(slice)
@@ -800,7 +800,7 @@ def train_unet():
     model = unet_patch()
 
     sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
-    adam = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=1e-6)
+    adam = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=1e-5)
 
     model.compile(optimizer=adam, loss=dice_coef_loss, metrics=[dice_coef])
 
@@ -819,7 +819,7 @@ def train_unet():
     hist = model.fit_generator(
         unet_patch_gen(training_indices, 1, augmentMode='flip'),
         len(training_indices),
-        epochs=200,
+        epochs=400,
         verbose=1,
         callbacks=[model_checkpoint, segvis_callback, confusion_callback],
         validation_data=unet_patch_gen(validation_indices, 1),

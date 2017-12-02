@@ -113,7 +113,7 @@ class SegVisCallback(Callback):
         plt.imshow(slice)
         plt.xticks([])
         plt.yticks([])
-        plt.xlabel('Epoch: ' + str(self.epoch))
+        plt.xlabel('Epoch: ' + str(self.epoch), fontsize=24)
         plt.tight_layout()
         plt.savefig(results_directory + '/segmentations/example_segmentation_' + str(self.epoch).zfill(4) + '.png')
         plt.close()
@@ -136,6 +136,7 @@ class ConfusionCallback(Callback):
 
     def on_train_begin(self, logs={}):
         self.confusion = []
+        self.epoch = 0
 
         f = h5py.File(input_file)
         self.images = f['images']
@@ -166,7 +167,7 @@ class ConfusionCallback(Callback):
 
         for epoch, conf in enumerate(self.confusion):
             filename = os.path.join(results_directory, 'confusion', 'confusion_' + str(epoch).zfill(4) + '.png')
-            save_confusion_matrix(conf, tissue_classes, filename)
+            save_confusion_matrix(conf, tissue_classes, filename, self.epoch)
 
         images = []
         for filename in os.listdir(os.path.join(results_directory, 'confusion')):
@@ -185,15 +186,15 @@ def lr_scheduler(model):
     def schedule(epoch):
         new_lr = K.get_value(model.optimizer.lr)
 
-        if epoch % 200 == 0:
-            new_lr = new_lr / 2
+        if epoch % 100 == 0:
+            new_lr = new_lr / 10
 
         return new_lr
 
     scheduler = LearningRateScheduler(schedule)
     return scheduler
 
-def save_confusion_matrix(cm, classes, filename,
+def save_confusion_matrix(cm, classes, filename, epoch_num,
                           title='Confusion matrix',
                           cmap=plt.cm.Blues):
     """This function plots the confusion matrix."""
@@ -202,7 +203,7 @@ def save_confusion_matrix(cm, classes, filename,
     cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
+    plt.title(title, fontsize=24)
     plt.colorbar()
     tick_marks = np.arange(len(classes))
     plt.xticks(tick_marks, classes, rotation=45)
@@ -212,11 +213,12 @@ def save_confusion_matrix(cm, classes, filename,
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
         plt.text(j, i, round(cm[i, j], 2),
                  horizontalalignment="center",
-                 color="white" if cm[i, j] > thresh else "black")
+                 color="white" if cm[i, j] > thresh else "black",
+                 fontsize=24)
 
     plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
+    plt.ylabel('True label', fontsize=24)
+    plt.xlabel('Predicted label', fontsize=24)
     plt.savefig(filename, bbox_inches='tight')
 
 def convnet():
@@ -821,7 +823,7 @@ def train_unet():
         len(training_indices),
         epochs=400,
         verbose=1,
-        callbacks=[model_checkpoint, segvis_callback, confusion_callback],
+        callbacks=[model_checkpoint, segvis_callback, confusion_callback, lr_sched],
         validation_data=unet_patch_gen(validation_indices, 1),
         validation_steps=len(validation_indices)*3)
 

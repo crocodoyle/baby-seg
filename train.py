@@ -187,7 +187,7 @@ def lr_scheduler(model):
         new_lr = K.get_value(model.optimizer.lr)
 
         if epoch % 100 == 0:
-            new_lr = new_lr / 10
+            new_lr = new_lr / 2
 
         return new_lr
 
